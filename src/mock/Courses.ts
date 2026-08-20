@@ -1,19 +1,19 @@
 export type Subtopic = {
   _id: string;
-  title: string;
+  title: LocalizedText;
   slug: string;
   order: number;
-  content: string;
+  content: LocalizedText;
   code: string;
   language: string;
 };
 
 export type Topic = {
   _id: string;
-  title: string;
+  title: LocalizedText;
   slug: string;
   order: number;
-  content: string;
+  content: LocalizedText;
   code: string;
   language: string;
   subtopics?: Subtopic[];
@@ -52,6 +52,13 @@ export type MultiLanguageCourse = {
 
 export type Course = SingleLanguageCourse | MultiLanguageCourse;
 
+export type LocalizedText =
+  | string
+  | {
+      bn: string;
+      en: string;
+    };
+
 export const courses: Course[] = [
   {
     _id: "course-001",
@@ -65,11 +72,16 @@ export const courses: Course[] = [
     topics: [
       {
         _id: "js-topic-001",
-        title: "Variables & Data Types",
+        title: {
+          bn: "Variables & Data Types",
+          en: "Variables & Data Types",
+        },
         slug: "variables-data-types",
         order: 1,
-        content:
-          "Variables store values in memory. JavaScript provides let, const, and var, along with primitive and reference data types.",
+        content: {
+          bn: "Variables store values in memory. JavaScript provides let, const, and var, along with primitive and reference data types.",
+          en: "Variables store values in memory. JavaScript provides let, const, and var, along with primitive and reference data types.",
+        },
         code: `let name = "Tamim";
 const age = 24;
 const isStudent = true;`,
@@ -77,11 +89,16 @@ const isStudent = true;`,
         subtopics: [
           {
             _id: "js-sub-001",
-            title: "let, const & var",
+            title: {
+          bn: "let, const & var",
+          en: "let, const & var",
+        },
             slug: "let-const-var",
             order: 1,
-            content:
-              "Use let when a variable may be reassigned and const when the binding should not be reassigned. var is the older function-scoped declaration.",
+            content: {
+          bn: "Use let when a variable may be reassigned and const when the binding should not be reassigned. var is the older function-scoped declaration.",
+          en: "Use let when a variable may be reassigned and const when the binding should not be reassigned. var is the older function-scoped declaration.",
+        },
             code: `let score = 80;
 score = 90;
 
@@ -90,11 +107,16 @@ const country = "Bangladesh";`,
           },
           {
             _id: "js-sub-002",
-            title: "Primitive Data Types",
+            title: {
+          bn: "Primitive Data Types",
+          en: "Primitive Data Types",
+        },
             slug: "primitive-data-types",
             order: 2,
-            content:
-              "JavaScript primitive values include string, number, bigint, boolean, undefined, symbol, and null.",
+            content: {
+          bn: "JavaScript primitive values include string, number, bigint, boolean, undefined, symbol, and null.",
+          en: "JavaScript primitive values include string, number, bigint, boolean, undefined, symbol, and null.",
+        },
             code: `const name = "Tamim";
 const age = 24;
 const active = true;
@@ -105,11 +127,16 @@ const value = null;`,
       },
       {
         _id: "js-topic-002",
-        title: "Functions",
+        title: {
+          bn: "Functions",
+          en: "Functions",
+        },
         slug: "functions",
         order: 2,
-        content:
-          "Functions group reusable logic. They can receive parameters and return values.",
+        content: {
+          bn: "Functions group reusable logic. They can receive parameters and return values.",
+          en: "Functions group reusable logic. They can receive parameters and return values.",
+        },
         code: `function greet(name) {
   return "Hello " + name;
 }
@@ -119,11 +146,16 @@ console.log(greet("Tamim"));`,
       },
       {
         _id: "js-topic-003",
-        title: "Arrays & Objects",
+        title: {
+          bn: "Arrays & Objects",
+          en: "Arrays & Objects",
+        },
         slug: "arrays-objects",
         order: 3,
-        content:
-          "Arrays hold ordered collections, while objects represent data using key-value pairs.",
+        content: {
+          bn: "Arrays hold ordered collections, while objects represent data using key-value pairs.",
+          en: "Arrays hold ordered collections, while objects represent data using key-value pairs.",
+        },
         code: `const users = [
   { name: "Tamim" },
   { name: "Rahim" }
@@ -132,11 +164,16 @@ console.log(greet("Tamim"));`,
       },
       {
         _id: "js-topic-004",
-        title: "Conditionals & Loops",
+        title: {
+          bn: "Conditionals & Loops",
+          en: "Conditionals & Loops",
+        },
         slug: "conditionals-loops",
         order: 4,
-        content:
-          "Conditionals make decisions and loops repeat a block of code while a condition or collection requires it.",
+        content: {
+          bn: "Conditionals make decisions and loops repeat a block of code while a condition or collection requires it.",
+          en: "Conditionals make decisions and loops repeat a block of code while a condition or collection requires it.",
+        },
         code: `for (let i = 0; i < 5; i++) {
   if (i % 2 === 0) {
     console.log(i);
@@ -146,11 +183,16 @@ console.log(greet("Tamim"));`,
       },
       {
         _id: "js-topic-005",
-        title: "Array Methods",
+        title: {
+          bn: "Array Methods",
+          en: "Array Methods",
+        },
         slug: "array-methods",
         order: 5,
-        content:
-          "Methods such as map, filter, and reduce help transform and process arrays declaratively.",
+        content: {
+          bn: "Methods such as map, filter, and reduce help transform and process arrays declaratively.",
+          en: "Methods such as map, filter, and reduce help transform and process arrays declaratively.",
+        },
         code: `const numbers = [1, 2, 3, 4];
 
 const doubled = numbers.map((number) => number * 2);
@@ -159,11 +201,16 @@ const even = numbers.filter((number) => number % 2 === 0);`,
       },
       {
         _id: "js-topic-006",
-        title: "ES6 & Modern JavaScript",
+        title: {
+          bn: "ES6 & Modern JavaScript",
+          en: "ES6 & Modern JavaScript",
+        },
         slug: "es6-modern-javascript",
         order: 6,
-        content:
-          "Modern JavaScript introduced features such as arrow functions, destructuring, template literals, and modules.",
+        content: {
+          bn: "Modern JavaScript introduced features such as arrow functions, destructuring, template literals, and modules.",
+          en: "Modern JavaScript introduced features such as arrow functions, destructuring, template literals, and modules.",
+        },
         code: `const add = (a, b) => a + b;
 
 const user = { name: "Tamim", age: 24 };
@@ -172,11 +219,16 @@ const { name } = user;`,
       },
       {
         _id: "js-topic-007",
-        title: "Async JavaScript",
+        title: {
+          bn: "Async JavaScript",
+          en: "Async JavaScript",
+        },
         slug: "async-javascript",
         order: 7,
-        content:
-          "Promises, async functions, and await make asynchronous JavaScript easier to write and reason about.",
+        content: {
+          bn: "Promises, async functions, and await make asynchronous JavaScript easier to write and reason about.",
+          en: "Promises, async functions, and await make asynchronous JavaScript easier to write and reason about.",
+        },
         code: `async function getUser() {
   const response = await fetch("/api/user");
   return response.json();
@@ -204,11 +256,16 @@ getUser().then(console.log);`,
         topics: [
           {
             _id: "csharp-topic-001",
-            title: "Class & Object",
+            title: {
+          bn: "Class & Object",
+          en: "Class & Object",
+        },
             slug: "class-object",
             order: 1,
-            content:
-              "A class is a blueprint for creating objects. An object is an instance of a class with its own state and behavior.",
+            content: {
+          bn: "A class is a blueprint for creating objects. An object is an instance of a class with its own state and behavior.",
+          en: "A class is a blueprint for creating objects. An object is an instance of a class with its own state and behavior.",
+        },
             code: `public class Student
 {
     public string Name { get; set; }
@@ -225,11 +282,16 @@ student.Introduce();`,
             subtopics: [
               {
                 _id: "csharp-sub-001",
-                title: "What is a Class?",
+                title: {
+          bn: "What is a Class?",
+          en: "What is a Class?",
+        },
                 slug: "what-is-a-class",
                 order: 1,
-                content:
-                  "A class defines the data and behavior that objects created from it can have.",
+                content: {
+          bn: "A class defines the data and behavior that objects created from it can have.",
+          en: "A class defines the data and behavior that objects created from it can have.",
+        },
                 code: `public class Student
 {
     public string Name { get; set; }
@@ -238,11 +300,16 @@ student.Introduce();`,
               },
               {
                 _id: "csharp-sub-002",
-                title: "Creating Objects",
+                title: {
+          bn: "Creating Objects",
+          en: "Creating Objects",
+        },
                 slug: "creating-objects",
                 order: 2,
-                content:
-                  "Use the new keyword to create an object from a class and initialize its properties.",
+                content: {
+          bn: "Use the new keyword to create an object from a class and initialize its properties.",
+          en: "Use the new keyword to create an object from a class and initialize its properties.",
+        },
                 code: `var student = new Student
 {
     Name = "Tamim"
@@ -251,11 +318,16 @@ student.Introduce();`,
               },
               {
                 _id: "csharp-sub-003",
-                title: "Class Members",
+                title: {
+          bn: "Class Members",
+          en: "Class Members",
+        },
                 slug: "class-members",
                 order: 3,
-                content:
-                  "Properties and methods are common class members used to represent state and behavior.",
+                content: {
+          bn: "Properties and methods are common class members used to represent state and behavior.",
+          en: "Properties and methods are common class members used to represent state and behavior.",
+        },
                 code: `public class Student
 {
     public string Name { get; set; }
@@ -271,11 +343,16 @@ student.Introduce();`,
           },
           {
             _id: "csharp-topic-002",
-            title: "Constructor",
+            title: {
+          bn: "Constructor",
+          en: "Constructor",
+        },
             slug: "constructor",
             order: 2,
-            content:
-              "Constructors run when an object is created and are commonly used to initialize its state.",
+            content: {
+          bn: "Constructors run when an object is created and are commonly used to initialize its state.",
+          en: "Constructors run when an object is created and are commonly used to initialize its state.",
+        },
             code: `public class Student
 {
     public Student(string name)
@@ -289,11 +366,16 @@ var student = new Student("Tamim");`,
           },
           {
             _id: "csharp-topic-003",
-            title: "Inheritance",
+            title: {
+          bn: "Inheritance",
+          en: "Inheritance",
+        },
             slug: "inheritance",
             order: 3,
-            content:
-              "Inheritance lets a derived class reuse and extend members of a base class.",
+            content: {
+          bn: "Inheritance lets a derived class reuse and extend members of a base class.",
+          en: "Inheritance lets a derived class reuse and extend members of a base class.",
+        },
             code: `public class Animal
 {
     public void Eat() => Console.WriteLine("Eating");
@@ -307,11 +389,16 @@ public class Dog : Animal
           },
           {
             _id: "csharp-topic-004",
-            title: "Polymorphism",
+            title: {
+          bn: "Polymorphism",
+          en: "Polymorphism",
+        },
             slug: "polymorphism",
             order: 4,
-            content:
-              "Polymorphism allows one interface or base type to represent different concrete implementations.",
+            content: {
+          bn: "Polymorphism allows one interface or base type to represent different concrete implementations.",
+          en: "Polymorphism allows one interface or base type to represent different concrete implementations.",
+        },
             code: `public class Animal
 {
     public virtual void Sound()
@@ -338,11 +425,16 @@ public class Dog : Animal
         topics: [
           {
             _id: "typescript-topic-001",
-            title: "Class & Object",
+            title: {
+          bn: "Class & Object",
+          en: "Class & Object",
+        },
             slug: "class-object",
             order: 1,
-            content:
-              "A class describes the shape and behavior of objects. TypeScript adds static typing on top of JavaScript classes.",
+            content: {
+          bn: "A class describes the shape and behavior of objects. TypeScript adds static typing on top of JavaScript classes.",
+          en: "A class describes the shape and behavior of objects. TypeScript adds static typing on top of JavaScript classes.",
+        },
             code: `class Student {
   constructor(public name: string) {}
 
@@ -357,11 +449,16 @@ student.introduce();`,
             subtopics: [
               {
                 _id: "typescript-sub-001",
-                title: "What is a Class?",
+                title: {
+          bn: "What is a Class?",
+          en: "What is a Class?",
+        },
                 slug: "what-is-a-class",
                 order: 1,
-                content:
-                  "A TypeScript class defines the properties and methods that its objects can use.",
+                content: {
+          bn: "A TypeScript class defines the properties and methods that its objects can use.",
+          en: "A TypeScript class defines the properties and methods that its objects can use.",
+        },
                 code: `class Student {
   name: string;
 
@@ -373,21 +470,31 @@ student.introduce();`,
               },
               {
                 _id: "typescript-sub-002",
-                title: "Creating Objects",
+                title: {
+          bn: "Creating Objects",
+          en: "Creating Objects",
+        },
                 slug: "creating-objects",
                 order: 2,
-                content:
-                  "Create an object with new and pass values that satisfy the constructor's parameter types.",
+                content: {
+          bn: "Create an object with new and pass values that satisfy the constructor's parameter types.",
+          en: "Create an object with new and pass values that satisfy the constructor's parameter types.",
+        },
                 code: `const student = new Student("Tamim");`,
                 language: "typescript",
               },
               {
                 _id: "typescript-sub-003",
-                title: "Class Members",
+                title: {
+          bn: "Class Members",
+          en: "Class Members",
+        },
                 slug: "class-members",
                 order: 3,
-                content:
-                  "Properties, methods, and access modifiers are commonly used as TypeScript class members.",
+                content: {
+          bn: "Properties, methods, and access modifiers are commonly used as TypeScript class members.",
+          en: "Properties, methods, and access modifiers are commonly used as TypeScript class members.",
+        },
                 code: `class Student {
   private name: string;
 
@@ -401,11 +508,16 @@ student.introduce();`,
           },
           {
             _id: "typescript-topic-002",
-            title: "Constructor",
+            title: {
+          bn: "Constructor",
+          en: "Constructor",
+        },
             slug: "constructor",
             order: 2,
-            content:
-              "A TypeScript constructor initializes an object and can use parameter properties to reduce boilerplate.",
+            content: {
+          bn: "A TypeScript constructor initializes an object and can use parameter properties to reduce boilerplate.",
+          en: "A TypeScript constructor initializes an object and can use parameter properties to reduce boilerplate.",
+        },
             code: `class Student {
   constructor(public name: string) {}
 }
@@ -415,11 +527,16 @@ const student = new Student("Tamim");`,
           },
           {
             _id: "typescript-topic-003",
-            title: "Inheritance",
+            title: {
+          bn: "Inheritance",
+          en: "Inheritance",
+        },
             slug: "inheritance",
             order: 3,
-            content:
-              "A class can extend another class and reuse its properties and methods.",
+            content: {
+          bn: "A class can extend another class and reuse its properties and methods.",
+          en: "A class can extend another class and reuse its properties and methods.",
+        },
             code: `class Animal {
   eat() {
     console.log("Eating");
@@ -435,11 +552,16 @@ class Dog extends Animal {
           },
           {
             _id: "typescript-topic-004",
-            title: "Polymorphism",
+            title: {
+          bn: "Polymorphism",
+          en: "Polymorphism",
+        },
             slug: "polymorphism",
             order: 4,
-            content:
-              "Polymorphism lets different classes satisfy the same contract while providing their own implementation.",
+            content: {
+          bn: "Polymorphism lets different classes satisfy the same contract while providing their own implementation.",
+          en: "Polymorphism lets different classes satisfy the same contract while providing their own implementation.",
+        },
             code: `interface Animal {
   sound(): string;
 }

@@ -2,19 +2,77 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import CodeBlock from "../components/CodeBlock";
 import {
-  courses,
   type CourseLanguage,
   type Topic,
   type Subtopic,
 } from "../mock/Courses";
+import { getCourseBySlug } from "../services/courseService";
+import { useLanguage } from "../context/LanguageContext";
 import "./CourseDetails.css";
 
 function CourseDetails() {
   const { slug } = useParams<{ slug: string }>();
+  const { language } = useLanguage();
+  const getText = (
+  text: string | { bn: string; en: string }
+) => {
+  if (typeof text === "string") {
+    return text;
+  }
 
-  const course = courses.find(
-    (item) => item.slug === slug
-  );
+  return text[language];
+};
+
+  const courseDetailsText = {
+    courseContent: {
+      bn: "কোর্স কনটেন্ট",
+      en: "Course Content",
+    },
+
+    topics: {
+      bn: "টপিক",
+      en: "Topics",
+    },
+
+    explanation: {
+      bn: "ব্যাখ্যা",
+      en: "Explanation",
+    },
+
+    codeExample: {
+      bn: "কোড উদাহরণ",
+      en: "Code Example",
+    },
+
+    readyToStart: {
+      bn: "শেখা শুরু করতে প্রস্তুত?",
+      en: "Ready to start learning?",
+    },
+
+    selectTopic: {
+      bn: "শেখা শুরু করতে sidebar থেকে একটি topic নির্বাচন করুন।",
+      en: "Select a topic from the sidebar to start learning.",
+    },
+
+    loginToStart: {
+      bn: "লগইন করে শেখা শুরু করুন",
+      en: "Login to Start Learning",
+    },
+
+    courseNotFound: {
+      bn: "কোর্স পাওয়া যায়নি।",
+      en: "Course not found.",
+    },
+
+    courseNotFoundDescription: {
+      bn: "আপনি যে কোর্সটি খুঁজছেন সেটি পাওয়া যায়নি।",
+      en: "The course you are looking for does not exist.",
+    },
+  };
+
+  const course = slug
+    ? getCourseBySlug(slug)
+    : undefined;
 
   const languages: CourseLanguage[] =
     course &&
@@ -47,7 +105,8 @@ function CourseDetails() {
         if (
           current &&
           course.languages.some(
-            (language) => language.id === current
+            (courseLanguage) =>
+              courseLanguage.id === current
           )
         ) {
           return current;
@@ -66,8 +125,8 @@ function CourseDetails() {
   const activeLanguage = useMemo(
     () =>
       languages.find(
-        (language) =>
-          language.id === selectedLanguageId
+        (courseLanguage) =>
+          courseLanguage.id === selectedLanguageId
       ),
     [languages, selectedLanguageId]
   );
@@ -107,7 +166,7 @@ function CourseDetails() {
   };
 
   const selectLanguage = (
-    language: CourseLanguage
+    courseLanguage: CourseLanguage
   ) => {
     const currentTopicSlug =
       selectedTopicSlug;
@@ -116,12 +175,12 @@ function CourseDetails() {
       selectedSubtopicSlug;
 
     const nextTopic =
-      language.topics.find(
+      courseLanguage.topics.find(
         (topic) =>
           topic.slug === currentTopicSlug
       );
 
-    setSelectedLanguageId(language.id);
+    setSelectedLanguageId(courseLanguage.id);
 
     if (!nextTopic) {
       setSelectedTopicSlug(null);
@@ -146,47 +205,56 @@ function CourseDetails() {
   if (!course) {
     return (
       <div className="course-not-found">
-        <h1>Course not found.</h1>
+        <h1>
+          {courseDetailsText.courseNotFound[language]}
+        </h1>
+
         <p>
-          The course you are looking for does not exist.
+          {
+            courseDetailsText
+              .courseNotFoundDescription[language]
+          }
         </p>
       </div>
     );
   }
 
   const breadcrumb = activeSubtopic
-    ? `${course.title} / ${activeTopic?.title} / ${activeSubtopic.title}`
-    : activeTopic
-      ? `${course.title} / ${activeTopic.title}`
-      : course.title;
+  ? `${course.title} / ${getText(
+      activeTopic!.title
+    )} / ${getText(activeSubtopic.title)}`
+  : activeTopic
+    ? `${course.title} / ${getText(activeTopic.title)}`
+    : course.title;
 
   return (
     <div className="course-details">
 
-      {/* Language Selector - OUTSIDE both sections */}
+      {/* Language Selector */}
       {isMultiLanguage && (
         <div className="course-language-bar">
           <div className="language-selector">
-            {languages.map((language) => (
+            {languages.map((courseLanguage) => (
               <button
                 type="button"
-                key={language.id}
+                key={courseLanguage.id}
                 className={`language-button ${
-                  selectedLanguageId === language.id
+                  selectedLanguageId ===
+                  courseLanguage.id
                     ? "active"
                     : ""
                 }`}
                 style={
                   {
                     "--language-color":
-                      language.color,
+                      courseLanguage.color,
                   } as React.CSSProperties
                 }
                 onClick={() =>
-                  selectLanguage(language)
+                  selectLanguage(courseLanguage)
                 }
               >
-                {language.name}
+                {courseLanguage.name}
               </button>
             ))}
           </div>
@@ -200,11 +268,15 @@ function CourseDetails() {
         <aside className="course-sidebar">
 
           <div className="course-sidebar-header">
+
             <p className="section-label">
-              COURSE CONTENT
+              {courseDetailsText.courseContent[language]}
             </p>
 
-            <h2>Topics</h2>
+            <h2>
+              {courseDetailsText.topics[language]}
+            </h2>
+
           </div>
 
           <div className="topic-list">
@@ -238,7 +310,9 @@ function CourseDetails() {
                       )}
                     </span>
 
-                    <p>{topic.title}</p>
+                    <p>
+                      {getText(topic.title)}
+                    </p>
 
                     {topic.subtopics?.length ? (
                       <span className="topic-chevron">
@@ -270,6 +344,7 @@ function CourseDetails() {
                               )
                             }
                           >
+
                             <span>
                               {String(
                                 subtopic.order
@@ -277,8 +352,9 @@ function CourseDetails() {
                             </span>
 
                             <p>
-                              {subtopic.title}
+                              {getText(subtopic.title)}
                             </p>
+
                           </button>
                         )
                       )}
@@ -305,7 +381,7 @@ function CourseDetails() {
 
             {activeContent && (
               <h1 className="course-topic-title">
-                {activeContent.title}
+                {getText(activeContent.title)}
               </h1>
             )}
 
@@ -318,11 +394,14 @@ function CourseDetails() {
               <section className="topic-explanation">
 
                 <p className="section-label">
-                  EXPLANATION
+                  {
+                    courseDetailsText
+                      .explanation[language]
+                  }
                 </p>
 
                 <p className="topic-description">
-                  {activeContent.content}
+                  {getText(activeContent.content)}
                 </p>
 
               </section>
@@ -331,7 +410,10 @@ function CourseDetails() {
               <section className="topic-code-section">
 
                 <p className="section-label">
-                  CODE EXAMPLE
+                  {
+                    courseDetailsText
+                      .codeExample[language]
+                  }
                 </p>
 
                 <CodeBlock
@@ -357,16 +439,24 @@ function CourseDetails() {
               </p>
 
               <h2>
-                Ready to start learning?
+                {
+                  courseDetailsText
+                    .readyToStart[language]
+                }
               </h2>
 
               <p>
-                Select a topic from the sidebar
-                to start learning.
+                {
+                  courseDetailsText
+                    .selectTopic[language]
+                }
               </p>
 
               <button type="button">
-                Login to Start Learning
+                {
+                  courseDetailsText
+                    .loginToStart[language]
+                }
               </button>
 
             </div>
