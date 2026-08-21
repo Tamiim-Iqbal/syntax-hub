@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { courses } from "../mock/Courses";
 import CourseCard from "../components/CourseCard";
 import "./Home.css";
@@ -24,9 +25,12 @@ function Home() {
           </p>
 
           <div className="hero-actions">
-            <button className="hero-primary-button">
+            <Link
+              to="/courses"
+              className="hero-primary-button"
+            >
               Explore Courses
-            </button>
+            </Link>
           </div>
         </div>
       </section>

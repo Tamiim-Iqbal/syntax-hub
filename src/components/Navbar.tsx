@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import "./Navbar.css";
 import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/useTheme";
 
 function Navbar() {
   const { language, toggleLanguage } = useLanguage();

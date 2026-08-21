@@ -22,17 +22,24 @@ const getContentSections = (
     return content.sections;
   }
 
-  return [
-    {
+  const sections: ContentSection[] = [];
+
+  if (content.content !== undefined) {
+    sections.push({
       type: "explanation",
       content: content.content,
-    },
-    {
+    });
+  }
+
+  if (content.code !== undefined) {
+    sections.push({
       type: "code",
       code: content.code,
       language: content.language,
-    },
-  ];
+    });
+  }
+
+  return sections;
 };
 
 function CourseDetails() {
@@ -40,14 +47,19 @@ function CourseDetails() {
 
   const { language } = useLanguage();
 
-  const getText = (
-    text: string | { bn: string; en: string }
-  ) => {
-    if (typeof text === "string") {
-      return text;
+  const getText = (text: LocalizedText): string => {
+    const localized =
+      typeof text === "string" ? text : text[language];
+
+    if (typeof localized === "string") {
+      return localized;
     }
 
-    return text[language];
+    return localized
+      .map((part) =>
+        typeof part === "string" ? part : part.text
+      )
+      .join("");
   };
 
   const getRichText = (
