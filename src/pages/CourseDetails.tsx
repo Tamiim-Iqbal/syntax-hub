@@ -147,6 +147,16 @@ const courseDetailsText = {
     bn: "আপনি যে কোর্সটি খুঁজছেন সেটি পাওয়া যায়নি।",
     en: "The course you are looking for does not exist.",
   },
+
+  previous: {
+    bn: "আগের টপিক",
+    en: "Previous Topic",
+  },
+
+  next: {
+    bn: "পরের টপিক",
+    en: "Next Topic",
+  },
 };
 
 const course = slug
@@ -231,6 +241,28 @@ const activeSubtopic: Subtopic | undefined =
 const activeContent =
   activeSubtopic ?? activeTopic ?? null;
 
+const navigableContent: ContentSource[] = topics.flatMap((topic) => [
+  topic,
+  ...(topic.subtopics ?? []),
+]);
+
+const activeContentIndex = activeContent
+  ? navigableContent.findIndex(
+      (content) => content._id === activeContent._id
+    )
+  : -1;
+
+const previousContent =
+  activeContentIndex > 0
+    ? navigableContent[activeContentIndex - 1]
+    : undefined;
+
+const nextContent =
+  activeContentIndex >= 0 &&
+  activeContentIndex < navigableContent.length - 1
+    ? navigableContent[activeContentIndex + 1]
+    : undefined;
+
 const selectTopic = (topic: Topic) => {
   setSelectedTopicSlug(topic.slug);
   setSelectedSubtopicSlug(null);
@@ -242,6 +274,31 @@ const selectSubtopic = (
 ) => {
   setSelectedTopicSlug(topic.slug);
   setSelectedSubtopicSlug(subtopic.slug);
+};
+
+const selectContent = (content: ContentSource) => {
+  const topic = topics.find(
+    (item) => item._id === content._id
+  );
+
+  if (topic) {
+    selectTopic(topic);
+    return;
+  }
+
+  const parentTopic = topics.find((item) =>
+    item.subtopics?.some(
+      (subtopic) => subtopic._id === content._id
+    )
+  );
+
+  const subtopic = parentTopic?.subtopics?.find(
+    (item) => item._id === content._id
+  );
+
+  if (parentTopic && subtopic) {
+    selectSubtopic(parentTopic, subtopic);
+  }
 };
 
 const selectLanguage = (
@@ -509,23 +566,51 @@ return (
                     key={`code-${index}`}
                   >
                     <p className="section-label">
-                      {
-                        courseDetailsText
-                          .codeExample[language]
-                      }
+                      {courseDetailsText.codeExample[language]}
                     </p>
 
                     <CodeBlock
                       code={section.code}
                       language={section.language}
-                      languageColor={
-                        activeLanguage?.color
-                      }
+                      languageColor={activeLanguage?.color}
                     />
                   </section>
                 );
               }
             )}
+
+            <nav
+              className="topic-navigation"
+              aria-label="Topic navigation"
+            >
+              <button
+                type="button"
+                className="topic-navigation-button previous"
+                onClick={() => {
+                  if (previousContent) {
+                    selectContent(previousContent);
+                  }
+                }}
+                disabled={!previousContent}
+              >
+                <span className="topic-navigation-arrow">←</span>
+                <span>{courseDetailsText.previous[language]}</span>
+              </button>
+
+              <button
+                type="button"
+                className="topic-navigation-button next"
+                onClick={() => {
+                  if (nextContent) {
+                    selectContent(nextContent);
+                  }
+                }}
+                disabled={!nextContent}
+              >
+                <span>{courseDetailsText.next[language]}</span>
+                <span className="topic-navigation-arrow">→</span>
+              </button>
+            </nav>
 
           </article>
         ) : (
