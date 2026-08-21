@@ -65,11 +65,25 @@ export type MultiLanguageCourse = {
 
 export type Course = SingleLanguageCourse | MultiLanguageCourse;
 
+export type HighlightPart = {
+  type: "highlight";
+  text: string;
+};
+
+export type BoldPart = {
+  type: "bold";
+  text: string;
+};
+
+export type RichTextContent =
+  | string
+  | Array<string | HighlightPart | BoldPart>;
+
 export type LocalizedText =
   | string
   | {
-      bn: string;
-      en: string;
+      bn: RichTextContent;
+      en: RichTextContent;
     };
 
 export const courses: Course[] = [
@@ -312,8 +326,16 @@ student.Introduce();`,
                   {
                     type: "explanation",
                     content: {
-                      bn: "A class defines the data and behavior that objects created from it can have.",
-                      en: "A class defines the data and behavior that objects created from it can have.",
+                      bn: ["A class defines the data and behavior that",
+                        {
+                          type: "highlight",
+                          text: "objects"
+                        }, "created from it can have."],
+                      en: ["A class defines the data and behavior that",
+                        {
+                          type: "highlight",
+                          text: "objects"
+                        }, "created from it can have."],
                     },
                   },
                   {
