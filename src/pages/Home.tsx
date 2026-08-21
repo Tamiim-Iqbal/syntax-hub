@@ -1,4 +1,3 @@
-import "./Home.css";
 import { courses } from "../mock/Courses";
 import CourseCard from "../components/CourseCard";
 import "./Home.css";

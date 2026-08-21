@@ -1,3 +1,14 @@
+export type ContentSection =
+  | {
+      type: "explanation";
+      content: LocalizedText;
+    }
+  | {
+      type: "code";
+      code: string;
+      language: string;
+    };
+
 export type Subtopic = {
   _id: string;
   title: LocalizedText;
@@ -6,6 +17,7 @@ export type Subtopic = {
   content: LocalizedText;
   code: string;
   language: string;
+  sections?: ContentSection[];
 };
 
 export type Topic = {
@@ -16,6 +28,7 @@ export type Topic = {
   content: LocalizedText;
   code: string;
   language: string;
+  sections?: ContentSection[];
   subtopics?: Subtopic[];
 };
 
@@ -252,7 +265,7 @@ getUser().then(console.log);`,
       {
         id: "csharp",
         name: "C#",
-        color: "#68217A",
+        color: "#a738c3",
         topics: [
           {
             _id: "csharp-topic-001",
@@ -269,13 +282,11 @@ getUser().then(console.log);`,
             code: `public class Student
 {
     public string Name { get; set; }
-
     public void Introduce()
     {
         Console.WriteLine($"Hi, I am {Name}");
     }
 }
-
 var student = new Student { Name = "Tamim" };
 student.Introduce();`,
             language: "csharp",
@@ -297,6 +308,36 @@ student.Introduce();`,
     public string Name { get; set; }
 }`, 
                 language: "csharp",
+                sections: [
+                  {
+                    type: "explanation",
+                    content: {
+                      bn: "A class defines the data and behavior that objects created from it can have.",
+                      en: "A class defines the data and behavior that objects created from it can have.",
+                    },
+                  },
+                  {
+                    type: "code",
+                    language: "csharp",
+                    code: `public class Student
+{
+    public string Name { get; set; }
+}`,
+                  },
+                  {
+                    type: "explanation",
+                    content: {
+                      bn: "Here, Student is the class and Name is a property of that class.",
+                      en: "Here, Student is the class and Name is a property of that class.",
+                    },
+                  },
+                  {
+                    type: "code",
+                    language: "csharp",
+                    code: `var student = new Student();
+student.Name = "Tamim";`,
+                  },
+                ],
               },
               {
                 _id: "csharp-sub-002",

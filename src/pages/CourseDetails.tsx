@@ -5,10 +5,33 @@ import {
   type CourseLanguage,
   type Topic,
   type Subtopic,
+  type ContentSection,
 } from "../mock/Courses";
 import { getCourseBySlug } from "../services/courseService";
 import { useLanguage } from "../context/LanguageContext";
 import "./CourseDetails.css";
+
+type ContentSource = Topic | Subtopic;
+
+const getContentSections = (
+  content: ContentSource
+): ContentSection[] => {
+  if (content.sections && content.sections.length > 0) {
+    return content.sections;
+  }
+
+  return [
+    {
+      type: "explanation",
+      content: content.content,
+    },
+    {
+      type: "code",
+      code: content.code,
+      language: content.language,
+    },
+  ];
+};
 
 function CourseDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -390,41 +413,44 @@ function CourseDetails() {
           {activeContent ? (
             <article className="topic-content">
 
-              {/* Explanation */}
-              <section className="topic-explanation">
-
-                <p className="section-label">
-                  {
-                    courseDetailsText
-                      .explanation[language]
+              {getContentSections(activeContent).map(
+                (section, index) => {
+                  if (section.type === "explanation") {
+                    return (
+                      <section
+                        className="topic-explanation"
+                        key={`explanation-${index}`}
+                      >
+                        <p className="topic-description">
+                          {getText(section.content)}
+                        </p>
+                      </section>
+                    );
                   }
-                </p>
 
-                <p className="topic-description">
-                  {getText(activeContent.content)}
-                </p>
+                  return (
+                    <section
+                      className="topic-code-section"
+                      key={`code-${index}`}
+                    >
+                      <p className="section-label">
+                        {
+                          courseDetailsText
+                            .codeExample[language]
+                        }
+                      </p>
 
-              </section>
-
-              {/* Code */}
-              <section className="topic-code-section">
-
-                <p className="section-label">
-                  {
-                    courseDetailsText
-                      .codeExample[language]
-                  }
-                </p>
-
-                <CodeBlock
-                  code={activeContent.code}
-                  language={activeContent.language}
-                  languageColor={
-                    activeLanguage?.color
-                  }
-                />
-
-              </section>
+                      <CodeBlock
+                        code={section.code}
+                        language={section.language}
+                        languageColor={
+                          activeLanguage?.color
+                        }
+                      />
+                    </section>
+                  );
+                }
+              )}
 
             </article>
           ) : (
