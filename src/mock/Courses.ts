@@ -7,6 +7,12 @@ export type ContentSection =
       type: "code";
       code: string;
       language: string;
+    }
+  | {
+      type: "image";
+      src: string;
+      alt: string;
+      caption?: LocalizedText;
     };
 
 export type Subtopic = {
@@ -14,8 +20,8 @@ export type Subtopic = {
   title: LocalizedText;
   slug: string;
   order: number;
-  content: LocalizedText;
-  code: string;
+  content?: LocalizedText;
+  code?: string;
   language: string;
   sections?: ContentSection[];
 };
@@ -25,8 +31,8 @@ export type Topic = {
   title: LocalizedText;
   slug: string;
   order: number;
-  content: LocalizedText;
-  code: string;
+  content?: LocalizedText;
+  code?: string;
   language: string;
   sections?: ContentSection[];
   subtopics?: Subtopic[];
@@ -75,9 +81,19 @@ export type BoldPart = {
   text: string;
 };
 
+export type InlineCodePart = {
+  type: "inline-code";
+  text: string;
+};
+
 export type RichTextContent =
   | string
-  | Array<string | HighlightPart | BoldPart>;
+  | Array<
+      string |
+      HighlightPart |
+      BoldPart |
+      InlineCodePart
+    >;
 
 export type LocalizedText =
   | string
@@ -289,20 +305,63 @@ getUser().then(console.log);`,
         },
             slug: "class-object",
             order: 1,
-            content: {
-          bn: "A class is a blueprint for creating objects. An object is an instance of a class with its own state and behavior.",
-          en: "A class is a blueprint for creating objects. An object is an instance of a class with its own state and behavior.",
-        },
-            code: `public class Student
+            sections: [
+              {
+                type: "explanation",
+                content: {
+                  bn: [
+                    "A ",
+                    { type: "bold", text: "class" },
+                    " is a blueprint for creating ",
+                    { type: "inline-code", text: "objects" },
+                    ". An ",
+                    { type: "highlight", text: "object" },
+                    " is an instance of a class with its own state and behavior.",
+                  ],
+                  en: [
+                    "A ",
+                    { type: "bold", text: "class" },
+                    " is a blueprint for creating ",
+                    { type: "inline-code", text: "objects" },
+                    ". An ",
+                    { type: "highlight", text: "object" },
+                    " is an instance of a class with its own state and behavior.",
+                  ],
+                },
+              },
+              {
+                type: "code",
+                language: "csharp",
+                code: `public class Student
 {
     public string Name { get; set; }
+
     public void Introduce()
     {
         Console.WriteLine($"Hi, I am {Name}");
     }
 }
+
 var student = new Student { Name = "Tamim" };
 student.Introduce();`,
+              },
+              {
+                type: "explanation",
+                content: {
+                  bn: "Here, Student is the class and student is an object created from that class.",
+                  en: "Here, Student is the class and student is an object created from that class.",
+                },
+              },
+              {
+                type: "image",
+                src: "https://media.licdn.com/dms/image/v2/D4D12AQFf_cR1jkHHsQ/article-cover_image-shrink_720_1280/B4DZw2X4ZoKkAI-/0/1770438763960?e=2147483647&v=beta&t=BLPbzFJ1t-fBmk9FujTgLCj3ZWcqOwG6mZEKz1NXneo",
+                alt: "C# Class and Object example",
+                caption: {
+                  bn: "C# Class ও Object-এর উদাহরণ",
+                  en: "C# Class and Object example",
+                },
+              },
+            ],
             language: "csharp",
             subtopics: [
               {

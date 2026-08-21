@@ -61,33 +61,44 @@ function CourseDetails() {
   };
 
   const renderRichText = (
-    text: RichTextContent
-  ): ReactNode => {
-    if (typeof text === "string") {
-      return text;
+  text: RichTextContent
+): ReactNode => {
+  if (typeof text === "string") {
+    return text;
+  }
+
+  return text.map((part, index) => {
+    if (typeof part === "string") {
+      return part;
     }
 
-    return text.map((part, index) => {
-      if (typeof part === "string") {
-        return part;
-      }
-
-      if (part.type === "bold") {
-        return (
-          <strong key={`bold-${index}`}>
-            {part.text}
-          </strong>
-        );
-      }
-
+    if (part.type === "bold") {
       return (
-        <span
-          key={`highlight-${index}`}
-          className="text-highlight"
+        <strong key={`bold-${index}`}>
+          {part.text}
+        </strong>
+      );
+    }
+
+    if (part.type === "inline-code") {
+      return (
+        <code
+          key={`inline-code-${index}`}
+          className="inline-code"
         >
           {part.text}
-        </span>
+        </code>
       );
+    }
+
+    return (
+      <span
+        key={`highlight-${index}`}
+        className="text-highlight"
+      >
+        {part.text}
+      </span>
+    );
   });
 };
 
@@ -469,6 +480,26 @@ return (
                         )}
                       </p>
                     </section>
+                  );
+                }
+
+                if (section.type === "image") {
+                  return (
+                    <figure
+                      className="topic-image"
+                      key={`image-${index}`}
+                    >
+                      <img
+                        src={section.src}
+                        alt={section.alt}
+                      />
+
+                      {section.caption && (
+                        <figcaption>
+                          {getText(section.caption)}
+                        </figcaption>
+                      )}
+                    </figure>
                   );
                 }
 
