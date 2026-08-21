@@ -1,9 +1,11 @@
 import { Link, NavLink } from "react-router-dom";
 import "./Navbar.css";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 
 function Navbar() {
   const { language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const navbarText = {
     home: {
       bn: "হোম",
@@ -58,10 +60,12 @@ function Navbar() {
           </button>
 
           <button
+            type="button"
             className="navbar-theme"
+            onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            ☀
+            {theme === "light" ? "🌙" : "☀"}
           </button>
         </div>
       </div>

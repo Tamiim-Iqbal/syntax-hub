@@ -79,44 +79,57 @@
     background 0.2s ease;
 }
 
-.navbar-language {
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-}
-
-.navbar-language:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
-}
-
 .navbar-login {
-  padding: 8px 14px;
+  padding: 6px 14px;
 
-  border: 1px solid var(--color-border) !important;
+  border: 1px solid var(--color-primary) !important;
   border-radius: var(--radius-md);
 
-  font-weight: 500;
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .navbar-login:hover {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
 }
 
 .navbar-theme {
-  width: 38px;
-  height: 38px;
+  width: 33px;
+  height: 33px;
 
   display: grid;
   place-items: center;
 
+  border: 1px solid var(--color-primary) !important;
   border-radius: 50%;
+
+  background: transparent;
+  color: var(--color-primary);
+
   font-size: 1rem;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .navbar-theme:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+
+  transform: translateY(-1px);
 }
 
 /* Mobile */
@@ -165,6 +178,15 @@
   cursor: pointer;
   box-sizing: border-box;
   outline: none;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.navbar-language-toggle:hover {
+  transform: translateY(-1px);
 }
 
 /* Selected language */
@@ -230,4 +252,134 @@
 
 .navbar-language-toggle.english .language-dot {
   transform: translateX(11px);
+}
+
+/* ========================================
+   NAVBAR - MOBILE
+======================================== */
+
+@media (max-width: 640px) {
+  .navbar {
+    height: 58px;
+  }
+
+  .navbar-container {
+    width: 98%;
+    max-width: none;
+  }
+
+  .navbar-logo {
+    font-size: 1.05rem;
+  }
+
+  .navbar-nav {
+    margin-left: 20px;
+  }
+
+  .nav-link {
+    font-size: 0.78rem;
+    padding: 6px 2px;
+  }
+
+  .navbar-actions {
+    gap: 5px;
+  }
+
+  /* Language toggle */
+  .navbar-language-toggle {
+    gap: 5px;
+    padding: 4px 6px;
+    font-size: 0.65rem;
+  }
+
+  .language-switch {
+    width: 21px;
+    height: 12px;
+  }
+
+  .language-dot {
+    width: 8px;
+    height: 8px;
+    top: 2px;
+    left: 2px;
+  }
+
+  .navbar-language-toggle.english .language-dot {
+    transform: translateX(9px);
+  }
+
+  /* Login */
+  .navbar-login {
+    padding: 6px 9px;
+    font-size: 0.7rem;
+  }
+
+  /* Theme */
+  .navbar-theme {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+}
+
+
+/* ========================================
+   VERY SMALL MOBILE
+======================================== */
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 50px;
+  }
+
+  .navbar-container {
+    width: 98%;
+  }
+
+  .navbar-logo {
+    font-size: 1.05rem;
+  }
+
+  .navbar-nav {
+    margin-left: 20px;
+  }
+
+  .nav-link {
+    font-size: 0.7rem;
+  }
+
+  .navbar-actions {
+    gap: 10px;
+  }
+
+  .navbar-language-toggle {
+    gap: 1px;
+    padding: 0 8px;
+    font-size: 0.65rem;
+  }
+
+  .language-switch {
+    width: 18px;
+    height: 10px;
+  }
+
+  .language-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .navbar-language-toggle.english .language-dot {
+    transform: translateX(8px);
+  }
+
+  .navbar-login {
+    padding: 9px 10px;
+    font-size: 0.62rem;
+  }
+
+  .navbar-theme {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
 }
