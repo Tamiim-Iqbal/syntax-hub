@@ -1,9 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { courses } from "../mock/Courses";
+
 import CourseCard from "../components/CourseCard";
+import { getCourses } from "../services/courseService";
+import type { Course } from "../types/course";
+
 import "./Home.css";
 
 function Home() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+
+        const data = await getCourses();
+
+        setCourses(data);
+      } catch (error) {
+        console.error(
+          "Failed to load courses:",
+          error
+        );
+
+        setError("Failed to load courses.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, []);
+
   return (
     <div className="home">
       {/* Hero */}
@@ -38,28 +69,38 @@ function Home() {
       {/* Courses */}
       <section className="courses-section">
         <div className="section-header">
-          <p className="section-label">LEARNING PATH</p>
+          <p className="section-label">
+            LEARNING PATH
+          </p>
 
           <h2>Explore Courses</h2>
 
           <p>
-            Start learning from carefully structured programming
-            courses.
+            Start learning from carefully structured
+            programming courses.
           </p>
         </div>
 
         <div className="course-grid">
-          {courses.map((course) => (
-            <CourseCard
-              key={course._id}
-              title={course.title}
-              description={course.description}
-              level={course.level}
-              topics={course.topicsCount}
-              category={course.category}
-              slug={course.slug}
-            />
-          ))}
+          {loading && <p>Loading courses...</p>}
+
+          {!loading && error && (
+            <p>{error}</p>
+          )}
+
+          {!loading &&
+            !error &&
+            courses.map((course) => (
+              <CourseCard
+                key={course._id}
+                title={course.title}
+                description={course.description}
+                level={course.level}
+                topics={course.topicsCount}
+                category={course.category}
+                slug={course.slug}
+              />
+            ))}
         </div>
       </section>
     </div>

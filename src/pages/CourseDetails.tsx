@@ -1,10 +1,5 @@
-import {
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode, } from "react";
 import { useParams } from "react-router-dom";
-
 import CodeBlock from "../components/CodeBlock";
 
 import {
@@ -14,9 +9,10 @@ import {
   type ContentSection,
   type LocalizedText,
   type RichTextContent,
-} from "../mock/Courses";
+} from "../types/course";
 
 import { getCourseBySlug } from "../services/courseService";
+
 import { useLanguage } from "../context/LanguageContext";
 
 import "./CourseDetails.css";
@@ -124,9 +120,64 @@ function CourseDetails() {
 
   const { language } = useLanguage();
 
-  const course = slug
-    ? getCourseBySlug(slug)
-    : undefined;
+  const [course, setCourse] =
+    useState<ReturnType<typeof getCourseBySlug> extends Promise<
+      infer T
+    >
+      ? T
+      : never>();
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCourse = async () => {
+      if (!slug) {
+        setCourse(undefined);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const data =
+          await getCourseBySlug(slug);
+
+        if (!cancelled) {
+          setCourse(data);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load course:",
+          error
+        );
+
+        if (!cancelled) {
+          setCourse(undefined);
+          setError(
+            "Failed to load course."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCourse();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   /* ============================= */
   /* Text Helpers                  */
@@ -458,29 +509,37 @@ function CourseDetails() {
   /* Course Not Found              */
   /* ============================= */
 
-  if (!course) {
-    return (
-      <div className="course-not-found">
-        <h1>
-          {
-            courseDetailsText
-              .courseNotFound[
-              language
-            ]
-          }
-        </h1>
+  if (loading) {
+  return (
+    <div className="course-not-found">
+      <h1>Loading...</h1>
+    </div>
+  );
+}
 
-        <p>
-          {
-            courseDetailsText
-              .courseNotFoundDescription[
-              language
-            ]
-          }
-        </p>
-      </div>
-    );
-  }
+if (error || !course) {
+  return (
+    <div className="course-not-found">
+      <h1>
+        {
+          courseDetailsText
+            .courseNotFound[
+            language
+          ]
+        }
+      </h1>
+
+      <p>
+        {
+          courseDetailsText
+            .courseNotFoundDescription[
+            language
+          ]
+        }
+      </p>
+    </div>
+  );
+}
 
   /* ============================= */
   /* Breadcrumb                    */
