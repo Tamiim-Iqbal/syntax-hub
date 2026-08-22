@@ -8,6 +8,11 @@ import {
   deleteCourse,
 } from "../services/course.service.js";
 
+import {
+  validateCreateCourse,
+  validateUpdateCourse,
+} from "../validators/course.validator.js";
+
 export const getCourses = async (
   _req: Request,
   res: Response
@@ -36,6 +41,15 @@ export const getCourse = async (
   try {
     const { slug } = req.params;
 
+    if (typeof slug !== "string") {
+      res.status(400).json({
+        success: false,
+        message: "Invalid course slug",
+      });
+
+      return;
+    }
+
     const course = await getCourseBySlug(slug);
 
     if (!course) {
@@ -43,6 +57,7 @@ export const getCourse = async (
         success: false,
         message: "Course not found",
       });
+
       return;
     }
 
@@ -65,6 +80,18 @@ export const createNewCourse = async (
   res: Response
 ) => {
   try {
+    const validation = validateCreateCourse(req.body);
+
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validation.errors,
+      });
+
+      return;
+    }
+
     const course = await createCourse(req.body);
 
     res.status(201).json({
@@ -72,8 +99,17 @@ export const createNewCourse = async (
       message: "Course created successfully",
       data: course,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create course error:", error);
+
+    if (error?.code === 11000) {
+      res.status(409).json({
+        success: false,
+        message: "A course with this slug already exists",
+      });
+
+      return;
+    }
 
     res.status(500).json({
       success: false,
@@ -89,6 +125,27 @@ export const updateExistingCourse = async (
   try {
     const { id } = req.params;
 
+    if (typeof id !== "string") {
+      res.status(400).json({
+        success: false,
+        message: "Invalid course ID",
+      });
+
+      return;
+    }
+
+    const validation = validateUpdateCourse(req.body);
+
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validation.errors,
+      });
+
+      return;
+    }
+
     const course = await updateCourse(id, req.body);
 
     if (!course) {
@@ -96,6 +153,7 @@ export const updateExistingCourse = async (
         success: false,
         message: "Course not found",
       });
+
       return;
     }
 
@@ -104,8 +162,17 @@ export const updateExistingCourse = async (
       message: "Course updated successfully",
       data: course,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update course error:", error);
+
+    if (error?.code === 11000) {
+      res.status(409).json({
+        success: false,
+        message: "A course with this slug already exists",
+      });
+
+      return;
+    }
 
     res.status(500).json({
       success: false,
@@ -121,6 +188,15 @@ export const removeCourse = async (
   try {
     const { id } = req.params;
 
+    if (typeof id !== "string") {
+      res.status(400).json({
+        success: false,
+        message: "Invalid course ID",
+      });
+
+      return;
+    }
+
     const course = await deleteCourse(id);
 
     if (!course) {
@@ -128,6 +204,7 @@ export const removeCourse = async (
         success: false,
         message: "Course not found",
       });
+
       return;
     }
 

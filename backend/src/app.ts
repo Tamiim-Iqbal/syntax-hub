@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import courseRoutes from "./routes/course.routes.js";
+import errorHandler from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -22,5 +23,8 @@ app.get("/api/health", (_req, res) => {
 
 // Course routes
 app.use("/api/courses", courseRoutes);
+
+// Global error handler
+app.use(errorHandler);
 
 export default app;
