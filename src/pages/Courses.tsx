@@ -31,13 +31,15 @@ function Courses() {
   return (
     <div className="courses-page">
       <section className="courses-page-header">
-        <p className="section-label">LEARNING PATH</p>
+        <p className="section-label">
+          LEARNING PATH
+        </p>
 
         <h1>Explore Courses</h1>
 
         <p>
-          Start learning from carefully structured programming
-          courses.
+          Start learning from carefully structured
+          programming courses.
         </p>
       </section>
 
@@ -60,6 +62,12 @@ function Courses() {
               topics={course.topicsCount}
               category={course.category}
               slug={course.slug}
+              type={course.type}
+              languages={
+                "languages" in course
+                  ? course.languages
+                  : undefined
+              }
             />
           ))}
       </section>

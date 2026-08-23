@@ -1,0 +1,77 @@
+.problem-solving-page {
+  width: min(90%, 1200px);
+  margin: 0 auto;
+  padding: 70px 0;
+}
+
+/* =========================
+   GRADIENT TOP BORDER
+========================= */
+
+.problem-solving-gradient-border {
+  width: 100%;
+  height: 4px;
+
+  margin-top: -20px;
+  margin-bottom: 30px;
+
+  border-top: 3px solid transparent;
+
+  border-image:
+    linear-gradient(
+      to right,
+      var(--color-primary),
+      transparent
+    )
+    1;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.problem-solving-header {
+  max-width: 700px;
+  margin-bottom: 50px;
+}
+
+.problem-solving-header h1 {
+  margin: 8px 0 14px;
+}
+
+.problem-solving-header p {
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+/* =========================
+   CATEGORY GRID
+========================= */
+
+.problem-category-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 30px;
+}
+
+/*
+ * Problem category cards use
+ * the same visual system as
+ * normal CourseCard.
+ */
+.problem-category-card {
+  height: 100%;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+  .problem-category-grid {
+    grid-template-columns: 1fr;
+  }
+}

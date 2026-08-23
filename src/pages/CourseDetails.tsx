@@ -263,8 +263,8 @@ function CourseDetails() {
   const languages = useMemo<CourseLanguage[]>(
     () =>
       course &&
-      "languages" in course &&
-      course.languages
+        "languages" in course &&
+        course.languages
         ? course.languages
         : [],
     [course]
@@ -315,8 +315,8 @@ function CourseDetails() {
 
   const topics: Topic[] =
     course &&
-    "languages" in course &&
-    course.languages
+      "languages" in course &&
+      course.languages
       ? activeLanguage?.topics ?? []
       : course?.topics ?? [];
 
@@ -361,26 +361,26 @@ function CourseDetails() {
 
   const activeContentIndex = activeContent
     ? navigableContent.findIndex(
-        (content) =>
-          content._id ===
-          activeContent._id
-      )
+      (content) =>
+        content._id ===
+        activeContent._id
+    )
     : -1;
 
   const previousContent =
     activeContentIndex > 0
       ? navigableContent[
-          activeContentIndex - 1
-        ]
+      activeContentIndex - 1
+      ]
       : undefined;
 
   const nextContent =
     activeContentIndex >= 0 &&
-    activeContentIndex <
+      activeContentIndex <
       navigableContent.length - 1
       ? navigableContent[
-          activeContentIndex + 1
-        ]
+      activeContentIndex + 1
+      ]
       : undefined;
 
   /* ============================= */
@@ -510,36 +510,36 @@ function CourseDetails() {
   /* ============================= */
 
   if (loading) {
-  return (
-    <div className="course-not-found">
-      <h1>Loading...</h1>
-    </div>
-  );
-}
+    return (
+      <div className="course-not-found">
+        <h1>Loading...</h1>
+      </div>
+    );
+  }
 
-if (error || !course) {
-  return (
-    <div className="course-not-found">
-      <h1>
-        {
-          courseDetailsText
-            .courseNotFound[
+  if (error || !course) {
+    return (
+      <div className="course-not-found">
+        <h1>
+          {
+            courseDetailsText
+              .courseNotFound[
             language
-          ]
-        }
-      </h1>
+            ]
+          }
+        </h1>
 
-      <p>
-        {
-          courseDetailsText
-            .courseNotFoundDescription[
+        <p>
+          {
+            courseDetailsText
+              .courseNotFoundDescription[
             language
-          ]
-        }
-      </p>
-    </div>
-  );
-}
+            ]
+          }
+        </p>
+      </div>
+    );
+  }
 
   /* ============================= */
   /* Breadcrumb                    */
@@ -548,14 +548,14 @@ if (error || !course) {
   const breadcrumb =
     activeSubtopic
       ? `${course.title} / ${getText(
-          activeTopic!.title
-        )} / ${getText(
-          activeSubtopic.title
-        )}`
+        activeTopic!.title
+      )} / ${getText(
+        activeSubtopic.title
+      )}`
       : activeTopic
         ? `${course.title} / ${getText(
-            activeTopic.title
-          )}`
+          activeTopic.title
+        )}`
         : course.title;
 
   /* ============================= */
@@ -580,12 +580,11 @@ if (error || !course) {
                   key={
                     courseLanguage.id
                   }
-                  className={`language-button ${
-                    effectiveSelectedLanguageId ===
-                    courseLanguage.id
+                  className={`language-button ${effectiveSelectedLanguageId ===
+                      courseLanguage.id
                       ? "active"
                       : ""
-                  }`}
+                    }`}
                   style={
                     {
                       "--language-color":
@@ -625,7 +624,7 @@ if (error || !course) {
               {
                 courseDetailsText
                   .courseContent[
-                  language
+                language
                 ]
               }
             </p>
@@ -634,7 +633,7 @@ if (error || !course) {
               {
                 courseDetailsText
                   .topics[
-                  language
+                language
                 ]
               }
             </h2>
@@ -658,11 +657,10 @@ if (error || !course) {
 
                   <button
                     type="button"
-                    className={`topic-preview ${
-                      isSelected
+                    className={`topic-preview ${isSelected
                         ? "selected"
                         : ""
-                    }`}
+                      }`}
                     onClick={() =>
                       selectTopic(topic)
                     }
@@ -697,8 +695,8 @@ if (error || !course) {
                   {/* Subtopics */}
 
                   {isSelected &&
-                  topic.subtopics
-                    ?.length ? (
+                    topic.subtopics
+                      ?.length ? (
                     <div className="subtopic-list">
 
                       {topic.subtopics.map(
@@ -708,12 +706,11 @@ if (error || !course) {
                             key={
                               subtopic._id
                             }
-                            className={`subtopic-preview ${
-                              selectedSubtopicSlug ===
-                              subtopic.slug
+                            className={`subtopic-preview ${selectedSubtopicSlug ===
+                                subtopic.slug
                                 ? "selected"
                                 : ""
-                            }`}
+                              }`}
                             onClick={() =>
                               selectSubtopic(
                                 topic,
@@ -781,19 +778,9 @@ if (error || !course) {
           {activeContent ? (
             <article className="topic-content">
 
-              {getContentSections(
-                activeContent
-              ).map(
+              {getContentSections(activeContent).map(
                 (section, index) => {
-
-                  /* ============================= */
-                  /* Explanation                    */
-                  /* ============================= */
-
-                  if (
-                    section.type ===
-                    "explanation"
-                  ) {
+                  if (section.type === "explanation") {
                     return (
                       <section
                         className="topic-explanation"
@@ -801,23 +788,46 @@ if (error || !course) {
                       >
                         <p className="topic-description">
                           {renderRichText(
-                            getRichText(
-                              section.content
-                            )
+                            getRichText(section.content)
                           )}
                         </p>
                       </section>
                     );
                   }
 
-                  /* ============================= */
-                  /* Image                          */
-                  /* ============================= */
+                  if (section.type === "only-text") {
+                    return (
+                      <section
+                        className="topic-only-text"
+                        key={`only-text-${index}`}
+                      >
+                        <p className="topic-description">
+                          {renderRichText(
+                            getRichText(section.content)
+                          )}
+                        </p>
+                      </section>
+                    );
+                  }
 
-                  if (
-                    section.type ===
-                    "image"
-                  ) {
+                  if (section.type === "bullet-points") {
+                    return (
+                      <section
+                        className="topic-bullet-points"
+                        key={`bullet-points-${index}`}
+                      >
+                        <ul>
+                          {section.items.map((item, itemIndex) => (
+                            <li key={`bullet-${index}-${itemIndex}`}>
+                              {renderRichText(getRichText(item))}
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    );
+                  }
+
+                  if (section.type === "image") {
                     return (
                       <figure
                         className="topic-image"
@@ -825,25 +835,17 @@ if (error || !course) {
                       >
                         <img
                           src={section.src}
-                          alt={
-                            section.alt
-                          }
+                          alt={section.alt}
                         />
 
                         {section.caption && (
                           <figcaption>
-                            {getText(
-                              section.caption
-                            )}
+                            {getText(section.caption)}
                           </figcaption>
                         )}
                       </figure>
                     );
                   }
-
-                  /* ============================= */
-                  /* Code                           */
-                  /* ============================= */
 
                   return (
                     <section
@@ -851,24 +853,13 @@ if (error || !course) {
                       key={`code-${index}`}
                     >
                       <p className="section-label">
-                        {
-                          courseDetailsText
-                            .codeExample[
-                            language
-                          ]
-                        }
+                        {courseDetailsText.codeExample[language]}
                       </p>
 
                       <CodeBlock
-                        code={
-                          section.code
-                        }
-                        language={
-                          section.language
-                        }
-                        languageColor={
-                          activeLanguage?.color
-                        }
+                        code={section.code}
+                        language={section.language}
+                        languageColor={activeLanguage?.color}
                       />
                     </section>
                   );
@@ -908,7 +899,7 @@ if (error || !course) {
                     {
                       courseDetailsText
                         .previous[
-                        language
+                      language
                       ]
                     }
                   </span>
@@ -934,7 +925,7 @@ if (error || !course) {
                     {
                       courseDetailsText
                         .next[
-                        language
+                      language
                       ]
                     }
                   </span>
@@ -967,7 +958,7 @@ if (error || !course) {
                 {
                   courseDetailsText
                     .readyToStart[
-                    language
+                  language
                   ]
                 }
               </h2>
@@ -976,7 +967,7 @@ if (error || !course) {
                 {
                   courseDetailsText
                     .selectTopic[
-                    language
+                  language
                   ]
                 }
               </p>
@@ -985,7 +976,7 @@ if (error || !course) {
                 {
                   courseDetailsText
                     .loginToStart[
-                    language
+                  language
                   ]
                 }
               </button>

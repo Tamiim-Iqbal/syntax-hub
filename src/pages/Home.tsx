@@ -99,6 +99,12 @@ function Home() {
                 topics={course.topicsCount}
                 category={course.category}
                 slug={course.slug}
+                type={course.type}
+                languages={
+                  course.type === "multi-language"
+                    ? course.languages
+                    : undefined
+                }
               />
             ))}
         </div>

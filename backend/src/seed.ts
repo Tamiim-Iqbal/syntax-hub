@@ -19,12 +19,18 @@ const seedCourses = async () => {
       title: course.title,
       slug: course.slug,
       category: course.category,
+      type: course.type,
       description: course.description,
       level: course.level,
 
-      content: {
-        topics: "topics" in course ? course.topics : undefined,
-      },
+      content:
+        "content" in course
+          ? course.content
+          : "topics" in course
+            ? {
+              topics: course.topics,
+            }
+            : undefined,
 
       languages:
         "languages" in course

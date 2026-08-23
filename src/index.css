@@ -6,7 +6,8 @@
   --max-content-width: 1400px;
 
   /* Background */
-  --color-bg: #ffffff;
+  --color-bg: #f7f7f5;
+  --color-bg-white: #ffffff;
   --color-surface: #f8fafc;
   --color-surface-hover: #f1f5f9;
 
@@ -62,6 +63,7 @@
 :root[data-theme="dark"] {
   /* Background */
   --color-bg: #0f172a;
+  --color-bg-white:#172033;
   --color-surface: #1e293b;
   --color-surface-hover: #334155;
 

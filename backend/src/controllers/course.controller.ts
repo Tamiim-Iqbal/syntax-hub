@@ -3,6 +3,9 @@ import type { Request, Response } from "express";
 import {
   getAllCourses,
   getCourseBySlug,
+  getProblemSolvingCourse,
+  getProblemCategory,
+  getProblemBySlug,
   createCourse,
   updateCourse,
   deleteCourse,
@@ -218,6 +221,134 @@ export const removeCourse = async (
     res.status(500).json({
       success: false,
       message: "Failed to delete course",
+    });
+  }
+};
+
+export const getProblemSolving = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const course = await getProblemSolvingCourse();
+
+    if (!course) {
+      res.status(404).json({
+        success: false,
+        message: "Problem Solving course not found",
+      });
+
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: course,
+    });
+  } catch (error) {
+    console.error(
+      "Get problem solving course error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch problem solving course",
+    });
+  }
+};
+
+export const getProblemSolvingCategory = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { categorySlug } = req.params;
+
+    if (typeof categorySlug !== "string") {
+      res.status(400).json({
+        success: false,
+        message: "Invalid category",
+      });
+
+      return;
+    }
+
+    const category = await getProblemCategory(categorySlug);
+
+    if (!category) {
+      res.status(404).json({
+        success: false,
+        message: "Problem category not found",
+      });
+
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: category,
+    });
+  } catch (error) {
+    console.error(
+      "Get problem solving category error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch problem category",
+    });
+  }
+};
+
+export const getProblem = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { categorySlug, problemSlug } =
+      req.params;
+
+    if (
+      typeof categorySlug !== "string" ||
+      typeof problemSlug !== "string"
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid problem parameters",
+      });
+
+      return;
+    }
+
+    const problem = await getProblemBySlug(
+      categorySlug,
+      problemSlug
+    );
+
+    if (!problem) {
+      res.status(404).json({
+        success: false,
+        message: "Problem not found",
+      });
+
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: problem,
+    });
+  } catch (error) {
+    console.error(
+      "Get problem error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch problem",
     });
   }
 };

@@ -21,6 +21,15 @@ const CourseSchema = new Schema(
       required: true,
       trim: true,
     },
+    type: {
+      type: String,
+      enum: [
+        "single-language",
+        "multi-language",
+        "problem-solving",
+      ],
+      required: true,
+    },
 
     description: {
       type: String,
@@ -80,6 +89,12 @@ export interface ICourse extends Document {
   title: string;
   slug: string;
   category: string;
+  
+  type:
+    | "single-language"
+    | "multi-language"
+    | "problem-solving";
+
   description: string;
   level: string;
   content: unknown;

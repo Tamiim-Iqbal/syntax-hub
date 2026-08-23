@@ -39,3 +39,74 @@ export const deleteCourse = async (
 ): Promise<ICourse | null> => {
   return Course.findByIdAndDelete(id).lean();
 };
+
+export const getProblemSolvingCourse = async (): Promise<ICourse | null> => {
+  return Course.findOne({
+    slug: "problem-solving",
+    type: "problem-solving",
+  }).lean();
+};
+
+export const getProblemCategory = async (
+  categorySlug: string
+) => {
+  const course = await Course.findOne({
+    slug: "problem-solving",
+    type: "problem-solving",
+  }).lean();
+
+  if (!course) {
+    return null;
+  }
+
+  const content = course.content as {
+    categories?: Array<{
+      slug: string;
+      [key: string]: unknown;
+    }>;
+  };
+
+  const category = content.categories?.find(
+    (item) => item.slug === categorySlug
+  );
+
+  return category ?? null;
+};
+
+export const getProblemBySlug = async (
+  categorySlug: string,
+  problemSlug: string
+) => {
+  const course = await Course.findOne({
+    slug: "problem-solving",
+    type: "problem-solving",
+  }).lean();
+
+  if (!course) {
+    return null;
+  }
+
+  const content = course.content as {
+    categories?: Array<{
+      slug: string;
+      problems?: Array<{
+        slug: string;
+        [key: string]: unknown;
+      }>;
+    }>;
+  };
+
+  const category = content.categories?.find(
+    (item) => item.slug === categorySlug
+  );
+
+  if (!category) {
+    return null;
+  }
+
+  const problem = category.problems?.find(
+    (item) => item.slug === problemSlug
+  );
+
+  return problem ?? null;
+};

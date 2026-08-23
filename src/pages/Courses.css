@@ -2,11 +2,18 @@
   width: var(--content-width);
   max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 72px 0 100px;
+  padding: 50px 0 100px;
 }
 
 .courses-page-header {
   margin-bottom: 36px;
+  border-top: 3px solid;
+  border-image: linear-gradient(
+    to right,
+    var(--color-primary),
+    transparent
+  ) 1;
+  padding-top: 30px;
 }
 
 .courses-page-header h1 {
