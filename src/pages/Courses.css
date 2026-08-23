@@ -7,10 +7,10 @@
 
 .courses-page-header {
   margin-bottom: 36px;
-  border-top: 3px solid;
+  border-top: 2px solid;
   border-image: linear-gradient(
     to right,
-    var(--color-primary),
+    rgb(211, 83, 104),
     transparent
   ) 1;
   padding-top: 30px;

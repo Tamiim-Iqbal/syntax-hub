@@ -46,8 +46,8 @@ function Home() {
 
           <h1>
             Learn Programming.
-            <br />
-            Build Your Future.
+            <br/>
+            <span>Build Your Future.</span>
           </h1>
 
           <p className="hero-description">

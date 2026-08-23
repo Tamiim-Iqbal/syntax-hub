@@ -111,10 +111,10 @@
 
   padding: 24px 16px;
 
-  border-top: 3px solid transparent;
+  border-top: 2px solid transparent;
   border-image: linear-gradient(
     to right,
-    var(--color-primary),
+    rgb(211, 83, 104),
     transparent
   ) 1;
 
@@ -186,18 +186,19 @@
 .topic-preview:hover {
   color: var(--color-primary);
   background: var(--color-surface);
-
 }
 
 .topic-preview.selected {
   background: color-mix(
     in srgb,
-    var(--color-primary) 9%,
+    var(--color-primary) 14%,
     var(--color-bg)
   );
+  border: 1px solid var(--color-primary);
 
   color: var(--color-primary);
 }
+
 
 .topic-preview > span:first-child {
   flex: 0 0 28px;
@@ -326,10 +327,10 @@
   padding: 28px 28px 30px;
 
   border: 0;
-  border-top: 3px solid transparent;
+  border-top: 2px solid transparent;
   border-image: linear-gradient(
     to right,
-    var(--color-primary),
+    rgb(211, 83, 104),
     transparent
   ) 1;
 
@@ -400,7 +401,7 @@
 
   padding: 20px 25px;
 
-  border-radius: 14px;
+  border-radius: 16px;
   margin-top: 30px;
 
   background: var(--color-bg-white);
@@ -423,7 +424,7 @@
  
   background: linear-gradient(
     90deg,
-    var(--color-primary),
+    rgb(211, 83, 104),
     rgba(170, 59, 255, 0.35),
     rgba(170, 59, 255, 0.08),
     transparent

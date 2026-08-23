@@ -19,15 +19,13 @@
   margin-top: -10px;
   margin-bottom: 30px;
 
-  border-top: 3px solid transparent;
+  border-top: 2px solid transparent;
 
-  border-image:
-    linear-gradient(
-      to right,
-      var(--color-primary),
-      transparent
-    )
-    1;
+  border-image: linear-gradient(
+    to right,
+    rgb(211, 83, 104),
+    transparent
+  ) 1;
 }
 
 /* =========================
