@@ -1,22 +1,13 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   type ReactNode,
 } from "react";
 
-type SiteLanguage = "bn" | "en";
-
-type LanguageContextType = {
-  language: SiteLanguage;
-  setLanguage: (language: SiteLanguage) => void;
-  toggleLanguage: () => void;
-};
-
-const LanguageContext = createContext<
-  LanguageContextType | undefined
->(undefined);
+import {
+  LanguageContext,
+  type SiteLanguage,
+} from "./languageContext";
 
 type LanguageProviderProps = {
   children: ReactNode;
@@ -27,11 +18,14 @@ export function LanguageProvider({
 }: LanguageProviderProps) {
   const [language, setLanguageState] =
     useState<SiteLanguage>(() => {
-      const savedLanguage = localStorage.getItem(
-        "syntaxhub-language"
-      );
+      const savedLanguage =
+        localStorage.getItem(
+          "syntaxhub-language"
+        );
 
-      return savedLanguage === "en" ? "en" : "bn";
+      return savedLanguage === "en"
+        ? "en"
+        : "bn";
     });
 
   useEffect(() => {
@@ -41,7 +35,9 @@ export function LanguageProvider({
     );
   }, [language]);
 
-  const setLanguage = (newLanguage: SiteLanguage) => {
+  const setLanguage = (
+    newLanguage: SiteLanguage
+  ) => {
     setLanguageState(newLanguage);
   };
 
@@ -62,16 +58,4 @@ export function LanguageProvider({
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  const context = useContext(LanguageContext);
-
-  if (!context) {
-    throw new Error(
-      "useLanguage must be used inside LanguageProvider"
-    );
-  }
-
-  return context;
 }

@@ -3,9 +3,14 @@ import type {
   CourseLanguage,
   Topic,
   ProblemCategory,
+  Problem,
 } from "../types/course";
 
 const API_URL = "http://localhost:5050/api";
+
+/* =========================================
+   API TYPES
+========================================= */
 
 type ApiCourse = {
   _id: string;
@@ -23,7 +28,6 @@ type ApiCourse = {
 
   content?: {
     topics?: Topic[];
-
     categories?: ProblemCategory[];
   };
 
@@ -33,14 +37,35 @@ type ApiCourse = {
   order: number;
 };
 
-type CoursesResponse = {
-  success: boolean;
-  data: ApiCourse[];
-};
+/* =========================================
+   API HELPER
+========================================= */
 
-type CourseResponse = {
-  success: boolean;
-  data: ApiCourse;
+const fetchApi = async <T>(
+  endpoint: string
+): Promise<T> => {
+  const response = await fetch(
+    `${API_URL}${endpoint}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `API request failed: ${response.status}`
+    );
+  }
+
+  const result: {
+    success: boolean;
+    data: T;
+  } = await response.json();
+
+  if (!result.success) {
+    throw new Error(
+      "API request was unsuccessful"
+    );
+  }
+
+  return result.data;
 };
 
 /* =========================================
@@ -55,7 +80,8 @@ const normalizeCourse = (
   ========================================= */
 
   if (course.type === "single-language") {
-    const topics = course.content?.topics ?? [];
+    const topics =
+      course.content?.topics ?? [];
 
     return {
       _id: course._id,
@@ -75,13 +101,15 @@ const normalizeCourse = (
   ========================================= */
 
   if (course.type === "multi-language") {
-    const languages = course.languages ?? [];
+    const languages =
+      course.languages ?? [];
 
-    const topicsCount = languages.reduce(
-      (total, language) =>
-        total + language.topics.length,
-      0
-    );
+    const topicsCount =
+      languages.reduce(
+        (total, language) =>
+          total + language.topics.length,
+        0
+      );
 
     return {
       _id: course._id,
@@ -103,11 +131,12 @@ const normalizeCourse = (
   const categories =
     course.content?.categories ?? [];
 
-  const topicsCount = categories.reduce(
-    (total, category) =>
-      total + category.problems.length,
-    0
-  );
+  const topicsCount =
+    categories.reduce(
+      (total, category) =>
+        total + category.problems.length,
+      0
+    );
 
   return {
     _id: course._id,
@@ -127,21 +156,15 @@ const normalizeCourse = (
    GET ALL COURSES
 ========================================= */
 
-export const getCourses = async (): Promise<Course[]> => {
-  const response = await fetch(
-    `${API_URL}/courses`
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      "Failed to fetch courses"
+export const getCourses = async (): Promise<
+  Course[]
+> => {
+  const data =
+    await fetchApi<ApiCourse[]>(
+      "/courses"
     );
-  }
 
-  const result: CoursesResponse =
-    await response.json();
-
-  return result.data.map(normalizeCourse);
+  return data.map(normalizeCourse);
 };
 
 /* =========================================
@@ -151,42 +174,26 @@ export const getCourses = async (): Promise<Course[]> => {
 export const getCourseBySlug = async (
   slug: string
 ): Promise<Course> => {
-  const response = await fetch(
-    `${API_URL}/courses/${slug}`
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      "Failed to fetch course"
+  const data =
+    await fetchApi<ApiCourse>(
+      `/courses/${slug}`
     );
-  }
 
-  const result: CourseResponse =
-    await response.json();
-
-  return normalizeCourse(result.data);
+  return normalizeCourse(data);
 };
 
 /* =========================================
-   PROBLEM SOLVING
+   GET PROBLEM SOLVING COURSE
 ========================================= */
 
 export const getProblemSolving =
   async (): Promise<Course> => {
-    const response = await fetch(
-      `${API_URL}/courses/problem-solving`
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Failed to fetch problem solving course"
+    const data =
+      await fetchApi<ApiCourse>(
+        "/courses/problem-solving"
       );
-    }
 
-    const result: CourseResponse =
-      await response.json();
-
-    return normalizeCourse(result.data);
+    return normalizeCourse(data);
   };
 
 /* =========================================
@@ -195,20 +202,10 @@ export const getProblemSolving =
 
 export const getProblemCategory = async (
   categorySlug: string
-) => {
-  const response = await fetch(
-    `${API_URL}/courses/problem-solving/${categorySlug}`
+): Promise<ProblemCategory> => {
+  return fetchApi<ProblemCategory>(
+    `/courses/problem-solving/${categorySlug}`
   );
-
-  if (!response.ok) {
-    throw new Error(
-      "Failed to fetch problem category"
-    );
-  }
-
-  const result = await response.json();
-
-  return result.data;
 };
 
 /* =========================================
@@ -218,18 +215,8 @@ export const getProblemCategory = async (
 export const getProblem = async (
   categorySlug: string,
   problemSlug: string
-) => {
-  const response = await fetch(
-    `${API_URL}/courses/problem-solving/${categorySlug}/${problemSlug}`
+): Promise<Problem> => {
+  return fetchApi<Problem>(
+    `/courses/problem-solving/${categorySlug}/${problemSlug}`
   );
-
-  if (!response.ok) {
-    throw new Error(
-      "Failed to fetch problem"
-    );
-  }
-
-  const result = await response.json();
-
-  return result.data;
 };

@@ -21,7 +21,7 @@ import {
 } from "../types/course";
 
 import { getCourseBySlug } from "../services/courseService";
-import { useLanguage } from "../context/LanguageContext";
+import { useLanguage } from "../context/useLanguage";
 
 import "./CourseDetails.css";
 

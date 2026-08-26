@@ -16,6 +16,34 @@ import {
   validateUpdateCourse,
 } from "../validators/course.validator.js";
 
+/* =========================================
+   ERROR HELPERS
+========================================= */
+
+type MongoDuplicateError = {
+  code: 11000;
+};
+
+const isMongoDuplicateError = (
+  error: unknown
+): error is MongoDuplicateError => {
+  if (
+    typeof error !== "object" ||
+    error === null
+  ) {
+    return false;
+  }
+
+  return (
+    "code" in error &&
+    error.code === 11000
+  );
+};
+
+/* =========================================
+   GET ALL COURSES
+========================================= */
+
 export const getCourses = async (
   _req: Request,
   res: Response
@@ -28,7 +56,10 @@ export const getCourses = async (
       data: courses,
     });
   } catch (error) {
-    console.error("Get courses error:", error);
+    console.error(
+      "Get courses error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -36,6 +67,10 @@ export const getCourses = async (
     });
   }
 };
+
+/* =========================================
+   GET COURSE
+========================================= */
 
 export const getCourse = async (
   req: Request,
@@ -53,7 +88,8 @@ export const getCourse = async (
       return;
     }
 
-    const course = await getCourseBySlug(slug);
+    const course =
+      await getCourseBySlug(slug);
 
     if (!course) {
       res.status(404).json({
@@ -69,7 +105,10 @@ export const getCourse = async (
       data: course,
     });
   } catch (error) {
-    console.error("Get course error:", error);
+    console.error(
+      "Get course error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -78,12 +117,17 @@ export const getCourse = async (
   }
 };
 
+/* =========================================
+   CREATE COURSE
+========================================= */
+
 export const createNewCourse = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const validation = validateCreateCourse(req.body);
+    const validation =
+      validateCreateCourse(req.body);
 
     if (!validation.valid) {
       res.status(400).json({
@@ -95,20 +139,25 @@ export const createNewCourse = async (
       return;
     }
 
-    const course = await createCourse(req.body);
+    const course =
+      await createCourse(req.body);
 
     res.status(201).json({
       success: true,
       message: "Course created successfully",
       data: course,
     });
-  } catch (error: any) {
-    console.error("Create course error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "Create course error:",
+      error
+    );
 
-    if (error?.code === 11000) {
+    if (isMongoDuplicateError(error)) {
       res.status(409).json({
         success: false,
-        message: "A course with this slug already exists",
+        message:
+          "A course with this slug already exists",
       });
 
       return;
@@ -120,6 +169,10 @@ export const createNewCourse = async (
     });
   }
 };
+
+/* =========================================
+   UPDATE COURSE
+========================================= */
 
 export const updateExistingCourse = async (
   req: Request,
@@ -137,7 +190,8 @@ export const updateExistingCourse = async (
       return;
     }
 
-    const validation = validateUpdateCourse(req.body);
+    const validation =
+      validateUpdateCourse(req.body);
 
     if (!validation.valid) {
       res.status(400).json({
@@ -149,7 +203,8 @@ export const updateExistingCourse = async (
       return;
     }
 
-    const course = await updateCourse(id, req.body);
+    const course =
+      await updateCourse(id, req.body);
 
     if (!course) {
       res.status(404).json({
@@ -165,13 +220,17 @@ export const updateExistingCourse = async (
       message: "Course updated successfully",
       data: course,
     });
-  } catch (error: any) {
-    console.error("Update course error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "Update course error:",
+      error
+    );
 
-    if (error?.code === 11000) {
+    if (isMongoDuplicateError(error)) {
       res.status(409).json({
         success: false,
-        message: "A course with this slug already exists",
+        message:
+          "A course with this slug already exists",
       });
 
       return;
@@ -183,6 +242,10 @@ export const updateExistingCourse = async (
     });
   }
 };
+
+/* =========================================
+   DELETE COURSE
+========================================= */
 
 export const removeCourse = async (
   req: Request,
@@ -200,7 +263,8 @@ export const removeCourse = async (
       return;
     }
 
-    const course = await deleteCourse(id);
+    const course =
+      await deleteCourse(id);
 
     if (!course) {
       res.status(404).json({
@@ -216,7 +280,10 @@ export const removeCourse = async (
       message: "Course deleted successfully",
     });
   } catch (error) {
-    console.error("Delete course error:", error);
+    console.error(
+      "Delete course error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -225,17 +292,23 @@ export const removeCourse = async (
   }
 };
 
+/* =========================================
+   PROBLEM SOLVING COURSE
+========================================= */
+
 export const getProblemSolving = async (
   _req: Request,
   res: Response
 ) => {
   try {
-    const course = await getProblemSolvingCourse();
+    const course =
+      await getProblemSolvingCourse();
 
     if (!course) {
       res.status(404).json({
         success: false,
-        message: "Problem Solving course not found",
+        message:
+          "Problem Solving course not found",
       });
 
       return;
@@ -253,62 +326,82 @@ export const getProblemSolving = async (
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch problem solving course",
+      message:
+        "Failed to fetch problem solving course",
     });
   }
 };
 
-export const getProblemSolvingCategory = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const { categorySlug } = req.params;
+/* =========================================
+   PROBLEM CATEGORY
+========================================= */
 
-    if (typeof categorySlug !== "string") {
-      res.status(400).json({
-        success: false,
-        message: "Invalid category",
+export const getProblemSolvingCategory =
+  async (
+    req: Request,
+    res: Response
+  ) => {
+    try {
+      const { categorySlug } =
+        req.params;
+
+      if (
+        typeof categorySlug !== "string"
+      ) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid category",
+        });
+
+        return;
+      }
+
+      const category =
+        await getProblemCategory(
+          categorySlug
+        );
+
+      if (!category) {
+        res.status(404).json({
+          success: false,
+          message:
+            "Problem category not found",
+        });
+
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: category,
       });
+    } catch (error) {
+      console.error(
+        "Get problem solving category error:",
+        error
+      );
 
-      return;
-    }
-
-    const category = await getProblemCategory(categorySlug);
-
-    if (!category) {
-      res.status(404).json({
+      res.status(500).json({
         success: false,
-        message: "Problem category not found",
+        message:
+          "Failed to fetch problem category",
       });
-
-      return;
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      data: category,
-    });
-  } catch (error) {
-    console.error(
-      "Get problem solving category error:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch problem category",
-    });
-  }
-};
+/* =========================================
+   GET PROBLEM
+========================================= */
 
 export const getProblem = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const { categorySlug, problemSlug } =
-      req.params;
+    const {
+      categorySlug,
+      problemSlug,
+    } = req.params;
 
     if (
       typeof categorySlug !== "string" ||
@@ -316,16 +409,18 @@ export const getProblem = async (
     ) {
       res.status(400).json({
         success: false,
-        message: "Invalid problem parameters",
+        message:
+          "Invalid problem parameters",
       });
 
       return;
     }
 
-    const problem = await getProblemBySlug(
-      categorySlug,
-      problemSlug
-    );
+    const problem =
+      await getProblemBySlug(
+        categorySlug,
+        problemSlug
+      );
 
     if (!problem) {
       res.status(404).json({
