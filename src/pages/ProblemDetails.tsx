@@ -11,10 +11,11 @@ import {
 } from "../services/courseService";
 
 import type {
-  LocalizedText,
   Problem,
   ProblemCategory,
 } from "../types/course";
+
+import { getDisplayText } from "../utils/localizedText";
 
 import "./ProblemDetails.css";
 
@@ -22,28 +23,6 @@ import CodeBlock from "../components/CodeBlock";
 import ProblemDetailsSkeleton from "../components/ProblemDetailsSkeleton";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
-
-const getDisplayText = (
-  text: LocalizedText
-): string => {
-  if (typeof text === "string") {
-    return text;
-  }
-
-  const value = text.en;
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return value
-    .map((part) =>
-      typeof part === "string"
-        ? part
-        : part.text
-    )
-    .join("");
-};
 
 function ProblemDetails() {
   const {
