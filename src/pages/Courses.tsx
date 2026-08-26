@@ -5,6 +5,7 @@ import ErrorState from "../components/ErrorState";
 import { getCourses } from "../services/courseService";
 import type { Course } from "../types/course";
 import "./Courses.css";
+import EmptyState from "../components/EmptyState";
 
 function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -100,8 +101,19 @@ function Courses() {
         )}
 
         {/* Courses */}
+        {/* Empty */}
         {!loading &&
           !error &&
+          courses.length === 0 && (
+            <EmptyState
+              title="No courses available"
+              message="There are no published courses available right now."
+            />
+          )}
+
+        {!loading &&
+          !error &&
+          courses.length > 0 &&
           courses.map((course) => (
             <CourseCard
               key={course._id}

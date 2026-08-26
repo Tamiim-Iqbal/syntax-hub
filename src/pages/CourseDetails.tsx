@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import CodeBlock from "../components/CodeBlock";
 import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
 
 import {
   type CourseLanguage,
@@ -137,8 +138,8 @@ function CourseDetails() {
       ReturnType<typeof getCourseBySlug> extends Promise<
         infer T
       >
-        ? T
-        : never
+      ? T
+      : never
     >();
 
   const [loading, setLoading] =
@@ -318,8 +319,8 @@ function CourseDetails() {
     useMemo<CourseLanguage[]>(
       () =>
         course &&
-        "languages" in course &&
-        course.languages
+          "languages" in course &&
+          course.languages
           ? course.languages
           : [],
       [course]
@@ -364,8 +365,8 @@ function CourseDetails() {
 
   const topics: Topic[] =
     course &&
-    "languages" in course &&
-    course.languages
+      "languages" in course &&
+      course.languages
       ? activeLanguage?.topics ?? []
       : course?.topics ?? [];
 
@@ -413,26 +414,26 @@ function CourseDetails() {
   const activeContentIndex =
     activeContent
       ? navigableContent.findIndex(
-          (content) =>
-            content._id ===
-            activeContent._id
-        )
+        (content) =>
+          content._id ===
+          activeContent._id
+      )
       : -1;
 
   const previousContent =
     activeContentIndex > 0
       ? navigableContent[
-          activeContentIndex - 1
-        ]
+      activeContentIndex - 1
+      ]
       : undefined;
 
   const nextContent =
     activeContentIndex >= 0 &&
-    activeContentIndex <
+      activeContentIndex <
       navigableContent.length - 1
       ? navigableContent[
-          activeContentIndex + 1
-        ]
+      activeContentIndex + 1
+      ]
       : undefined;
 
   /* ============================= */
@@ -557,7 +558,7 @@ function CourseDetails() {
 
     setSelectedSubtopicSlug(
       matchingSubtopic?.slug ??
-        null
+      null
     );
   };
 
@@ -581,7 +582,7 @@ function CourseDetails() {
             error ||
             courseDetailsText
               .courseNotFoundDescription[
-              language
+            language
             ]
           }
           onRetry={loadCourse}
@@ -597,14 +598,14 @@ function CourseDetails() {
   const breadcrumb =
     activeSubtopic
       ? `${course.title} / ${getText(
-          activeTopic!.title
-        )} / ${getText(
-          activeSubtopic.title
-        )}`
+        activeTopic!.title
+      )} / ${getText(
+        activeSubtopic.title
+      )}`
       : activeTopic
         ? `${course.title} / ${getText(
-            activeTopic.title
-          )}`
+          activeTopic.title
+        )}`
         : course.title;
 
   /* ============================= */
@@ -629,12 +630,11 @@ function CourseDetails() {
                   key={
                     courseLanguage.id
                   }
-                  className={`language-button ${
-                    effectiveSelectedLanguageId ===
-                    courseLanguage.id
+                  className={`language-button ${effectiveSelectedLanguageId ===
+                      courseLanguage.id
                       ? "active"
                       : ""
-                  }`}
+                    }`}
                   style={
                     {
                       "--language-color":
@@ -674,7 +674,7 @@ function CourseDetails() {
               {
                 courseDetailsText
                   .courseContent[
-                  language
+                language
                 ]
               }
             </p>
@@ -683,7 +683,7 @@ function CourseDetails() {
               {
                 courseDetailsText
                   .topics[
-                  language
+                language
                 ]
               }
             </h2>
@@ -691,111 +691,115 @@ function CourseDetails() {
           </div>
 
           <div className="topic-list">
+            {topics.length === 0 ? (
+              <EmptyState
+                title="No topics available"
+                message="There are no topics available for this course yet."
+              />
+            ) : (
+              topics.map((topic) => {
+                const isSelected =
+                  selectedTopicSlug ===
+                  topic.slug;
 
-            {topics.map((topic) => {
-              const isSelected =
-                selectedTopicSlug ===
-                topic.slug;
-
-              return (
-                <div
-                  className="topic-group"
-                  key={topic._id}
-                >
-
-                  {/* Main Topic */}
-
-                  <button
-                    type="button"
-                    className={`topic-preview ${
-                      isSelected
-                        ? "selected"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      selectTopic(topic)
-                    }
+                return (
+                  <div
+                    className="topic-group"
+                    key={topic._id}
                   >
 
-                    <span>
-                      {String(
-                        topic.order
-                      ).padStart(
-                        2,
-                        "0"
-                      )}
-                    </span>
+                    {/* Main Topic */}
 
-                    <p>
-                      {getText(
-                        topic.title
-                      )}
-                    </p>
+                    <button
+                      type="button"
+                      className={`topic-preview ${isSelected
+                          ? "selected"
+                          : ""
+                        }`}
+                      onClick={() =>
+                        selectTopic(topic)
+                      }
+                    >
 
-                    {topic.subtopics
-                      ?.length ? (
-                      <span className="topic-chevron">
-                        {isSelected
-                          ? "⌃"
-                          : "⌄"}
+                      <span>
+                        {String(
+                          topic.order
+                        ).padStart(
+                          2,
+                          "0"
+                        )}
                       </span>
+
+                      <p>
+                        {getText(
+                          topic.title
+                        )}
+                      </p>
+
+                      {topic.subtopics
+                        ?.length ? (
+                        <span className="topic-chevron">
+                          {isSelected
+                            ? "⌃"
+                            : "⌄"}
+                        </span>
+                      ) : null}
+
+                    </button>
+
+                    {/* Subtopics */}
+
+                    {isSelected &&
+                      topic.subtopics
+                        ?.length ? (
+                      <div className="subtopic-list">
+
+                        {topic.subtopics.map(
+                          (subtopic) => (
+                            <button
+                              type="button"
+                              key={
+                                subtopic._id
+                              }
+                              className={`subtopic-preview ${selectedSubtopicSlug ===
+                                  subtopic.slug
+                                  ? "selected"
+                                  : ""
+                                }`}
+                              onClick={() =>
+                                selectSubtopic(
+                                  topic,
+                                  subtopic
+                                )
+                              }
+                            >
+
+                              <span>
+                                {String(
+                                  subtopic.order
+                                ).padStart(
+                                  2,
+                                  "0"
+                                )}
+                              </span>
+
+                              <p>
+                                {getText(
+                                  subtopic.title
+                                )}
+                              </p>
+
+                            </button>
+                          )
+                        )}
+
+                      </div>
                     ) : null}
 
-                  </button>
-
-                  {/* Subtopics */}
-
-                  {isSelected &&
-                  topic.subtopics
-                    ?.length ? (
-                    <div className="subtopic-list">
-
-                      {topic.subtopics.map(
-                        (subtopic) => (
-                          <button
-                            type="button"
-                            key={
-                              subtopic._id
-                            }
-                            className={`subtopic-preview ${
-                              selectedSubtopicSlug ===
-                              subtopic.slug
-                                ? "selected"
-                                : ""
-                            }`}
-                            onClick={() =>
-                              selectSubtopic(
-                                topic,
-                                subtopic
-                              )
-                            }
-                          >
-
-                            <span>
-                              {String(
-                                subtopic.order
-                              ).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span>
-
-                            <p>
-                              {getText(
-                                subtopic.title
-                              )}
-                            </p>
-
-                          </button>
-                        )
-                      )}
-
-                    </div>
-                  ) : null}
-
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })
+              )}
 
           </div>
 
@@ -940,7 +944,7 @@ function CourseDetails() {
                         {
                           courseDetailsText
                             .codeExample[
-                            language
+                          language
                           ]
                         }
                       </p>
@@ -994,7 +998,7 @@ function CourseDetails() {
                     {
                       courseDetailsText
                         .previous[
-                        language
+                      language
                       ]
                     }
                   </span>
@@ -1020,7 +1024,7 @@ function CourseDetails() {
                     {
                       courseDetailsText
                         .next[
-                        language
+                      language
                       ]
                     }
                   </span>
@@ -1053,7 +1057,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .readyToStart[
-                    language
+                  language
                   ]
                 }
               </h2>
@@ -1062,7 +1066,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .selectTopic[
-                    language
+                  language
                   ]
                 }
               </p>
@@ -1071,7 +1075,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .loginToStart[
-                    language
+                  language
                   ]
                 }
               </button>

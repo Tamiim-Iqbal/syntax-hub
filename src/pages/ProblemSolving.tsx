@@ -13,6 +13,7 @@ import type {
 
 import ProblemCategorySkeleton from "../components/ProblemCategorySkeleton";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
 
 import "./ProblemSolving.css";
 
@@ -50,6 +51,10 @@ function ProblemSolving() {
   const [error, setError] =
     useState<string | null>(null);
 
+  /* =========================
+     LOAD COURSE
+  ========================= */
+
   const loadCourse = async () => {
     try {
       setLoading(true);
@@ -78,6 +83,10 @@ function ProblemSolving() {
       setLoading(false);
     }
   };
+
+  /* =========================
+     INITIAL LOAD
+  ========================= */
 
   useEffect(() => {
     const load = async () => {
@@ -156,65 +165,80 @@ function ProblemSolving() {
         <p>{course.description}</p>
       </section>
 
-      {/* Category cards */}
-      <section className="problem-category-grid">
-        {course.problemSolvingCategories.map(
-          (
-            category: ProblemCategory
-          ) => {
-            const title =
-              getDisplayText(
-                category.title
+      {/* =========================
+          EMPTY
+      ========================= */}
+
+      {course.problemSolvingCategories.length ===
+      0 ? (
+        <EmptyState
+          title="No problem sets available"
+          message="There are no problem-solving categories available right now."
+        />
+      ) : (
+        /* =========================
+           CATEGORY CARDS
+        ========================= */
+
+        <section className="problem-category-grid">
+          {course.problemSolvingCategories.map(
+            (
+              category: ProblemCategory
+            ) => {
+              const title =
+                getDisplayText(
+                  category.title
+                );
+
+              const description =
+                getDisplayText(
+                  category.description
+                );
+
+              const problemCount =
+                category.problems.length;
+
+              return (
+                <article
+                  key={category._id}
+                  className="course-card problem-category-card"
+                >
+                  {/* Top */}
+                  <div className="course-card-top">
+                    <span className="course-card-category">
+                      PROBLEM SET
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="course-card-content">
+                    <h3>{title}</h3>
+
+                    <p>{description}</p>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="course-card-footer">
+                    <span className="course-card-topics">
+                      {problemCount}{" "}
+                      {problemCount === 1
+                        ? "Problem"
+                        : "Problems"}
+                    </span>
+
+                    <Link
+                      to={`/courses/problem-solving/${category.slug}`}
+                      className="course-card-button"
+                    >
+                      Explore →
+                    </Link>
+                  </div>
+                </article>
               );
-
-            const description =
-              getDisplayText(
-                category.description
-              );
-
-            const problemCount =
-              category.problems.length;
-
-            return (
-              <article
-                key={category._id}
-                className="course-card problem-category-card"
-              >
-                {/* Top */}
-                <div className="course-card-top">
-                  <span className="course-card-category">
-                    PROBLEM SET
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="course-card-content">
-                  <h3>{title}</h3>
-
-                  <p>{description}</p>
-                </div>
-
-                {/* Footer */}
-                <div className="course-card-footer">
-                  <span className="course-card-topics">
-                    {problemCount}{" "}
-                    {problemCount === 1
-                      ? "Problem"
-                      : "Problems"}
-                  </span>
-
-                  <Link
-                    to={`/courses/problem-solving/${category.slug}`}
-                    className="course-card-button"
-                  >
-                    Explore →
-                  </Link>
-                </div>
-              </article>
-            );
-          }
-        )}
-      </section>
+            }
+          )}
+        </section>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import type {
 
 import ProblemListSkeleton from "../components/ProblemListSkeleton";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
 
 import "./ProblemCategory.css";
 
@@ -209,116 +210,132 @@ function ProblemCategory() {
         <p>{description}</p>
       </section>
 
-      {/* Problem list */}
-      <section className="problem-list">
-        <div className="problem-list-header">
-          <span>#</span>
+      {/* =========================
+          EMPTY
+      ========================= */}
 
-          <span>Problem</span>
+      {category.problems.length === 0 ? (
+        <EmptyState
+          title="No problems available"
+          message="There are no problems in this category yet."
+        />
+      ) : (
+        /* =========================
+           PROBLEM LIST
+        ========================= */
 
-          <span>Difficulty</span>
+        <section className="problem-list">
+          <div className="problem-list-header">
+            <span>#</span>
 
-          <span>Rating</span>
+            <span>Problem</span>
 
-          <span>Judge</span>
-        </div>
+            <span>Difficulty</span>
 
-        {category.problems.map(
-          (problem) => {
-            const problemTitle =
-              getDisplayText(
-                problem.title
-              );
+            <span>Rating</span>
 
-            return (
-              <div
-                key={problem._id}
-                className="problem-row"
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  openProblem(
-                    problem.slug
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (
-                    event.key ===
-                      "Enter" ||
-                    event.key === " "
-                  ) {
-                    event.preventDefault();
+            <span>Judge</span>
+          </div>
 
+          {category.problems.map(
+            (problem) => {
+              const problemTitle =
+                getDisplayText(
+                  problem.title
+                );
+
+              return (
+                <div
+                  key={problem._id}
+                  className="problem-row"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
                     openProblem(
                       problem.slug
-                    );
+                    )
                   }
-                }}
-              >
-                {/* Number */}
-                <span className="problem-number">
-                  {String(
-                    problem.order
-                  ).padStart(2, "0")}
-                </span>
+                  onKeyDown={(event) => {
+                    if (
+                      event.key ===
+                        "Enter" ||
+                      event.key === " "
+                    ) {
+                      event.preventDefault();
 
-                {/* Problem name + topics */}
-                <div className="problem-name">
-                  <strong>
-                    {problemTitle}
-                  </strong>
-
-                  <small className="problem-topics">
-                    {problem.topics.join(
-                      " · "
-                    )}
-                  </small>
-                </div>
-
-                {/* Difficulty */}
-                <span
-                  className={`problem-difficulty problem-difficulty-${problem.difficulty}`}
+                      openProblem(
+                        problem.slug
+                      );
+                    }
+                  }}
                 >
-                  {problem.difficulty}
-                </span>
-
-                {/* Rating */}
-                <span className="problem-rating">
-                  {problem.rating ??
-                    "—"}
-                </span>
-
-                {/* Judge */}
-                {problem.judgeUrl ? (
-                  <a
-                    href={problem.judgeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="problem-judge"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
-                  >
-                    {problem.judge}
-
-                    {problem.problemNumber
-                      ? ` #${problem.problemNumber}`
-                      : ""}
-                  </a>
-                ) : (
-                  <span className="problem-judge">
-                    {problem.judge}
-
-                    {problem.problemNumber
-                      ? ` #${problem.problemNumber}`
-                      : ""}
+                  {/* Number */}
+                  <span className="problem-number">
+                    {String(
+                      problem.order
+                    ).padStart(2, "0")}
                   </span>
-                )}
-              </div>
-            );
-          }
-        )}
-      </section>
+
+                  {/* Problem name + topics */}
+                  <div className="problem-name">
+                    <strong>
+                      {problemTitle}
+                    </strong>
+
+                    <small className="problem-topics">
+                      {problem.topics.join(
+                        " · "
+                      )}
+                    </small>
+                  </div>
+
+                  {/* Difficulty */}
+                  <span
+                    className={`problem-difficulty problem-difficulty-${problem.difficulty}`}
+                  >
+                    {problem.difficulty}
+                  </span>
+
+                  {/* Rating */}
+                  <span className="problem-rating">
+                    {problem.rating ??
+                      "—"}
+                  </span>
+
+                  {/* Judge */}
+                  {problem.judgeUrl ? (
+                    <a
+                      href={
+                        problem.judgeUrl
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="problem-judge"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      {problem.judge}
+
+                      {problem.problemNumber
+                        ? ` #${problem.problemNumber}`
+                        : ""}
+                    </a>
+                  ) : (
+                    <span className="problem-judge">
+                      {problem.judge}
+
+                      {problem.problemNumber
+                        ? ` #${problem.problemNumber}`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+              );
+            }
+          )}
+        </section>
+      )}
     </div>
   );
 }

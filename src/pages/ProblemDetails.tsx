@@ -21,6 +21,7 @@ import "./ProblemDetails.css";
 import CodeBlock from "../components/CodeBlock";
 import ProblemDetailsSkeleton from "../components/ProblemDetailsSkeleton";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
 
 const getDisplayText = (
   text: LocalizedText
@@ -185,7 +186,7 @@ function ProblemDetails() {
 
   const nextProblem =
     currentIndex >= 0 &&
-    currentIndex <
+      currentIndex <
       problems.length - 1
       ? problems[currentIndex + 1]
       : null;
@@ -340,11 +341,10 @@ function ProblemDetails() {
 
       {/* Content */}
       <main
-        className={`problem-details-content ${
-          activeTab === "solution"
+        className={`problem-details-content ${activeTab === "solution"
             ? "solution-active"
             : ""
-        }`}
+          }`}
       >
 
         {/* =========================
@@ -379,7 +379,7 @@ function ProblemDetails() {
                       </h3>
 
                       <pre>
-{`Input:
+                        {`Input:
 ${example.input}
 
 Output:
@@ -508,42 +508,45 @@ ${example.output}`}
         {activeTab === "solution" && (
           <section className="problem-solution-section">
 
-            {/* Language Selector */}
-            <div className="problem-solution-languages">
-
-              {problem.solutions?.map(
-                (item) => (
-                  <button
-                    key={
-                      item.language
-                    }
-                    className={
-                      selectedLanguage ===
-                      item.language
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() =>
-                      setSelectedLanguage(
-                        item.language
-                      )
-                    }
-                  >
-                    {item.label}
-                  </button>
-                )
-              )}
-
-            </div>
-
-            {/* Code */}
-            {solution && (
-              <CodeBlock
-                code={solution.code}
-                language={
-                  solution.language
-                }
+            {problem.solutions?.length === 0 ? (
+              <EmptyState
+                title="No solution available"
+                message="A solution has not been added for this problem yet."
               />
+            ) : (
+              <>
+                {/* Language Selector */}
+                <div className="problem-solution-languages">
+                  {problem.solutions?.map(
+                    (item) => (
+                      <button
+                        key={item.language}
+                        className={
+                          selectedLanguage ===
+                            item.language
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() =>
+                          setSelectedLanguage(
+                            item.language
+                          )
+                        }
+                      >
+                        {item.label}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {/* Code */}
+                {solution && (
+                  <CodeBlock
+                    code={solution.code}
+                    language={solution.language}
+                  />
+                )}
+              </>
             )}
 
           </section>
