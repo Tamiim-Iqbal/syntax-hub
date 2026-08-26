@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
+
 import CourseCard from "../components/CourseCard";
 import CourseCardSkeleton from "../components/CourseCardSkeleton";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
+
 import { getCourses } from "../services/courseService";
 import type { Course } from "../types/course";
+
 import "./Courses.css";
-import EmptyState from "../components/EmptyState";
 
 function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  /* =========================
+     RETRY
+  ========================= */
 
   const loadCourses = async () => {
     try {
@@ -32,6 +39,10 @@ function Courses() {
     }
   };
 
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
   useEffect(() => {
     let cancelled = false;
 
@@ -41,6 +52,7 @@ function Courses() {
 
         if (!cancelled) {
           setCourses(data);
+          setError("");
           setLoading(false);
         }
       } catch (error) {
@@ -65,6 +77,10 @@ function Courses() {
 
   return (
     <div className="courses-page">
+      {/* =========================
+          HEADER
+      ========================= */}
+
       <section className="courses-page-header">
         <p className="section-label">
           LEARNING PATH
@@ -78,11 +94,16 @@ function Courses() {
         </p>
       </section>
 
+      {/* =========================
+          COURSE GRID
+      ========================= */}
+
       <section
         className="courses-page-grid"
         aria-label="Available courses"
       >
         {/* Loading */}
+
         {loading &&
           Array.from({ length: 3 }).map(
             (_, index) => (
@@ -93,6 +114,7 @@ function Courses() {
           )}
 
         {/* Error */}
+
         {!loading && error && (
           <ErrorState
             message={error}
@@ -100,8 +122,8 @@ function Courses() {
           />
         )}
 
-        {/* Courses */}
         {/* Empty */}
+
         {!loading &&
           !error &&
           courses.length === 0 && (
@@ -110,6 +132,8 @@ function Courses() {
               message="There are no published courses available right now."
             />
           )}
+
+        {/* Courses */}
 
         {!loading &&
           !error &&

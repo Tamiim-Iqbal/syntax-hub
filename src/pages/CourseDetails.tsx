@@ -149,7 +149,7 @@ function CourseDetails() {
     useState("");
 
   /* ============================= */
-  /* Load Course                   */
+  /* RETRY                         */
   /* ============================= */
 
   const loadCourse = async () => {
@@ -164,8 +164,7 @@ function CourseDetails() {
       setLoading(true);
       setError("");
 
-      const data =
-        await getCourseBySlug(slug);
+      const data = await getCourseBySlug(slug);
 
       setCourse(data);
     } catch (error) {
@@ -176,16 +175,14 @@ function CourseDetails() {
 
       setCourse(undefined);
 
-      setError(
-        "Failed to load course."
-      );
+      setError("Failed to load course.");
     } finally {
       setLoading(false);
     }
   };
 
   /* ============================= */
-  /* Initial Load                  */
+  /* INITIAL LOAD                  */
   /* ============================= */
 
   useEffect(() => {
@@ -203,8 +200,7 @@ function CourseDetails() {
       }
 
       try {
-        const data =
-          await getCourseBySlug(slug);
+        const data = await getCourseBySlug(slug);
 
         if (!cancelled) {
           setCourse(data);
@@ -219,9 +215,7 @@ function CourseDetails() {
 
         if (!cancelled) {
           setCourse(undefined);
-          setError(
-            "Failed to load course."
-          );
+          setError("Failed to load course.");
           setLoading(false);
         }
       }
@@ -631,9 +625,9 @@ function CourseDetails() {
                     courseLanguage.id
                   }
                   className={`language-button ${effectiveSelectedLanguageId ===
-                      courseLanguage.id
-                      ? "active"
-                      : ""
+                    courseLanguage.id
+                    ? "active"
+                    : ""
                     }`}
                   style={
                     {
@@ -713,8 +707,8 @@ function CourseDetails() {
                     <button
                       type="button"
                       className={`topic-preview ${isSelected
-                          ? "selected"
-                          : ""
+                        ? "selected"
+                        : ""
                         }`}
                       onClick={() =>
                         selectTopic(topic)
@@ -762,9 +756,9 @@ function CourseDetails() {
                                 subtopic._id
                               }
                               className={`subtopic-preview ${selectedSubtopicSlug ===
-                                  subtopic.slug
-                                  ? "selected"
-                                  : ""
+                                subtopic.slug
+                                ? "selected"
+                                : ""
                                 }`}
                               onClick={() =>
                                 selectSubtopic(
@@ -799,7 +793,7 @@ function CourseDetails() {
                   </div>
                 );
               })
-              )}
+            )}
 
           </div>
 

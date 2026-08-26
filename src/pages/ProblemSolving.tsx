@@ -52,13 +52,13 @@ function ProblemSolving() {
     useState<string | null>(null);
 
   /* =========================
-     LOAD COURSE
+     RETRY
   ========================= */
 
   const loadCourse = async () => {
     try {
       setLoading(true);
-      setError("");
+      setError(null);
 
       const data =
         await getProblemSolving();
@@ -74,7 +74,10 @@ function ProblemSolving() {
 
       setCourse(data);
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Failed to load problem solving course:",
+        error
+      );
 
       setError(
         "Failed to load problem solving course."
@@ -89,6 +92,8 @@ function ProblemSolving() {
   ========================= */
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
       try {
         const data =
@@ -103,20 +108,32 @@ function ProblemSolving() {
           );
         }
 
-        setCourse(data);
-        setLoading(false);
+        if (!cancelled) {
+          setCourse(data);
+          setError(null);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error(error);
-
-        setError(
-          "Failed to load problem solving course."
+        console.error(
+          "Failed to load problem solving course:",
+          error
         );
 
-        setLoading(false);
+        if (!cancelled) {
+          setError(
+            "Failed to load problem solving course."
+          );
+
+          setLoading(false);
+        }
       }
     };
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* =========================

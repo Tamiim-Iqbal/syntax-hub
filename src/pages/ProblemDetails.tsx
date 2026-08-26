@@ -77,12 +77,14 @@ function ProblemDetails() {
     useState<string>("javascript");
 
   /* =========================
-     LOAD PROBLEM
-  ========================= */
+   RETRY
+========================= */
 
   const loadProblem = async () => {
     if (!categorySlug || !problemSlug) {
-      setError("Invalid problem");
+      setProblem(null);
+      setCategory(null);
+      setError("Invalid problem.");
       setLoading(false);
       return;
     }
@@ -91,26 +93,23 @@ function ProblemDetails() {
       setLoading(true);
       setError(null);
 
-      const [
-        problemData,
-        categoryData,
-      ] = await Promise.all([
-        getProblem(
-          categorySlug,
-          problemSlug
-        ),
+      const [problemData, categoryData] =
+        await Promise.all([
+          getProblem(
+            categorySlug,
+            problemSlug
+          ),
 
-        getProblemCategory(
-          categorySlug
-        ),
-      ]);
+          getProblemCategory(
+            categorySlug
+          ),
+        ]);
 
       setProblem(problemData);
       setCategory(categoryData);
 
       const firstLanguage =
-        problemData.solutions?.[0]
-          ?.language;
+        problemData.solutions?.[0]?.language;
 
       setSelectedLanguage(
         firstLanguage ?? "javascript"
@@ -118,7 +117,13 @@ function ProblemDetails() {
 
       setActiveTab("problem");
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Failed to load problem:",
+        error
+      );
+
+      setProblem(null);
+      setCategory(null);
 
       setError(
         "Failed to load problem."
@@ -133,11 +138,70 @@ function ProblemDetails() {
   ========================= */
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
-      await loadProblem();
+      if (!categorySlug || !problemSlug) {
+        if (!cancelled) {
+          setProblem(null);
+          setCategory(null);
+          setError("Invalid problem.");
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        const [problemData, categoryData] =
+          await Promise.all([
+            getProblem(
+              categorySlug,
+              problemSlug
+            ),
+
+            getProblemCategory(
+              categorySlug
+            ),
+          ]);
+
+        if (!cancelled) {
+          setProblem(problemData);
+          setCategory(categoryData);
+
+          const firstLanguage =
+            problemData.solutions?.[0]?.language;
+
+          setSelectedLanguage(
+            firstLanguage ?? "javascript"
+          );
+
+          setActiveTab("problem");
+          setError(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load problem:",
+          error
+        );
+
+        if (!cancelled) {
+          setProblem(null);
+          setCategory(null);
+          setError(
+            "Failed to load problem."
+          );
+          setLoading(false);
+        }
+      }
     };
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [categorySlug, problemSlug]);
 
   /* =========================
@@ -342,8 +406,8 @@ function ProblemDetails() {
       {/* Content */}
       <main
         className={`problem-details-content ${activeTab === "solution"
-            ? "solution-active"
-            : ""
+          ? "solution-active"
+          : ""
           }`}
       >
 
@@ -508,7 +572,8 @@ ${example.output}`}
         {activeTab === "solution" && (
           <section className="problem-solution-section">
 
-            {problem.solutions?.length === 0 ? (
+            {!problem.solutions ||
+              problem.solutions.length === 0 ? (
               <EmptyState
                 title="No solution available"
                 message="A solution has not been added for this problem yet."
