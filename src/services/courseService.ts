@@ -6,7 +6,9 @@ import type {
   Problem,
 } from "../types/course";
 
-const API_URL = "http://localhost:5050/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  "http://localhost:5050/api";
 
 /* =========================================
    API TYPES
@@ -187,13 +189,23 @@ export const getCourseBySlug = async (
 ========================================= */
 
 export const getProblemSolving =
-  async (): Promise<Course> => {
+  async (): Promise<
+    Extract<Course, { type: "problem-solving" }>
+  > => {
     const data =
       await fetchApi<ApiCourse>(
         "/courses/problem-solving"
       );
 
-    return normalizeCourse(data);
+    const course = normalizeCourse(data);
+
+    if (course.type !== "problem-solving") {
+      throw new Error(
+        "Invalid problem solving course response"
+      );
+    }
+
+    return course;
   };
 
 /* =========================================

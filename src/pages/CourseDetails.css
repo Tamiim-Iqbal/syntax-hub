@@ -557,6 +557,7 @@
   font-weight: 700;
 
   color: var(--color-primary);
+  margin-left: 10px;
 
   text-transform: uppercase;
 }
@@ -1502,9 +1503,9 @@
 .topic-navigation {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 55%;
+  gap: 16px;
   margin-top: 30px;
-  padding: 10;
+  padding: 10px;
 }
 
 .topic-navigation-button {
@@ -1614,4 +1615,185 @@
   margin-bottom: 0.75rem;
 
   line-height: 1.8;
+}
+
+@media (max-width: 360px) {
+  .problem-details-page,
+  .problem-category-page,
+  .problem-solving-page,
+  .courses-page {
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .problem-tabs {
+    max-width: 100%;
+  }
+
+  .topic-navigation {
+    gap: 6px;
+  }
+
+  .topic-navigation-button {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+
+/* =========================================================
+   PHASE 1 RESPONSIVE + ACCESSIBILITY POLISH
+========================================================= */
+
+.course-sidebar,
+.course-main,
+.topic-content,
+.course-language-bar {
+  min-width: 0;
+}
+
+.topic-preview:focus-visible,
+.subtopic-preview:focus-visible,
+.language-button:focus-visible,
+.topic-navigation-button:focus-visible,
+.course-start-content button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.topic-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 900px) {
+  .course-learning {
+    grid-template-columns: minmax(190px, 0.34fr) minmax(0, 0.66fr);
+    gap: 18px;
+  }
+
+  .course-main {
+    min-width: 0;
+  }
+
+  .topic-content {
+    overflow-wrap: anywhere;
+  }
+
+  .code-block {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 650px) {
+  .course-learning {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .course-sidebar {
+    position: static;
+    max-height: none;
+  }
+
+  .topic-list {
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .course-main-header {
+    min-width: 0;
+  }
+
+  .course-topic-title {
+    overflow-wrap: anywhere;
+  }
+
+  .language-selector {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .language-button {
+    flex: 0 0 auto;
+  }
+
+  .topic-navigation {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .topic-navigation-button {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 425px) {
+  .course-details {
+    width: 100%;
+  }
+
+  .course-language-bar {
+    margin-bottom: 12px;
+  }
+
+  .course-learning {
+    gap: 14px;
+  }
+
+  .course-main-header {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .topic-content {
+    font-size: 0.88rem;
+  }
+
+  .topic-navigation-button {
+    padding: 8px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .language-button {
+    padding: 8px 12px;
+    font-size: 0.7rem;
+  }
+
+  .topic-preview,
+  .subtopic-preview {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .topic-navigation {
+    gap: 6px;
+  }
+
+  .topic-navigation-button {
+    gap: 6px;
+    padding: 7px 6px;
+    font-size: 0.62rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .topic-navigation-button {
+    font-size: 0.58rem;
+  }
+
+  .topic-navigation-arrow {
+    font-size: 0.8rem;
+  }
+
+  .course-start-content h2 {
+    font-size: 1.2rem;
+  }
 }

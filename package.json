@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:all": "npm run build && npm run build:backend",
+    "build:backend": "npm --prefix backend run build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:backend": "npm --prefix backend run dev"
   },
   "dependencies": {
     "highlight.js": "^11.12.0",

@@ -1,76 +1,79 @@
-# React + TypeScript + Vite
+# SyntaxHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SyntaxHub is a React + TypeScript programming-learning platform backed by an Express + MongoDB API.
 
-Currently, two official plugins are available:
+## Project structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `src/` — React/Vite frontend
+- `backend/src/` — Express/Mongoose backend
+- `backend/src/data/courses.ts` — seed content
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Frontend
 
-## Expanding the ESLint configuration
+Create `.env` from `.env.example`:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```env
+VITE_API_URL=http://localhost:5050/api
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
-# syntax-hub
+
+### 2. Backend
+
+Create `backend/.env` from `backend/.env.example`:
+
+```env
+PORT=5050
+MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/syntaxhub?retryWrites=true&w=majority
+CLIENT_URL=http://localhost:5173
+```
+
+Then:
+
+```bash
+cd backend
+npm install
+npm run seed
+npm run dev
+```
+
+The seed command inserts the course content from `backend/src/data/courses.ts` into MongoDB.
+
+## Validation
+
+From the project root:
+
+```bash
+npm run lint
+npm run build
+npm run build:backend
+```
+
+## Notes
+
+- `.env` files are intentionally excluded from the project archive.
+- `node_modules`, build output, Vite cache, and local editor files are excluded.
+- The frontend API URL is configurable through `VITE_API_URL`.
+- Backend CORS is configurable through `CLIENT_URL`.
+
+## Phase 1 update
+
+This build includes the Phase 1 polish pass:
+
+- Route-level lazy loading with React `Suspense` to reduce the initial JavaScript payload.
+- Highlight.js highlighting memoized so code is not re-highlighted on unrelated renders.
+- Common JavaScript/TypeScript/Python/C++/C# aliases for code highlighting.
+- Mobile layout polish down to very small screens.
+- Horizontal overflow protection on the document.
+- Improved copy-code accessibility labels.
+- Problem solution tabs now use full available width on small screens.
+- Existing loading, error, empty-state, dark-mode, and API configuration are preserved.
+
+Before running, install dependencies in both the root and `backend` directories.

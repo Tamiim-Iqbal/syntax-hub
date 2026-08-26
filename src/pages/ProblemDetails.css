@@ -717,7 +717,7 @@
 
   .problem-tabs {
     margin-bottom: 14px;
-    width: 60%;
+    width: max-content;
   }
 
   .problem-tabs button {
@@ -814,4 +814,167 @@
   background: transparent;
 
   box-shadow: none;
+}
+
+@media (max-width: 360px) {
+  .problem-details-page,
+  .problem-category-page,
+  .problem-solving-page,
+  .courses-page {
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .problem-tabs {
+    max-width: 100%;
+  }
+
+  .topic-navigation {
+    gap: 6px;
+  }
+
+  .topic-navigation-button {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+
+/* =========================================================
+   PHASE 1 RESPONSIVE + ACCESSIBILITY POLISH
+========================================================= */
+
+.problem-details-page,
+.problem-details-header,
+.problem-details-content,
+.problem-tabs,
+.problem-solution-section,
+.topic-navigation {
+  min-width: 0;
+}
+
+.problem-tabs button:focus-visible,
+.problem-solution-languages button:focus-visible,
+.topic-navigation-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.problem-example pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 800px) {
+  .problem-tabs {
+    width:max-content;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .problem-tabs button {
+    flex: 0 0 auto;
+  }
+
+  .problem-details-content {
+    overflow-wrap: anywhere;
+  }
+
+  .topic-navigation {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .topic-navigation-button {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 425px) {
+  .problem-details-page {
+    width: 92%;
+    padding-bottom: 48px;
+  }
+
+  .problem-back-link {
+    margin-bottom: 20px;
+  }
+
+  .problem-meta {
+    gap: 7px;
+  }
+
+  .problem-details-content {
+    padding: 16px;
+  }
+
+  .problem-solution-languages {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .problem-solution-languages button {
+    flex: 0 0 auto;
+  }
+
+  .topic-navigation {
+    gap: 8px;
+  }
+
+  .topic-navigation-button {
+    padding: 8px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .problem-details-page {
+    width: 94%;
+  }
+
+  .problem-details-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .problem-details-content {
+    padding: 13px;
+  }
+
+  .problem-tabs button {
+    min-width: 86px;
+    padding: 8px 10px;
+  }
+
+  .topic-navigation-button {
+    gap: 5px;
+    padding: 7px 6px;
+    font-size: 0.62rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .problem-details-page {
+    width: 96%;
+  }
+
+  .problem-details-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .problem-details-content {
+    padding: 11px;
+  }
+
+  .problem-tabs button {
+    min-width: 78px;
+    font-size: 0.68rem;
+  }
+
+  .topic-navigation-button {
+    font-size: 0.58rem;
+  }
 }

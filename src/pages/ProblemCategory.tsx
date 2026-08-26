@@ -78,53 +78,33 @@ function ProblemCategory() {
   ========================= */
 
   useEffect(() => {
-    let cancelled = false;
-
     const load = async () => {
       if (!categorySlug) {
-        if (!cancelled) {
-          setError(
-            "Invalid problem category"
-          );
-
-          setLoading(false);
-        }
-
+        setError("Invalid problem category");
+        setLoading(false);
         return;
       }
 
       try {
-        const data =
-          await getProblemCategory(
-            categorySlug
-          );
+        const data = await getProblemCategory(categorySlug);
 
-        if (!cancelled) {
-          setCategory(data);
-          setError(null);
-          setLoading(false);
-        }
+        setCategory(data);
+        setError(null);
       } catch (error) {
         console.error(
           "Get problem category error:",
           error
         );
 
-        if (!cancelled) {
-          setError(
-            "Failed to load problem category."
-          );
-
-          setLoading(false);
-        }
+        setError(
+          "Failed to load problem category."
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    void load();
   }, [categorySlug]);
 
   /* =========================

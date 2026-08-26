@@ -138,3 +138,28 @@
     gap: 12px;
   }
 }
+
+@media (max-width: 360px) {
+  .problem-details-page,
+  .problem-category-page,
+  .problem-solving-page,
+  .courses-page {
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .problem-tabs {
+    max-width: 100%;
+  }
+
+  .topic-navigation {
+    gap: 6px;
+  }
+
+  .topic-navigation-button {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}

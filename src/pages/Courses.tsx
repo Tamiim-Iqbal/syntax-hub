@@ -44,35 +44,25 @@ function Courses() {
   ========================= */
 
   useEffect(() => {
-    let cancelled = false;
-
     const load = async () => {
       try {
         const data = await getCourses();
 
-        if (!cancelled) {
-          setCourses(data);
-          setError("");
-          setLoading(false);
-        }
+        setCourses(data);
+        setError("");
       } catch (error) {
         console.error(
           "Failed to load courses:",
           error
         );
 
-        if (!cancelled) {
-          setError("Failed to load courses.");
-          setLoading(false);
-        }
+        setError("Failed to load courses.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    void load();
   }, []);
 
   return (
