@@ -365,6 +365,7 @@
   width: min(100%, 900px);
 
   margin: 0 auto 26px;
+
 }
 
 .course-breadcrumb {
@@ -380,7 +381,7 @@
 }
 
 .course-topic-title {
-  margin: 0;
+  margin-top: 15px;
 
   color: var(--color-text);
 
