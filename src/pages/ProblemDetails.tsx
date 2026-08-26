@@ -18,6 +18,7 @@ import type {
 
 import "./ProblemDetails.css";
 import CodeBlock from "../components/CodeBlock";
+import ProblemDetailsSkeleton from "../components/ProblemDetailsSkeleton";
 
 const getDisplayText = (
     text: LocalizedText
@@ -124,12 +125,8 @@ function ProblemDetails() {
     }, [categorySlug, problemSlug]);
 
     if (loading) {
-        return (
-            <div className="problem-details-page">
-                <p>Loading...</p>
-            </div>
-        );
-    }
+  return <ProblemDetailsSkeleton />;
+}
 
     if (error || !problem) {
         return (

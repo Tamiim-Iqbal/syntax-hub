@@ -15,6 +15,7 @@ import type {
 } from "../types/course";
 
 import "./ProblemCategory.css";
+import ProblemListSkeleton from "../components/ProblemListSkeleton";
 
 const getDisplayText = (
   text: LocalizedText
@@ -90,12 +91,12 @@ function ProblemCategory() {
   }, [categorySlug]);
 
   if (loading) {
-    return (
-      <div className="problem-category-page">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  return (
+    <div className="problem-category-page">
+      <ProblemListSkeleton />
+    </div>
+  );
+}
 
   if (error || !category) {
     return (

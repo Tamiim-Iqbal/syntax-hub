@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode, } from "react";
 import { useParams } from "react-router-dom";
 import CodeBlock from "../components/CodeBlock";
-
 import {
   type CourseLanguage,
   type Topic,
@@ -10,12 +9,10 @@ import {
   type LocalizedText,
   type RichTextContent,
 } from "../types/course";
-
 import { getCourseBySlug } from "../services/courseService";
-
 import { useLanguage } from "../context/LanguageContext";
-
 import "./CourseDetails.css";
+import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
 
 type ContentSource = Topic | Subtopic;
 
@@ -510,12 +507,8 @@ function CourseDetails() {
   /* ============================= */
 
   if (loading) {
-    return (
-      <div className="course-not-found">
-        <h1>Loading...</h1>
-      </div>
-    );
-  }
+  return <CourseDetailsSkeleton />;
+}
 
   if (error || !course) {
     return (

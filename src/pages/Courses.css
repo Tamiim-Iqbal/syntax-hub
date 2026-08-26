@@ -5,62 +5,136 @@
   padding: 50px 0 100px;
 }
 
+/* ============================= */
+/* Header                        */
+/* ============================= */
+
 .courses-page-header {
   margin-bottom: 36px;
+
   border-top: 2px solid;
+
   border-image: linear-gradient(
     to right,
     rgb(211, 83, 104),
     transparent
   ) 1;
+
   padding-top: 30px;
 }
 
 .courses-page-header h1 {
   margin-top: 4px;
+
   font-size: clamp(2.2rem, 5vw, 3.5rem);
+
   letter-spacing: -0.045em;
 }
 
 .courses-page-header > p:last-child {
   max-width: 620px;
+
   margin-top: 12px;
+
   font-size: 1rem;
   line-height: 1.6;
 }
 
+/* ============================= */
+/* Course Grid                   */
+/* ============================= */
+
 .courses-page-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+
   gap: 20px;
 }
 
+/* ============================= */
+/* Tablet                        */
+/* ============================= */
+
 @media (max-width: 900px) {
   .courses-page-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+    gap: 16px;
   }
 }
 
+/* ============================= */
+/* Mobile                        */
+/* ============================= */
+
 @media (max-width: 640px) {
   .courses-page {
-    width: 98%;
-    padding: 52px 0 72px;
+    width: 92%;
+    padding: 42px 0 65px;
   }
 
   .courses-page-header {
-    margin-bottom: 26px;
+    margin-bottom: 28px;
+    padding-top: 24px;
   }
 
   .courses-page-header h1 {
+    margin-top: 3px;
     font-size: 2rem;
+    line-height: 1.1;
   }
 
   .courses-page-header > p:last-child {
-    font-size: 0.88rem;
+    max-width: 480px;
+
+    margin-top: 10px;
+
+    font-size: 0.85rem;
+    line-height: 1.55;
   }
 
   .courses-page-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* ============================= */
+/* Small Mobile                  */
+/* ============================= */
+
+@media (max-width: 480px) {
+  .courses-page {
+    width: 100%;
+    padding: 24px 0 50px;
+  }
+
+  .courses-page-header {
+    margin-bottom: 24px;
+    padding-top: 15px;
+  }
+
+  .courses-page-header .section-label {
+    font-size: 0.63rem;
+  }
+
+  .courses-page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .courses-page-header > p:last-child {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .courses-page-grid {
     gap: 12px;
   }
 }

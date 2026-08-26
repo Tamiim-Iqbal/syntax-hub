@@ -1,19 +1,52 @@
 .problem-category-page {
   width: min(90%, 1100px);
+
   margin: 0 auto;
-  padding: 60px 0 80px;
+
+  padding: 50px 0 80px;
 }
+
+/* =========================
+   TOP GRADIENT BORDER
+========================= */
+
+.problem-category-page::before {
+  content: "";
+
+  display: block;
+
+  width: 100%;
+  height: 4px;
+
+  margin-top: -10px;
+  margin-bottom: 20px;
+
+  border-top: 2px solid transparent;
+
+  border-image: linear-gradient(
+    to right,
+    rgb(211, 83, 104),
+    transparent
+  ) 1;
+}
+
+/* =========================
+   HEADER
+========================= */
 
 .problem-category-header {
   max-width: 760px;
-  margin-bottom: 40px;
+
+  margin-bottom: 30px;
 }
 
 .problem-back-link {
   display: inline-block;
-  margin-bottom: 28px;
+
   color: var(--color-text-muted);
+
   text-decoration: none;
+
   font-size: 0.85rem;
 }
 
@@ -23,23 +56,38 @@
 
 .problem-category-header h1 {
   margin: 8px 0 12px;
+
+  line-height: 1.2;
 }
 
 .problem-category-header > p:last-child {
   color: var(--color-text-secondary);
+
   line-height: 1.7;
 }
 
+/* =========================
+   PROBLEM LIST
+========================= */
+
 .problem-list {
   border: 1px solid var(--color-border);
+
   border-radius: 10px;
+
   overflow: hidden;
+
   background: var(--color-bg-white);
 }
+
+/* =========================
+   LIST HEADER + ROW
+========================= */
 
 .problem-list-header,
 .problem-row {
   display: grid;
+
   grid-template-columns:
     60px
     minmax(240px, 1fr)
@@ -48,29 +96,51 @@
     140px;
 
   align-items: center;
+
   gap: 18px;
+
   padding: 16px 20px;
 }
 
+/* =========================
+   LIST HEADER
+========================= */
+
 .problem-list-header {
   background: var(--color-surface);
+
   border-bottom: 1px solid var(--color-border);
 
   color: var(--color-text-muted);
+
   font-size: 0.72rem;
+
   font-weight: 700;
+
   text-transform: uppercase;
+
   letter-spacing: 0.04em;
 }
 
+/* =========================
+   PROBLEM ROW
+========================= */
+
 .problem-row {
+  position: relative;
+
   color: var(--color-text);
+
   text-decoration: none;
 
   border-bottom: 1px solid var(--color-border);
 
+  cursor: pointer;
+
   transition:
     background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
     transform 0.18s ease;
 }
 
@@ -80,116 +150,400 @@
 
 .problem-row:hover {
   background: var(--color-surface);
-  border: 1px solid var(--color-primary);
+
+  border-color: var(--color-primary);
+
   border-radius: 10px;
+
   color: var(--color-primary);
 }
 
+/* =========================
+   NUMBER
+========================= */
+
 .problem-number {
   color: var(--color-text-muted);
+
   font-family: var(--font-mono);
+
   font-size: 0.8rem;
 }
 
+/* =========================
+   NAME
+========================= */
+
 .problem-name {
   min-width: 0;
+
   margin-bottom: -5px;
 }
 
 .problem-name strong {
   display: block;
-  margin-bottom: 1px;
+
   margin-top: -5px;
+  margin-bottom: 1px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
 }
 
 .problem-name small {
   display: block;
+
   color: var(--color-text-muted);
+
   font-size: 0.72rem;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
 }
+
+/* =========================
+   DIFFICULTY
+========================= */
 
 .problem-difficulty {
   width: fit-content;
+
   padding: 4px 9px;
+
   border-radius: 999px;
+
   font-size: 0.72rem;
+
   font-weight: 700;
+
   text-transform: capitalize;
 }
 
 .problem-difficulty-easy {
   background: #dcfce7;
+
   color: #15803d;
 }
 
 .problem-difficulty-medium {
   background: #fef3c7;
+
   color: #b45309;
 }
 
 .problem-difficulty-hard {
   background: #fee2e2;
+
   color: #dc2626;
 }
 
+/* =========================
+   RATING
+========================= */
+
 .problem-rating {
   color: var(--color-text-secondary);
+
   font-family: var(--font-mono);
+
   font-size: 0.8rem;
 }
 
+/* =========================
+   JUDGE
+========================= */
+
 .problem-judge {
   color: var(--color-primary);
+
   font-size: 0.8rem;
-  transition: color 0.2s ease;
+
+  transition:
+    color 0.2s ease,
+    font-weight 0.2s ease;
 }
 
 a.problem-judge:hover {
   color: var(--color-primary);
-  font-weight: bold;
-}
-.problem-topics {
-  white-space: nowrap;
+
+  font-weight: 700;
 }
 
+/* =========================
+   TOPICS
+========================= */
+
+.problem-topics {
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .problem-category-page {
+    width: 92%;
+
+    padding: 42px 0 70px;
+  }
+
+  .problem-list-header,
+  .problem-row {
+    grid-template-columns:
+      45px
+      minmax(180px, 1fr)
+      100px
+      80px
+      110px;
+
+    gap: 12px;
+
+    padding: 14px 16px;
+  }
+
+  .problem-name strong {
+    font-size: 0.9rem;
+  }
+
+  .problem-name small {
+    font-size: 0.65rem;
+  }
+
+  .problem-difficulty,
+  .problem-rating,
+  .problem-judge {
+    font-size: 0.68rem;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media (max-width: 800px) {
+  .problem-category-page {
+    width: 92%;
+
+    padding: 38px 0 60px;
+  }
+
+  .problem-category-page::before {
+    height: 3px;
+
+    margin-top: -8px;
+
+    margin-bottom: 18px;
+  }
+
+  /* =========================
+     Header
+  ========================= */
+
+  .problem-category-header {
+    margin-bottom: 24px;
+  }
+
+  .problem-back-link {
+    margin-bottom: 4px;
+
+    font-size: 0.72rem;
+  }
+
+  .problem-category-header h1 {
+    margin: 6px 0 9px;
+
+    font-size: 1.75rem;
+
+    line-height: 1.15;
+  }
+
+  .problem-category-header > p:last-child {
+    font-size: 0.82rem;
+
+    line-height: 1.6;
+  }
+
+  /* =========================
+     List
+  ========================= */
+
+  .problem-list {
+    border-radius: 10px;
+  }
+
   .problem-list-header {
     display: none;
   }
 
+  /* =========================
+     Row
+  ========================= */
+
   .problem-row {
-    grid-template-columns: 42px 1fr auto;
-    gap: 12px;
+    grid-template-columns:
+      38px
+      minmax(0, 1fr)
+      auto;
+
+    gap: 10px;
+
+    padding: 14px 12px;
+
+    align-items: start;
   }
+
+  .problem-row:hover {
+    border-radius: 8px;
+  }
+
+  /* Number */
+
+  .problem-number {
+    padding-top: 2px;
+
+    font-size: 0.68rem;
+  }
+
+  /* Name */
+
+  .problem-name {
+    margin-bottom: 0;
+  }
+
+  .problem-name strong {
+    margin-top: 0;
+
+    margin-bottom: 3px;
+
+    font-size: 0.82rem;
+
+    line-height: 1.35;
+  }
+
+  .problem-name small {
+    font-size: 0.62rem;
+
+    line-height: 1.4;
+  }
+
+  /* Difficulty */
 
   .problem-difficulty {
     grid-column: 3;
+
     grid-row: 1;
+
+    align-self: start;
+
+    padding: 4px 8px;
+
+    font-size: 0.6rem;
+  }
+
+  /* Rating */
+
+  .problem-rating {
+    grid-column: 2 / 4;
+
+    font-size: 0.65rem;
+  }
+
+  /* Judge */
+
+  .problem-judge {
+    grid-column: 2 / 4;
+
+    font-size: 0.65rem;
+  }
+
+  /* Topics */
+
+  .problem-topics {
+    grid-column: 2 / 4;
+
+    white-space: normal;
+
+    font-size: 0.65rem;
+
+    line-height: 1.5;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .problem-category-page {
+    width: 100%;
+
+    padding: 30px 0 50px;
+  }
+
+  .problem-category-page::before {
+    margin-bottom: 16px;
+  }
+
+  .problem-category-header {
+    margin-bottom: 20px;
+  }
+
+  .problem-back-link {
+    font-size: 0.65rem;
+  }
+
+  .problem-category-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .problem-category-header > p:last-child {
+    font-size: 0.74rem;
+
+    line-height: 1.55;
+  }
+
+  .problem-row {
+    grid-template-columns:
+      32px
+      minmax(0, 1fr)
+      auto;
+
+    gap: 7px;
+
+    padding: 12px 10px;
+  }
+
+  .problem-number {
+    font-size: 0.6rem;
+  }
+
+  .problem-name strong {
+    font-size: 0.74rem;
+  }
+
+  .problem-name small {
+    font-size: 0.56rem;
+  }
+
+  .problem-difficulty {
+    padding: 3px 7px;
+
+    font-size: 0.55rem;
   }
 
   .problem-rating,
-  .problem-judge {
-    grid-column: 2 / 4;
+  .problem-judge,
+  .problem-topics {
+    font-size: 0.58rem;
   }
-}
-
-.problem-category-page::before {
-  content: "";
-  display: block;
-  width: 100%;
-  height: 4px;
-
-  margin-bottom: 30px;
-  margin-top: -10px;
-
-  border-top: 2px solid transparent;
-  border-image: linear-gradient(
-    to right,
-    rgb(211, 83, 104),
-    transparent
-  ) 1;
-}
-
-.problem-row {
-  cursor: pointer;
 }

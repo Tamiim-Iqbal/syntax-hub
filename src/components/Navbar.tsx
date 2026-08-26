@@ -1,11 +1,16 @@
 import { Link, NavLink } from "react-router-dom";
 import "./Navbar.css";
+
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/useTheme";
 
 function Navbar() {
-  const { language, toggleLanguage } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage } =
+    useLanguage();
+
+  const { theme, toggleTheme } =
+    useTheme();
+
   const navbarText = {
     home: {
       bn: "হোম",
@@ -17,28 +22,44 @@ function Navbar() {
       en: "Login",
     },
   };
+
   return (
     <header className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
+
+        {/* Logo */}
+        <Link
+          to="/"
+          className="navbar-logo"
+        >
           Syntax<span>Hub</span>
         </Link>
 
+        {/* Navigation */}
         <nav className="navbar-nav">
           <NavLink
             to="/"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active"
+                : "nav-link"
             }
           >
             {navbarText.home[language]}
           </NavLink>
         </nav>
 
+        {/* Actions */}
         <div className="navbar-actions">
+
+          {/* Language */}
           <button
-            className={`navbar-language-toggle ${language === "en" ? "english" : "bangla"
-              }`}
+            type="button"
+            className={`navbar-language-toggle ${
+              language === "en"
+                ? "english"
+                : "bangla"
+            }`}
             onClick={toggleLanguage}
             aria-label="Toggle language"
           >
@@ -55,18 +76,26 @@ function Navbar() {
             </span>
           </button>
 
-          <button className="navbar-login">
+          {/* Login */}
+          <button
+            type="button"
+            className="navbar-login"
+          >
             {navbarText.login[language]}
           </button>
 
+          {/* Theme */}
           <button
             type="button"
             className="navbar-theme"
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            {theme === "light" ? "🌙" : "☀"}
+            {theme === "light"
+              ? "🌙"
+              : "☀"}
           </button>
+
         </div>
       </div>
     </header>

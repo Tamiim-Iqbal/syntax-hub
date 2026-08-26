@@ -1,0 +1,149 @@
+.problem-list-skeleton {
+  overflow: hidden;
+
+  border: 1px solid var(--color-border);
+
+  border-radius: 10px;
+
+  background: var(--color-bg-white);
+}
+
+.problem-list-skeleton-row {
+  display: grid;
+
+  grid-template-columns:
+    60px
+    minmax(240px, 1fr)
+    120px
+    100px
+    140px;
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 16px 20px;
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.problem-list-skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.problem-list-skeleton .skeleton {
+  position: relative;
+
+  overflow: hidden;
+
+  height: 13px;
+
+  border-radius: 5px;
+
+  background: var(--color-surface);
+}
+
+.problem-list-skeleton .skeleton::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  transform: translateX(-100%);
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(
+      in srgb,
+      var(--color-text) 6%,
+      transparent
+    ),
+    transparent
+  );
+
+  animation: problem-list-skeleton-loading 1.4s infinite;
+}
+
+.skeleton-number {
+  width: 25px;
+}
+
+.problem-list-skeleton-name {
+  min-width: 0;
+}
+
+.skeleton-name {
+  width: 70%;
+}
+
+.skeleton-subname {
+  width: 45%;
+
+  margin-top: 8px;
+}
+
+.skeleton-difficulty {
+  width: 75px;
+
+  height: 22px !important;
+
+  border-radius: 999px !important;
+}
+
+.skeleton-rating {
+  width: 55px;
+}
+
+.skeleton-judge {
+  width: 80px;
+}
+
+@keyframes problem-list-skeleton-loading {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 800px) {
+  .problem-list-skeleton-row {
+    grid-template-columns:
+      38px
+      minmax(0, 1fr)
+      auto;
+
+    gap: 10px;
+
+    padding: 14px 12px;
+  }
+
+  .skeleton-difficulty {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .skeleton-rating {
+    grid-column: 2 / 4;
+
+    margin-top: 4px;
+  }
+
+  .skeleton-judge {
+    grid-column: 2 / 4;
+
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .problem-list-skeleton-row {
+    grid-template-columns:
+      32px
+      minmax(0, 1fr)
+      auto;
+
+    gap: 7px;
+
+    padding: 12px 10px;
+  }
+}

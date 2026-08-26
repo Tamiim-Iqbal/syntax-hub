@@ -12,6 +12,7 @@ import type {
 } from "../types/course";
 
 import "./ProblemSolving.css";
+import ProblemCategorySkeleton from "../components/ProblemCategorySkeleton";
 
 const getDisplayText = (
   text: LocalizedText
@@ -78,12 +79,8 @@ function ProblemSolving() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="problem-solving-page">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  return <ProblemCategorySkeleton />;
+}
 
   if (error || !course) {
     return (

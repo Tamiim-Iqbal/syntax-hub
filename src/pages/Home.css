@@ -159,30 +159,37 @@
 
 @media (max-width: 640px) {
   .home {
-    width: 98%;
+    width: 92%;
   }
 
   .hero {
-    min-height: 480px;
-    padding: 40px 0;
+    min-height: 430px;
+    padding: 35px 0 45px;
+  }
+
+  .hero-content {
+    max-width: 100%;
   }
 
   .hero-badge {
     padding: 6px 10px;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
   }
 
   .hero h1 {
     margin-top: 18px;
+    margin-bottom: 0;
 
-    font-size: 2.35rem;
+    font-size: clamp(2rem, 9vw, 2.35rem);
     line-height: 1.08;
   }
 
   .hero-description {
-    margin-top: 18px;
+    max-width: 480px;
 
-    font-size: 0.9rem;
+    margin: 18px auto 0;
+
+    font-size: 0.88rem;
     line-height: 1.6;
   }
 
@@ -195,8 +202,12 @@
     font-size: 0.82rem;
   }
 
+  /* ============================= */
+  /* Courses                       */
+  /* ============================= */
+
   .courses-section {
-    padding: 50px 0 70px;
+    padding: 35px 0 65px;
   }
 
   .section-header {
@@ -204,21 +215,28 @@
   }
 
   .section-label {
+    margin-bottom: 7px;
     font-size: 0.65rem;
   }
 
   .section-header h2 {
-    font-size: 1.8rem;
+    font-size: 1.75rem;
   }
 
   .section-header > p:last-child {
+    margin-top: 8px;
+
     font-size: 0.82rem;
-    line-height: 1.5;
+    line-height: 1.55;
   }
+
+  /* ============================= */
+  /* Course Grid                   */
+  /* ============================= */
 
   .course-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
   }
 
   .course-card {
@@ -230,27 +248,44 @@
     margin-bottom: 16px;
   }
 
+  .course-card-category {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+  }
+
+  .course-card-level {
+    font-size: 0.68rem;
+  }
+
   .course-card-content h3 {
     font-size: 1.2rem;
   }
 
   .course-card-content p {
+    margin-top: 8px;
+
     font-size: 0.82rem;
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
-  .course-card-meta {
-    padding-top: 18px;
+  .course-card-footer-meta {
+    gap: 6px;
+    margin-bottom: 14px;
   }
 
-  .course-card-meta span {
-    padding: 4px 7px;
-    font-size: 0.65rem;
+  .course-card-topics,
+  .course-card-language {
+    padding: 6px 9px;
+    font-size: 0.68rem;
+  }
+
+  .course-card-languages {
+    gap: 6px;
   }
 
   .course-card-button {
-    margin-top: 14px;
-    padding: 9px 12px;
+    margin-top: 0;
+    padding: 10px 12px;
     font-size: 0.78rem;
   }
 }
@@ -261,12 +296,16 @@
 
 @media (max-width: 480px) {
   .home {
-    width: 98%;
+    width: 92%;
   }
 
   .hero {
-    min-height: 440px;
-    padding: 30px 0;
+    min-height: 300px;
+    padding: 30px 0 40px;
+  }
+
+  .hero-badge {
+    font-size: 0.58rem;
   }
 
   .hero h1 {
@@ -274,7 +313,12 @@
   }
 
   .hero-description {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  .hero-actions {
+    margin-top: 20px;
   }
 
   .hero-primary-button {
@@ -283,7 +327,15 @@
   }
 
   .courses-section {
-    padding: 40px 0 60px;
+    padding: 10px 0 55px;
+  }
+
+  .section-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .section-header > p:last-child {
+    font-size: 0.78rem;
   }
 
   .course-card {
@@ -296,5 +348,16 @@
 
   .course-card-content p {
     font-size: 0.78rem;
+  }
+
+  .course-card-topics,
+  .course-card-language {
+    padding: 5px 8px;
+    font-size: 0.64rem;
+  }
+
+  .course-card-button {
+    padding: 9px 12px;
+    font-size: 0.74rem;
   }
 }

@@ -3,6 +3,7 @@ import CourseCard from "../components/CourseCard";
 import { getCourses } from "../services/courseService";
 import type { Course } from "../types/course";
 import "./Courses.css";
+import CourseCardSkeleton from "../components/CourseCardSkeleton";
 
 function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -47,7 +48,10 @@ function Courses() {
         className="courses-page-grid"
         aria-label="Available courses"
       >
-        {loading && <p>Loading courses...</p>}
+        {loading &&
+          Array.from({ length: 3 }).map((_, index) => (
+            <CourseCardSkeleton key={index} />
+          ))}
 
         {!loading && error && <p>{error}</p>}
 

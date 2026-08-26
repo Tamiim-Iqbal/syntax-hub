@@ -3,6 +3,7 @@
    Clean single-source stylesheet
    ========================================================= */
 
+
 /* =========================================================
    COURSE DETAILS
    ========================================================= */
@@ -17,6 +18,7 @@
   overflow: hidden;
 }
 
+
 /* =========================================================
    LANGUAGE SELECTOR
    ========================================================= */
@@ -28,8 +30,10 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+
   padding: 14px 0;
   margin-bottom: -40px;
+
   border: 0;
 }
 
@@ -77,6 +81,7 @@
   );
 }
 
+
 /* =========================================================
    MAIN LEARNING AREA
    ========================================================= */
@@ -84,6 +89,7 @@
 .course-learning {
   flex: 1 1 auto;
   min-height: 0;
+
   margin-top: 40px;
 
   display: grid;
@@ -93,6 +99,7 @@
   overflow: hidden;
   align-items: start;
 }
+
 
 /* =========================================================
    LEFT SIDEBAR
@@ -119,7 +126,7 @@
   ) 1;
 
   background: var(--color-bg-white);
-  height: auto;
+
   border-radius: 10px;
 
   box-shadow:
@@ -142,6 +149,7 @@
   font-weight: 650;
 }
 
+
 /* =========================================================
    TOPIC LIST
    ========================================================= */
@@ -156,7 +164,10 @@
   width: 100%;
 }
 
-/* Main topic */
+
+/* =========================================================
+   MAIN TOPIC
+   ========================================================= */
 
 .topic-preview {
   width: 100%;
@@ -194,11 +205,11 @@
     var(--color-primary) 14%,
     var(--color-bg)
   );
+
   border: 1px solid var(--color-primary);
 
   color: var(--color-primary);
 }
-
 
 .topic-preview > span:first-child {
   flex: 0 0 28px;
@@ -209,7 +220,6 @@
 
   color: var(--color-text-muted);
 }
-
 
 .topic-preview.selected > span:first-child {
   color: var(--color-primary);
@@ -232,6 +242,7 @@
   font-size: 0.85rem;
   color: currentColor;
 }
+
 
 /* =========================================================
    SUBTOPICS
@@ -308,6 +319,7 @@
   color: inherit;
 }
 
+
 /* =========================================================
    RIGHT CONTENT
    Only top border — independent scroll
@@ -344,6 +356,7 @@
   scrollbar-width: thin;
 }
 
+
 /* =========================================================
    CURRENT LOCATION / DYNAMIC ROUTE
    ========================================================= */
@@ -352,7 +365,6 @@
   width: min(100%, 900px);
 
   margin: 0 auto 26px;
-
 }
 
 .course-breadcrumb {
@@ -379,6 +391,7 @@
   letter-spacing: -0.025em;
 }
 
+
 /* =========================================================
    TOPIC CONTENT
    ========================================================= */
@@ -390,6 +403,7 @@
 
   padding-bottom: 30px;
 }
+
 
 /* =========================================================
    EXPLANATION CARD
@@ -421,7 +435,7 @@
   padding: 1px;
 
   border-radius: inherit;
- 
+
   background: linear-gradient(
     90deg,
     rgb(211, 83, 104),
@@ -451,6 +465,7 @@
   line-height: 1.85;
 }
 
+
 /* =========================================================
    CODE EXAMPLE
    ========================================================= */
@@ -473,7 +488,10 @@
     0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
-/* Header */
+
+/* =========================================================
+   CODE HEADER
+   ========================================================= */
 
 .code-block-header {
   display: grid;
@@ -495,7 +513,10 @@
   );
 }
 
-/* Mac controls */
+
+/* =========================================================
+   MAC CONTROLS
+   ========================================================= */
 
 .code-window-controls {
   display: flex;
@@ -522,7 +543,10 @@
   background: #28c840;
 }
 
-/* Language */
+
+/* =========================================================
+   CODE LANGUAGE
+   ========================================================= */
 
 .code-language {
   justify-self: start;
@@ -536,7 +560,10 @@
   text-transform: uppercase;
 }
 
-/* Copy */
+
+/* =========================================================
+   COPY BUTTON
+   ========================================================= */
 
 .code-copy-button {
   padding: 8px 14px;
@@ -566,6 +593,7 @@
 .code-copy-button:active {
   transform: translateY(0);
 }
+
 
 /* =========================================================
    CODE BODY
@@ -603,10 +631,9 @@
   opacity: 1;
 }
 
+
 /* =========================================================
-   LIGHT THEME SYNTAX COLORS
-   Colors are mixed with the active text color so they
-   remain readable when the app switches to dark theme.
+   SYNTAX COLORS
    ========================================================= */
 
 .code-block-content .hljs {
@@ -689,6 +716,7 @@
   );
 }
 
+
 /* =========================================================
    READY TO START
    ========================================================= */
@@ -762,6 +790,7 @@
   transform: translateY(-1px);
 }
 
+
 /* =========================================================
    COURSE NOT FOUND
    ========================================================= */
@@ -774,299 +803,584 @@
 
 .course-not-found h1 {
   margin: 0;
+
   font-size: 2rem;
 }
 
 .course-not-found p {
   margin-top: 10px;
+
   color: var(--color-text-secondary);
 }
 
+
 /* =========================================================
-   RESPONSIVE
+   TABLET
    ========================================================= */
 
 @media (max-width: 900px) {
   .course-learning {
     grid-template-columns: 220px minmax(0, 1fr);
-    gap: 24px;
+    gap: 20px;
   }
 
   .course-main {
-    padding-right: 8px;
+    padding: 24px 20px;
   }
 
   .topic-explanation {
-    padding: 24px;
+    padding: 22px;
+  }
+
+  .code-block-content {
+    overflow-x: auto;
   }
 }
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width: 650px) {
   .course-details {
     width: 100%;
+    height: calc(100vh - var(--navbar-height));
   }
 
-  /* Language selector */
+  /* ============================= */
+  /* Language Selector             */
+  /* ============================= */
+
   .course-language-bar {
-    padding: 12px 16px;
-    margin-bottom: -20px;
-    
+    padding: 10px 12px;
+    margin-bottom: -16px;
   }
 
   .language-selector {
     width: 100%;
+
     overflow-x: auto;
+
     justify-content: flex-start;
+
+    gap: 7px;
+
+    padding-bottom: 2px;
+
+    scrollbar-width: none;
+  }
+
+  .language-selector::-webkit-scrollbar {
+    display: none;
   }
 
   .language-button {
     flex-shrink: 0;
+
+    padding: 7px 11px;
+
+    font-size: 0.68rem;
   }
 
-  /* Sidebar + content stay side-by-side */
-  .course-learning {
-  display: grid;
-  grid-template-columns: minmax(95px, 28%) minmax(0, 1fr);
-  gap: 8px;
-}
 
-  /* Sticky topic sidebar */
+  /* ============================= */
+  /* Learning Area                 */
+  /* ============================= */
+
+  .course-learning {
+    grid-template-columns: 145px minmax(0, 1fr);
+
+    gap: 10px;
+
+    margin-top: 22px;
+  }
+
+
+  /* ============================= */
+  /* Sidebar                       */
+  /* ============================= */
+
   .course-sidebar {
     width: 100%;
     min-width: 0;
 
     position: sticky;
-    top: calc(var(--navbar-height) + 10px);
 
-    max-height: calc(100vh - var(--navbar-height) - 20px);
+    top: 0;
+
+    max-height: calc(
+      100vh - var(--navbar-height) - 15px
+    );
+
     overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 16px 8px;
+
+    border-radius: 8px;
   }
 
   .course-sidebar-header {
-    margin-bottom: 12px;
-  }
-
-  .topic-list {
-    max-height: none;
-    overflow: visible;
-  }
-
-  /* Main content */
-  .course-main {
-    width: 100%;
-    min-width: 0;
-    padding: 12px;
-  }
-
-  .course-main-header {
-    margin-bottom: 16px;
-  }
-
-  .course-topic-title {
-    font-size: 1.4rem;
-  }
-
-  .course-breadcrumb {
-    font-size: 0.75rem;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-
-  /* Explanation */
-  .topic-explanation {
-    padding: 16px;
-  }
-
-  .topic-description {
-    font-size: 0.95rem;
-    line-height: 1.7;
-  }
-
-  /* Code */
-  .topic-code-section {
-    padding: 16px;
-  }
-
-  .topic-code-section pre {
-    max-width: 100%;
-    overflow-x: auto;
-  }
-
-  /* Start screen */
-  .course-start-content {
-    padding: 28px 14px;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .course-details {
-    width: 98%;
-    margin: 0 auto;
-  }
-
-  .course-learning {
-    grid-template-columns: minmax(100px, 24%) minmax(0, 1fr);
-    gap: 4px;
-    margin-top: 20px;
-  }
-
-  /* ================================
-     SIDEBAR
-  ================================= */
-
-  .course-sidebar {
-    width: 100%;
-    padding: 0;
-  }
-
-  .course-sidebar-header {
-    margin-top: 8px;
-    padding: 0 0;
-  }
-
-  .course-sidebar-header .section-label {
-    font-size: 0.5rem;
+    padding: 0 8px 10px;
   }
 
   .course-sidebar-header h2 {
-    font-size: 0.75rem;
     margin: 0;
-  }
 
-  /* Topic list */
-  .topic-list {
-    gap: 3px;
-    margin: 0;
-    padding: 0;
-  }
-
-  .topic-group {
-    margin: 0;
-    padding: 0;
-  }
-
-  /* Topic */
-  .topic-preview {
-    width: 100%;
-    margin: 0;
-    padding: 5px 2px;
-    gap: 0;
-    min-height: 0;
-    font-size: 0.55rem;
-    line-height: 1.1;
-  }
-
-  
-
-  .topic-preview > span:first-child {
-    font-size: 0.5rem;
-    line-height: 1;
-  }
-
-  .topic-preview p {
-    margin: 0;
-    padding: 0;
-    font-size: 0.55rem;
-    line-height: 1.1;
-  }
-
-  .topic-chevron {
-    font-size: 0.45rem;
-  }
-
-  /* Selected topic */
-  .topic-preview.selected {
-    padding: 4px 2px;
-  }
-
-  /* Subtopics */
-  .subtopic-list {
-    margin: 0;
-    padding: 0 0 0 2px;
-  }
-
-  .subtopic-preview {
-    margin: 2px;
-    padding: 4px 2px;
-    gap: 0;
-    min-height: 0;
-  }
-
-  .subtopic-preview > span:first-child {
-    font-size: 0.45rem;
-  }
-
-  .subtopic-preview span {
-    font-size: 0.45rem;
-  }
-
-  .subtopic-preview p {
-    margin: 0;
-    padding: 0;
-    font-size: 0.5rem;
-    line-height: 1.1;
-  }
-
-  /* ================================
-     MAIN CONTENT
-  ================================= */
-
-  .course-main {
-    padding: 6px;
-  }
-
-  .course-main-header {
-    margin-bottom: 10px;
-  }
-
-  .course-breadcrumb {
-    font-size: 0.55rem;
-
-  }
-
-  .course-topic-title {
     font-size: 0.9rem;
   }
 
+  .course-sidebar-header .section-label {
+    font-size: 0.55rem;
+  }
+
+  .topic-list {
+    gap: 2px;
+  }
+
+  .topic-preview {
+    min-height: 38px;
+
+    padding: 6px 5px;
+
+    gap: 4px;
+  }
+
+  .topic-preview > span:first-child {
+    flex: 0 0 22px;
+
+    font-size: 0.58rem;
+  }
+
+  .topic-preview p {
+    font-size: 0.68rem;
+
+    line-height: 1.25;
+  }
+
+  .topic-chevron {
+    font-size: 0.6rem;
+  }
+
+  .topic-preview.selected {
+    padding: 6px 5px;
+  }
+
+
+  /* ============================= */
+  /* Subtopics                     */
+  /* ============================= */
+
+  .subtopic-list {
+    margin: 2px 0 6px 8px;
+
+    padding-left: 6px;
+  }
+
+  .subtopic-preview {
+    min-height: 32px;
+
+    padding: 5px;
+
+    gap: 4px;
+  }
+
+  .subtopic-preview > span:first-child {
+    flex: 0 0 20px;
+
+    font-size: 0.52rem;
+  }
+
+  .subtopic-preview p {
+    font-size: 0.62rem;
+
+    line-height: 1.2;
+  }
+
+
+  /* ============================= */
+  /* Main Content                  */
+  /* ============================= */
+
+  .course-main {
+    width: 100%;
+    min-width: 0;
+
+    padding: 16px 12px 24px;
+
+    border-radius: 8px 8px 0 0;
+  }
+
+  .course-main-header {
+    width: 100%;
+
+    margin-bottom: 18px;
+  }
+
+  .course-breadcrumb {
+    margin-bottom: 8px;
+
+    font-size: 0.62rem;
+
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+  }
+
+  .course-topic-title {
+    font-size: 1.15rem;
+
+    line-height: 1.3;
+  }
+
+
+  /* ============================= */
+  /* Topic Content                 */
+  /* ============================= */
+
+  .topic-content {
+    width: 100%;
+
+    padding-bottom: 24px;
+  }
+
   .topic-explanation {
-    padding: 14px;
+    padding: 16px;
+
+    margin-top: 20px;
+
+    border-radius: 12px;
+  }
+
+  .topic-description {
+    font-size: 0.85rem;
+
+    line-height: 1.7;
   }
 
   .topic-explanation .section-label,
   .topic-code-section .section-label {
-    font-size: 0.55rem;
+    font-size: 0.58rem;
   }
 
-  .topic-description {
-    font-size: 0.75rem;
-    line-height: 1.40;
-  }
+
+  /* ============================= */
+  /* Code                          */
+  /* ============================= */
 
   .topic-code-section {
-    padding: 1px;
+    margin-top: 20px;
+
+    padding: 0;
+  }
+
+  .code-block {
+    margin-top: 10px;
+
+    border-radius: 12px;
   }
 
   .code-block-header {
-    grid-template-columns: 60px 1fr auto;
+    grid-template-columns: 55px 1fr auto;
+
+    min-height: 46px;
+
     padding: 0 10px;
-    min-height: 45px;
   }
-  .code-block-header .code-language {
-  font-size: 0.6rem;
-}
+
+  .code-window-controls {
+    gap: 5px;
+  }
+
+  .code-dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .code-language {
+    font-size: 0.62rem;
+  }
+
+  .code-copy-button {
+    padding: 6px 9px;
+
+    font-size: 0.62rem;
+  }
 
   .code-block-content {
-    padding: 6px;
-    font-size: 0.65rem;
+    padding: 14px;
+
+    font-size: 0.68rem;
+
+    line-height: 1.65;
+
+    overflow-x: auto;
+  }
+
+
+  /* ============================= */
+  /* Start Screen                  */
+  /* ============================= */
+
+  .course-start-content {
+    width: 100%;
+
+    margin: 40px auto;
+
+    padding: 28px 18px;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .course-details {
+    width: 100%;
+  }
+
+
+  /* ============================= */
+  /* Language Selector             */
+  /* ============================= */
+
+  .course-language-bar {
+    padding: 8px 10px;
+
+    margin-bottom: -12px;
   }
 
   .language-button {
-    padding: 6px 10px;
+    padding: 6px 9px;
+
+    font-size: 0.6rem;
+  }
+
+
+  /* ============================= */
+  /* Learning Area                 */
+  /* ============================= */
+
+  .course-learning {
+    grid-template-columns: 125px minmax(0, 1fr);
+
+    gap: 7px;
+
+    margin-top: 18px;
+  }
+
+
+  /* ============================= */
+  /* Sidebar                       */
+  /* ============================= */
+
+  .course-sidebar {
+    padding: 12px 5px;
+
+    border-radius: 7px;
+  }
+
+  .course-sidebar-header {
+    padding: 0 5px 8px;
+  }
+
+  .course-sidebar-header .section-label {
+    font-size: 0.48rem;
+  }
+
+  .course-sidebar-header h2 {
+    font-size: 0.75rem;
+  }
+
+  .topic-list {
+    gap: 2px;
+  }
+
+  .topic-preview {
+    min-height: 34px;
+
+    padding: 5px 3px;
+
+    gap: 2px;
+  }
+
+  .topic-preview > span:first-child {
+    flex: 0 0 19px;
+
+    font-size: 0.5rem;
+  }
+
+  .topic-preview p {
+    font-size: 0.58rem;
+
+    line-height: 1.2;
+  }
+
+  .topic-chevron {
+    font-size: 0.5rem;
+  }
+
+  .topic-preview.selected {
+    padding: 5px 3px;
+  }
+
+
+  /* ============================= */
+  /* Subtopics                     */
+  /* ============================= */
+
+  .subtopic-list {
+    margin-left: 5px;
+
+    padding-left: 4px;
+  }
+
+  .subtopic-preview {
+    min-height: 29px;
+
+    padding: 4px 3px;
+  }
+
+  .subtopic-preview > span:first-child {
+    flex: 0 0 17px;
+
+    font-size: 0.45rem;
+  }
+
+  .subtopic-preview p {
+    font-size: 0.52rem;
+
+    line-height: 1.15;
+  }
+
+
+  /* ============================= */
+  /* Main Content                  */
+  /* ============================= */
+
+  .course-main {
+    padding: 12px 8px 20px;
+  }
+
+  .course-main-header {
+    margin-bottom: 14px;
+  }
+
+  .course-breadcrumb {
+    font-size: 0.52rem;
+  }
+
+  .course-topic-title {
+    font-size: 0.95rem;
+  }
+
+
+  /* ============================= */
+  /* Explanation                   */
+  /* ============================= */
+
+  .topic-explanation {
+    padding: 12px;
+
+    margin-top: 16px;
+
+    border-radius: 10px;
+  }
+
+  .topic-description {
+    font-size: 0.72rem;
+
+    line-height: 1.6;
+  }
+
+  .topic-explanation .section-label,
+  .topic-code-section .section-label {
+    font-size: 0.5rem;
+  }
+
+
+  /* ============================= */
+  /* Code                          */
+  /* ============================= */
+
+  .topic-code-section {
+    margin-top: 16px;
+  }
+
+  .code-block {
+    border-radius: 10px;
+  }
+
+  .code-block-header {
+    grid-template-columns: 48px 1fr auto;
+
+    min-height: 42px;
+
+    padding: 0 8px;
+  }
+
+  .code-window-controls {
+    gap: 4px;
+  }
+
+  .code-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .code-language {
+    font-size: 0.54rem;
+  }
+
+  .code-copy-button {
+    padding: 5px 7px;
+
     font-size: 0.55rem;
+  }
+
+  .code-block-content {
+    padding: 12px;
+
+    font-size: 0.6rem;
+
+    line-height: 1.6;
+  }
+
+
+  /* ============================= */
+  /* Start Screen                  */
+  /* ============================= */
+
+  .course-start-content {
+    margin: 30px auto;
+
+    padding: 24px 14px;
+  }
+
+  .course-start-content h2 {
+    font-size: 1.2rem;
+  }
+
+  .course-start-content > p:not(.section-label) {
+    font-size: 0.8rem;
+
+    line-height: 1.6;
+  }
+
+  .course-start-content button {
+    padding: 9px 14px;
+
+    font-size: 0.75rem;
   }
 }
 
+
+/* =========================================================
+   THEME / INLINE TEXT
+   ========================================================= */
 
 :root {
   --color-highlight: #16a34a;
@@ -1082,7 +1396,6 @@
 
   border: 1px solid transparent;
   border-radius: 6px;
-  
 
   background: var(--color-highlight-bg);
   color: var(--color-highlight);
@@ -1093,7 +1406,10 @@
   line-height: 1.45;
 }
 
-/* Inline Code */
+
+/* =========================================================
+   INLINE CODE
+   ========================================================= */
 
 .inline-code {
   padding: 2px 6px;
@@ -1110,12 +1426,13 @@
 }
 
 
-/* ============================= */
-/* Topic Image                   */
-/* ============================= */
+/* =========================================================
+   TOPIC IMAGE
+   ========================================================= */
 
 .topic-image {
   width: 100%;
+
   margin: 28px 0;
 
   text-align: center;
@@ -1144,6 +1461,7 @@
 
 .topic-image img:hover {
   transform: translateY(-2px);
+
   box-shadow: var(--shadow-md);
 }
 
@@ -1151,6 +1469,7 @@
   max-width: 800px;
 
   margin: 10px auto 0;
+
   padding: 0 8px;
 
   color: var(--color-text-muted);
@@ -1161,38 +1480,43 @@
 
 @media (max-width: 480px) {
   .topic-image {
-  margin: 18px 0;
+    margin: 18px 0;
+  }
+
+  .topic-image img {
+    border-radius: var(--radius-md);
+  }
+
+  .topic-image figcaption {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
 }
 
-.topic-image img {
-  border-radius: var(--radius-md);
-}
 
-.topic-image figcaption {
-  font-size: 0.7rem;
-  line-height: 1.4;
-}
-}
-
-/* ============================= */
-/* Previous / Next Topic         */
-/* ============================= */
+/* =========================================================
+   PREVIOUS / NEXT TOPIC
+   ========================================================= */
 
 .topic-navigation {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 55%;
   margin-top: 30px;
+  padding: 10;
 }
 
 .topic-navigation-button {
   min-height: 56px;
+
   display: flex;
   align-items: center;
   gap: 10px;
 
-  padding: 12px 16px;
+  padding: 10px 20px;
+  justify-items: center;
 
+  justify-self: center;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 
@@ -1217,18 +1541,23 @@
 
 .topic-navigation-button.next {
   justify-content: flex-end;
+
   text-align: right;
 }
 
 .topic-navigation-button:not(:disabled):hover {
   transform: translateY(-2px);
+
   border-color: var(--color-primary);
+
   background: var(--color-surface);
+
   color: var(--color-primary);
 }
 
 .topic-navigation-button:disabled {
   opacity: 0.35;
+
   cursor: not-allowed;
 }
 
@@ -1237,29 +1566,35 @@
 }
 
 
-/* Mobile */
+/* =========================================================
+   TOPIC NAVIGATION — MOBILE
+   ========================================================= */
 
 @media (max-width: 480px) {
-
   .topic-navigation {
     gap: 8px;
+
     margin-top: 20px;
   }
 
   .topic-navigation-button {
     min-height: 46px;
+
     padding: 8px 10px;
+
     font-size: 0.68rem;
   }
 
   .topic-navigation-arrow {
     font-size: 0.9rem;
   }
-
 }
 
 
-/* Only Text & Bullet */
+/* =========================================================
+   ONLY TEXT & BULLET
+   ========================================================= */
+
 .topic-only-text {
   margin: 1.5rem 0;
 }
@@ -1270,10 +1605,12 @@
 
 .topic-bullet-points ul {
   margin: 0;
+
   padding-left: 1.5rem;
 }
 
 .topic-bullet-points li {
   margin-bottom: 0.75rem;
+
   line-height: 1.8;
 }

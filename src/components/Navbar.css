@@ -1,38 +1,55 @@
+/* =========================================================
+   NAVBAR
+========================================================= */
+
 .navbar {
+  width: 100%;
   height: var(--navbar-height);
-  background: var(--color-bg-white);
+
   position: sticky;
   top: 0;
+
   z-index: 100;
-  width: 100%;
+
+  background: var(--color-bg-white);
   border-bottom: 1px solid var(--color-border);
 }
 
 .navbar-container {
   width: var(--content-width);
   max-width: var(--max-content-width);
+
   height: 100%;
-  
+
   margin: 0 auto;
+
   display: flex;
   align-items: center;
-
 }
 
-/* Logo */
+/* =========================================================
+   LOGO
+========================================================= */
 
 .navbar-logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  flex-shrink: 0;
+
   color: var(--color-text);
+
+  font-size: 1.4rem;
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
 }
 
 .navbar-logo span {
   color: var(--color-primary);
 }
 
-/* Navigation */
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
 
 .navbar-nav {
   margin-left: 48px;
@@ -43,10 +60,10 @@
 
   padding: 8px 4px;
 
+  color: var(--color-text-secondary);
+
   font-size: 0.95rem;
   font-weight: 500;
-
-  color: var(--color-text-secondary);
 
   transition:
     color 0.2s ease,
@@ -61,101 +78,36 @@
   color: var(--color-primary);
 }
 
-/* Right side */
+
+/* =========================================================
+   ACTIONS
+========================================================= */
 
 .navbar-actions {
   margin-left: auto;
 
   display: flex;
   align-items: center;
+
   gap: 10px;
 }
 
 .navbar-actions button {
   border: 0;
+
   background: transparent;
+
   color: var(--color-text-secondary);
+
   transition:
     color 0.2s ease,
     background 0.2s ease;
 }
 
-.navbar-login {
-  padding: 6px 14px;
 
-  border: 1px solid var(--color-primary) !important;
-  border-radius: var(--radius-md);
-
-  background: var(--color-primary) !important;
-  color: #ffffff !important;
-
-  font-weight: 600;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.navbar-login:hover {
-  background: var(--color-primary-hover) !important;
-  border-color: var(--color-primary-hover) !important;
-  color: #ffffff !important;
-  transform: translateY(-1px);
-}
-
-.navbar-theme {
-  width: 33px;
-  height: 33px;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid var(--color-border) !important;
-  border-radius: 50%;
-
-  background: transparent;
-  color: var(--color-primary);
-
-  font-size: 1rem;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.navbar-theme:hover {
-  border-color: var(--color-primary) !important;
-  color: #ffffff !important;
-
-  transform: translateY(-1px);
-}
-
-/* Mobile */
-
-@media (max-width: 640px) {
-  .navbar-container {
-    width: min(100% - 20px, var(--container-width));
-  }
-
-  .navbar-nav {
-    margin-left: 24px;
-  }
-
-  .navbar-language {
-    display: none;
-  }
-
-  .navbar-login {
-    padding: 7px 10px;
-  }
-}
-
-/* =========================================
-   Language Toggle
-   ========================================= */
+/* =========================================================
+   LANGUAGE TOGGLE
+========================================================= */
 
 .navbar-language-toggle {
   width: 110px;
@@ -167,17 +119,20 @@
 
   padding: 0 10px;
 
+  box-sizing: border-box;
+
   border: 1.5px solid var(--color-primary) !important;
   border-radius: 8px;
 
   background: var(--color-surface) !important;
+
   color: var(--color-text-secondary);
 
   font-size: 0.78rem;
   font-weight: 600;
 
   cursor: pointer;
-  box-sizing: border-box;
+
   outline: none;
 
   transition:
@@ -190,21 +145,26 @@
   transform: translateY(-1px);
 }
 
-/* Selected language */
-
 .language-option {
   white-space: nowrap;
 
   transition: color 0.2s ease;
 }
 
-.navbar-language-toggle.bangla .bangla-option,
-.navbar-language-toggle.english .english-option {
+.navbar-language-toggle.bangla
+  .bangla-option,
+
+.navbar-language-toggle.english
+  .english-option {
   color: var(--color-primary);
+
   font-weight: 750;
 }
 
-/* Toggle track */
+
+/* =========================================================
+   LANGUAGE SWITCH
+========================================================= */
 
 .language-switch {
   position: relative;
@@ -225,8 +185,6 @@
   pointer-events: none;
 }
 
-/* Toggle dot */
-
 .language-dot {
   position: absolute;
 
@@ -243,21 +201,115 @@
   transition: transform 0.25s ease;
 }
 
-/* Bangla selected */
-
-.navbar-language-toggle.bangla .language-dot {
+.navbar-language-toggle.bangla
+  .language-dot {
   transform: translateX(0);
 }
 
-/* English selected */
-
-.navbar-language-toggle.english .language-dot {
+.navbar-language-toggle.english
+  .language-dot {
   transform: translateX(11px);
 }
 
-/* ========================================
-   NAVBAR - MOBILE
-======================================== */
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+.navbar-login {
+  padding: 6px 14px;
+
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-md);
+
+  background: var(--color-primary) !important;
+
+  color: #ffffff !important;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navbar-login:hover {
+  background: var(--color-primary-hover) !important;
+
+  border-color: var(--color-primary-hover) !important;
+
+  color: #ffffff !important;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+.navbar-theme {
+  width: 33px;
+  height: 33px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--color-border) !important;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: var(--color-primary);
+
+  font-size: 1rem;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navbar-theme:hover {
+  border-color: var(--color-primary) !important;
+
+  color: var(--color-primary) !important;
+
+  background: var(--color-surface);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .navbar-container {
+    width: 92%;
+  }
+
+  .navbar-nav {
+    margin-left: 32px;
+  }
+
+  .navbar-actions {
+    gap: 8px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 640px) {
   .navbar {
@@ -265,32 +317,45 @@
   }
 
   .navbar-container {
-    width: 98%;
+    width: 92%;
     max-width: none;
   }
+
+  /* Logo */
 
   .navbar-logo {
     font-size: 1.05rem;
   }
+
+  /* Navigation */
 
   .navbar-nav {
     margin-left: 20px;
   }
 
   .nav-link {
-    font-size: 0.78rem;
     padding: 6px 2px;
+
+    font-size: 0.75rem;
   }
+
+  /* Actions */
 
   .navbar-actions {
-    gap: 5px;
+    gap: 6px;
   }
 
-  /* Language toggle */
+  /* Language */
+
   .navbar-language-toggle {
-    gap: 5px;
-    padding: 4px 6px;
-    font-size: 0.65rem;
+    width: 82px;
+    height: 32px;
+
+    padding: 0 7px;
+
+    border-radius: 7px;
+
+    font-size: 0.62rem;
   }
 
   .language-switch {
@@ -301,62 +366,71 @@
   .language-dot {
     width: 8px;
     height: 8px;
+
     top: 2px;
     left: 2px;
   }
 
-  .navbar-language-toggle.english .language-dot {
+  .navbar-language-toggle.english
+    .language-dot {
     transform: translateX(9px);
   }
 
   /* Login */
+
   .navbar-login {
-    padding: 6px 9px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+
+    font-size: 0.68rem;
   }
 
   /* Theme */
+
   .navbar-theme {
     width: 30px;
     height: 30px;
+
     font-size: 0.8rem;
   }
 }
 
 
-/* ========================================
-   VERY SMALL MOBILE
-======================================== */
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
 
 @media (max-width: 480px) {
   .navbar {
-    height: 50px;
+    height: 54px;
   }
 
   .navbar-container {
-    width: 98%;
+    width: 92%;
   }
 
   .navbar-logo {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
   }
 
   .navbar-nav {
-    margin-left: 20px;
+    margin-left: 14px;
   }
 
   .nav-link {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
 
   .navbar-actions {
-    gap: 10px;
+    gap: 5px;
   }
 
   .navbar-language-toggle {
-    gap: 1px;
-    padding: 0 8px;
-    font-size: 0.65rem;
+    width: 70px;
+    height: 29px;
+
+    padding: 0 6px;
+
+    font-size: 0.55rem;
   }
 
   .language-switch {
@@ -367,20 +441,58 @@
   .language-dot {
     width: 7px;
     height: 7px;
+
+    top: 1.5px;
+    left: 2px;
   }
 
-  .navbar-language-toggle.english .language-dot {
+  .navbar-language-toggle.english
+    .language-dot {
     transform: translateX(8px);
   }
 
   .navbar-login {
-    padding: 9px 10px;
-    font-size: 0.62rem;
+    padding: 6px 8px;
+
+    font-size: 0.58rem;
   }
 
   .navbar-theme {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+
+    font-size: 0.75rem;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 360px) {
+  .navbar-container {
+    width: 94%;
+  }
+
+  .navbar-nav {
+    margin-left: 10px;
+  }
+
+  .navbar-actions {
+    gap: 4px;
+  }
+
+  .navbar-language-toggle {
+    width: 62px;
+  }
+
+  .navbar-login {
+    padding: 5px 7px;
+  }
+
+  .navbar-theme {
+    width: 27px;
+    height: 27px;
   }
 }
