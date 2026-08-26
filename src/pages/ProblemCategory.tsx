@@ -14,8 +14,10 @@ import type {
   ProblemCategory as ProblemCategoryType,
 } from "../types/course";
 
-import "./ProblemCategory.css";
 import ProblemListSkeleton from "../components/ProblemListSkeleton";
+import ErrorState from "../components/ErrorState";
+
+import "./ProblemCategory.css";
 
 const getDisplayText = (
   text: LocalizedText
@@ -40,14 +42,17 @@ const getDisplayText = (
 };
 
 function ProblemCategory() {
-  const { categorySlug } = useParams<{
-    categorySlug: string;
-  }>();
+  const { categorySlug } =
+    useParams<{
+      categorySlug: string;
+    }>();
 
   const navigate = useNavigate();
 
   const [category, setCategory] =
-    useState<ProblemCategoryType | null>(null);
+    useState<ProblemCategoryType | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -55,24 +60,65 @@ function ProblemCategory() {
   const [error, setError] =
     useState<string | null>(null);
 
-  useEffect(() => {
+  /* =========================
+     LOAD CATEGORY
+  ========================= */
+
+  const loadCategory = async () => {
     if (!categorySlug) {
       setError("Invalid problem category");
       setLoading(false);
       return;
     }
 
-    const loadCategory = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
+      const data =
+        await getProblemCategory(
+          categorySlug
+        );
+
+      setCategory(data);
+    } catch (error) {
+      console.error(
+        "Get problem category error:",
+        error
+      );
+
+      setError(
+        "Failed to load problem category."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
+  useEffect(() => {
+    const load = async () => {
+      if (!categorySlug) {
+        setError(
+          "Invalid problem category"
+        );
+
+        setLoading(false);
+
+        return;
+      }
+
+      try {
         const data =
           await getProblemCategory(
             categorySlug
           );
 
         setCategory(data);
+        setLoading(false);
       } catch (error) {
         console.error(
           "Get problem category error:",
@@ -80,31 +126,42 @@ function ProblemCategory() {
         );
 
         setError(
-          "Failed to load problem category"
+          "Failed to load problem category."
         );
-      } finally {
+
         setLoading(false);
       }
     };
 
-    loadCategory();
+    load();
   }, [categorySlug]);
 
+  /* =========================
+     LOADING
+  ========================= */
+
   if (loading) {
-  return (
-    <div className="problem-category-page">
-      <ProblemListSkeleton />
-    </div>
-  );
-}
+    return (
+      <div className="problem-category-page">
+        <ProblemListSkeleton />
+      </div>
+    );
+  }
+
+  /* =========================
+     ERROR
+  ========================= */
 
   if (error || !category) {
     return (
       <div className="problem-category-page">
-        <p>
-          {error ??
-            "Problem category not found."}
-        </p>
+        <ErrorState
+          message={
+            error ??
+            "Problem category not found."
+          }
+          onRetry={loadCategory}
+        />
       </div>
     );
   }
@@ -116,6 +173,10 @@ function ProblemCategory() {
   const description = getDisplayText(
     category.description
   );
+
+  /* =========================
+     OPEN PROBLEM
+  ========================= */
 
   const openProblem = (
     problemSlug: string

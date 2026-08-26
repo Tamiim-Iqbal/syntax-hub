@@ -1,6 +1,15 @@
-import { useEffect, useMemo, useState, type ReactNode, } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useParams } from "react-router-dom";
+
 import CodeBlock from "../components/CodeBlock";
+import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
+import ErrorState from "../components/ErrorState";
+
 import {
   type CourseLanguage,
   type Topic,
@@ -9,10 +18,11 @@ import {
   type LocalizedText,
   type RichTextContent,
 } from "../types/course";
+
 import { getCourseBySlug } from "../services/courseService";
 import { useLanguage } from "../context/LanguageContext";
+
 import "./CourseDetails.css";
-import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
 
 type ContentSource = Topic | Subtopic;
 
@@ -23,7 +33,10 @@ type ContentSource = Topic | Subtopic;
 const getContentSections = (
   content: ContentSource
 ): ContentSection[] => {
-  if (content.sections && content.sections.length > 0) {
+  if (
+    content.sections &&
+    content.sections.length > 0
+  ) {
     return content.sections;
   }
 
@@ -113,16 +126,20 @@ const courseDetailsText = {
 /* ============================= */
 
 function CourseDetails() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams<{
+    slug: string;
+  }>();
 
   const { language } = useLanguage();
 
   const [course, setCourse] =
-    useState<ReturnType<typeof getCourseBySlug> extends Promise<
-      infer T
-    >
-      ? T
-      : never>();
+    useState<
+      ReturnType<typeof getCourseBySlug> extends Promise<
+        infer T
+      >
+        ? T
+        : never
+    >();
 
   const [loading, setLoading] =
     useState(true);
@@ -130,25 +147,68 @@ function CourseDetails() {
   const [error, setError] =
     useState("");
 
+  /* ============================= */
+  /* Load Course                   */
+  /* ============================= */
+
+  const loadCourse = async () => {
+    if (!slug) {
+      setCourse(undefined);
+      setError("Invalid course.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const data =
+        await getCourseBySlug(slug);
+
+      setCourse(data);
+    } catch (error) {
+      console.error(
+        "Failed to load course:",
+        error
+      );
+
+      setCourse(undefined);
+
+      setError(
+        "Failed to load course."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ============================= */
+  /* Initial Load                  */
+  /* ============================= */
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadCourse = async () => {
+    const load = async () => {
       if (!slug) {
-        setCourse(undefined);
-        setLoading(false);
+        if (!cancelled) {
+          setCourse(undefined);
+          setError("Invalid course.");
+          setLoading(false);
+        }
+
         return;
       }
 
       try {
-        setLoading(true);
-        setError("");
-
         const data =
           await getCourseBySlug(slug);
 
         if (!cancelled) {
           setCourse(data);
+          setError("");
+          setLoading(false);
         }
       } catch (error) {
         console.error(
@@ -161,15 +221,12 @@ function CourseDetails() {
           setError(
             "Failed to load course."
           );
-        }
-      } finally {
-        if (!cancelled) {
           setLoading(false);
         }
       }
     };
 
-    loadCourse();
+    load();
 
     return () => {
       cancelled = true;
@@ -257,15 +314,16 @@ function CourseDetails() {
   /* Languages                     */
   /* ============================= */
 
-  const languages = useMemo<CourseLanguage[]>(
-    () =>
-      course &&
+  const languages =
+    useMemo<CourseLanguage[]>(
+      () =>
+        course &&
         "languages" in course &&
         course.languages
-        ? course.languages
-        : [],
-    [course]
-  );
+          ? course.languages
+          : [],
+      [course]
+    );
 
   const isMultiLanguage =
     languages.length > 0;
@@ -277,13 +335,6 @@ function CourseDetails() {
     languages[0]?.id
   );
 
-  /*
-   * If the course changes and the old selected
-   * language does not exist in the new course,
-   * automatically use the first available language.
-   *
-   * This avoids calling setState inside useEffect.
-   */
   const effectiveSelectedLanguageId =
     languages.some(
       (courseLanguage) =>
@@ -293,18 +344,19 @@ function CourseDetails() {
       ? selectedLanguageId
       : languages[0]?.id;
 
-  const activeLanguage = useMemo(
-    () =>
-      languages.find(
-        (courseLanguage) =>
-          courseLanguage.id ===
-          effectiveSelectedLanguageId
-      ),
-    [
-      languages,
-      effectiveSelectedLanguageId,
-    ]
-  );
+  const activeLanguage =
+    useMemo(
+      () =>
+        languages.find(
+          (courseLanguage) =>
+            courseLanguage.id ===
+            effectiveSelectedLanguageId
+        ),
+      [
+        languages,
+        effectiveSelectedLanguageId,
+      ]
+    );
 
   /* ============================= */
   /* Topics                        */
@@ -312,8 +364,8 @@ function CourseDetails() {
 
   const topics: Topic[] =
     course &&
-      "languages" in course &&
-      course.languages
+    "languages" in course &&
+    course.languages
       ? activeLanguage?.topics ?? []
       : course?.topics ?? [];
 
@@ -329,7 +381,8 @@ function CourseDetails() {
 
   const activeTopic = topics.find(
     (topic) =>
-      topic.slug === selectedTopicSlug
+      topic.slug ===
+      selectedTopicSlug
   );
 
   const activeSubtopic:
@@ -350,34 +403,36 @@ function CourseDetails() {
   /* Previous / Next               */
   /* ============================= */
 
-  const navigableContent: ContentSource[] =
+  const navigableContent:
+    ContentSource[] =
     topics.flatMap((topic) => [
       topic,
       ...(topic.subtopics ?? []),
     ]);
 
-  const activeContentIndex = activeContent
-    ? navigableContent.findIndex(
-      (content) =>
-        content._id ===
-        activeContent._id
-    )
-    : -1;
+  const activeContentIndex =
+    activeContent
+      ? navigableContent.findIndex(
+          (content) =>
+            content._id ===
+            activeContent._id
+        )
+      : -1;
 
   const previousContent =
     activeContentIndex > 0
       ? navigableContent[
-      activeContentIndex - 1
-      ]
+          activeContentIndex - 1
+        ]
       : undefined;
 
   const nextContent =
     activeContentIndex >= 0 &&
-      activeContentIndex <
+    activeContentIndex <
       navigableContent.length - 1
       ? navigableContent[
-      activeContentIndex + 1
-      ]
+          activeContentIndex + 1
+        ]
       : undefined;
 
   /* ============================= */
@@ -387,15 +442,23 @@ function CourseDetails() {
   const selectTopic = (
     topic: Topic
   ) => {
-    setSelectedTopicSlug(topic.slug);
-    setSelectedSubtopicSlug(null);
+    setSelectedTopicSlug(
+      topic.slug
+    );
+
+    setSelectedSubtopicSlug(
+      null
+    );
   };
 
   const selectSubtopic = (
     topic: Topic,
     subtopic: Subtopic
   ) => {
-    setSelectedTopicSlug(topic.slug);
+    setSelectedTopicSlug(
+      topic.slug
+    );
+
     setSelectedSubtopicSlug(
       subtopic.slug
     );
@@ -404,9 +467,8 @@ function CourseDetails() {
   const selectContent = (
     content: ContentSource
   ) => {
-    /*
-     * Main topic
-     */
+    /* Main topic */
+
     const topic = topics.find(
       (item) =>
         item._id === content._id
@@ -417,17 +479,16 @@ function CourseDetails() {
       return;
     }
 
-    /*
-     * Subtopic
-     */
-    const parentTopic = topics.find(
-      (item) =>
+    /* Subtopic */
+
+    const parentTopic =
+      topics.find((item) =>
         item.subtopics?.some(
           (subtopic) =>
             subtopic._id ===
             content._id
         )
-    );
+      );
 
     const subtopic =
       parentTopic?.subtopics?.find(
@@ -470,26 +531,23 @@ function CourseDetails() {
       courseLanguage.id
     );
 
-    /*
-     * Current topic doesn't exist
-     * in the new language.
-     */
+    /* Current topic doesn't exist
+       in the new language. */
+
     if (!nextTopic) {
       setSelectedTopicSlug(null);
       setSelectedSubtopicSlug(null);
       return;
     }
 
-    /*
-     * Keep the same topic.
-     */
+    /* Keep the same topic */
+
     setSelectedTopicSlug(
       nextTopic.slug
     );
 
-    /*
-     * Try to keep the same subtopic.
-     */
+    /* Try to keep the same subtopic */
+
     const matchingSubtopic =
       nextTopic.subtopics?.find(
         (subtopic) =>
@@ -498,38 +556,36 @@ function CourseDetails() {
       );
 
     setSelectedSubtopicSlug(
-      matchingSubtopic?.slug ?? null
+      matchingSubtopic?.slug ??
+        null
     );
   };
 
   /* ============================= */
-  /* Course Not Found              */
+  /* Loading                       */
   /* ============================= */
 
   if (loading) {
-  return <CourseDetailsSkeleton />;
-}
+    return <CourseDetailsSkeleton />;
+  }
+
+  /* ============================= */
+  /* Error                         */
+  /* ============================= */
 
   if (error || !course) {
     return (
       <div className="course-not-found">
-        <h1>
-          {
-            courseDetailsText
-              .courseNotFound[
-            language
-            ]
-          }
-        </h1>
-
-        <p>
-          {
+        <ErrorState
+          message={
+            error ||
             courseDetailsText
               .courseNotFoundDescription[
-            language
+              language
             ]
           }
-        </p>
+          onRetry={loadCourse}
+        />
       </div>
     );
   }
@@ -541,14 +597,14 @@ function CourseDetails() {
   const breadcrumb =
     activeSubtopic
       ? `${course.title} / ${getText(
-        activeTopic!.title
-      )} / ${getText(
-        activeSubtopic.title
-      )}`
+          activeTopic!.title
+        )} / ${getText(
+          activeSubtopic.title
+        )}`
       : activeTopic
         ? `${course.title} / ${getText(
-          activeTopic.title
-        )}`
+            activeTopic.title
+          )}`
         : course.title;
 
   /* ============================= */
@@ -573,11 +629,12 @@ function CourseDetails() {
                   key={
                     courseLanguage.id
                   }
-                  className={`language-button ${effectiveSelectedLanguageId ===
-                      courseLanguage.id
+                  className={`language-button ${
+                    effectiveSelectedLanguageId ===
+                    courseLanguage.id
                       ? "active"
                       : ""
-                    }`}
+                  }`}
                   style={
                     {
                       "--language-color":
@@ -617,7 +674,7 @@ function CourseDetails() {
               {
                 courseDetailsText
                   .courseContent[
-                language
+                  language
                 ]
               }
             </p>
@@ -626,7 +683,7 @@ function CourseDetails() {
               {
                 courseDetailsText
                   .topics[
-                language
+                  language
                 ]
               }
             </h2>
@@ -650,10 +707,11 @@ function CourseDetails() {
 
                   <button
                     type="button"
-                    className={`topic-preview ${isSelected
+                    className={`topic-preview ${
+                      isSelected
                         ? "selected"
                         : ""
-                      }`}
+                    }`}
                     onClick={() =>
                       selectTopic(topic)
                     }
@@ -688,8 +746,8 @@ function CourseDetails() {
                   {/* Subtopics */}
 
                   {isSelected &&
-                    topic.subtopics
-                      ?.length ? (
+                  topic.subtopics
+                    ?.length ? (
                     <div className="subtopic-list">
 
                       {topic.subtopics.map(
@@ -699,11 +757,12 @@ function CourseDetails() {
                             key={
                               subtopic._id
                             }
-                            className={`subtopic-preview ${selectedSubtopicSlug ===
-                                subtopic.slug
+                            className={`subtopic-preview ${
+                              selectedSubtopicSlug ===
+                              subtopic.slug
                                 ? "selected"
                                 : ""
-                              }`}
+                            }`}
                             onClick={() =>
                               selectSubtopic(
                                 topic,
@@ -771,9 +830,15 @@ function CourseDetails() {
           {activeContent ? (
             <article className="topic-content">
 
-              {getContentSections(activeContent).map(
+              {getContentSections(
+                activeContent
+              ).map(
                 (section, index) => {
-                  if (section.type === "explanation") {
+
+                  if (
+                    section.type ===
+                    "explanation"
+                  ) {
                     return (
                       <section
                         className="topic-explanation"
@@ -781,14 +846,19 @@ function CourseDetails() {
                       >
                         <p className="topic-description">
                           {renderRichText(
-                            getRichText(section.content)
+                            getRichText(
+                              section.content
+                            )
                           )}
                         </p>
                       </section>
                     );
                   }
 
-                  if (section.type === "only-text") {
+                  if (
+                    section.type ===
+                    "only-text"
+                  ) {
                     return (
                       <section
                         className="topic-only-text"
@@ -796,31 +866,50 @@ function CourseDetails() {
                       >
                         <p className="topic-description">
                           {renderRichText(
-                            getRichText(section.content)
+                            getRichText(
+                              section.content
+                            )
                           )}
                         </p>
                       </section>
                     );
                   }
 
-                  if (section.type === "bullet-points") {
+                  if (
+                    section.type ===
+                    "bullet-points"
+                  ) {
                     return (
                       <section
                         className="topic-bullet-points"
                         key={`bullet-points-${index}`}
                       >
                         <ul>
-                          {section.items.map((item, itemIndex) => (
-                            <li key={`bullet-${index}-${itemIndex}`}>
-                              {renderRichText(getRichText(item))}
-                            </li>
-                          ))}
+                          {section.items.map(
+                            (
+                              item,
+                              itemIndex
+                            ) => (
+                              <li
+                                key={`bullet-${index}-${itemIndex}`}
+                              >
+                                {renderRichText(
+                                  getRichText(
+                                    item
+                                  )
+                                )}
+                              </li>
+                            )
+                          )}
                         </ul>
                       </section>
                     );
                   }
 
-                  if (section.type === "image") {
+                  if (
+                    section.type ===
+                    "image"
+                  ) {
                     return (
                       <figure
                         className="topic-image"
@@ -833,7 +922,9 @@ function CourseDetails() {
 
                         {section.caption && (
                           <figcaption>
-                            {getText(section.caption)}
+                            {getText(
+                              section.caption
+                            )}
                           </figcaption>
                         )}
                       </figure>
@@ -846,13 +937,24 @@ function CourseDetails() {
                       key={`code-${index}`}
                     >
                       <p className="section-label">
-                        {courseDetailsText.codeExample[language]}
+                        {
+                          courseDetailsText
+                            .codeExample[
+                            language
+                          ]
+                        }
                       </p>
 
                       <CodeBlock
-                        code={section.code}
-                        language={section.language}
-                        languageColor={activeLanguage?.color}
+                        code={
+                          section.code
+                        }
+                        language={
+                          section.language
+                        }
+                        languageColor={
+                          activeLanguage?.color
+                        }
                       />
                     </section>
                   );
@@ -892,7 +994,7 @@ function CourseDetails() {
                     {
                       courseDetailsText
                         .previous[
-                      language
+                        language
                       ]
                     }
                   </span>
@@ -918,7 +1020,7 @@ function CourseDetails() {
                     {
                       courseDetailsText
                         .next[
-                      language
+                        language
                       ]
                     }
                   </span>
@@ -951,7 +1053,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .readyToStart[
-                  language
+                    language
                   ]
                 }
               </h2>
@@ -960,7 +1062,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .selectTopic[
-                  language
+                    language
                   ]
                 }
               </p>
@@ -969,7 +1071,7 @@ function CourseDetails() {
                 {
                   courseDetailsText
                     .loginToStart[
-                  language
+                    language
                   ]
                 }
               </button>

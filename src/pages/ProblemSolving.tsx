@@ -11,8 +11,10 @@ import type {
   ProblemCategory,
 } from "../types/course";
 
-import "./ProblemSolving.css";
 import ProblemCategorySkeleton from "../components/ProblemCategorySkeleton";
+import ErrorState from "../components/ErrorState";
+
+import "./ProblemSolving.css";
 
 const getDisplayText = (
   text: LocalizedText
@@ -48,8 +50,37 @@ function ProblemSolving() {
   const [error, setError] =
     useState<string | null>(null);
 
+  const loadCourse = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data =
+        await getProblemSolving();
+
+      if (
+        data.type !==
+        "problem-solving"
+      ) {
+        throw new Error(
+          "Invalid problem solving course"
+        );
+      }
+
+      setCourse(data);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "Failed to load problem solving course."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadCourse = async () => {
+    const load = async () => {
       try {
         const data =
           await getProblemSolving();
@@ -64,34 +95,50 @@ function ProblemSolving() {
         }
 
         setCourse(data);
+        setLoading(false);
       } catch (error) {
         console.error(error);
 
         setError(
-          "Failed to load problem solving course"
+          "Failed to load problem solving course."
         );
-      } finally {
+
         setLoading(false);
       }
     };
 
-    loadCourse();
+    load();
   }, []);
 
+  /* =========================
+     LOADING
+  ========================= */
+
   if (loading) {
-  return <ProblemCategorySkeleton />;
-}
+    return <ProblemCategorySkeleton />;
+  }
+
+  /* =========================
+     ERROR
+  ========================= */
 
   if (error || !course) {
     return (
       <div className="problem-solving-page">
-        <p>
-          {error ??
-            "Course not found."}
-        </p>
+        <ErrorState
+          message={
+            error ??
+            "Problem solving course not found."
+          }
+          onRetry={loadCourse}
+        />
       </div>
     );
   }
+
+  /* =========================
+     CONTENT
+  ========================= */
 
   return (
     <div className="problem-solving-page">

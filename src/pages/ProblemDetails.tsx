@@ -1,542 +1,605 @@
 import { useEffect, useState } from "react";
 import {
-    Link,
-    useNavigate,
-    useParams,
+  Link,
+  useNavigate,
+  useParams,
 } from "react-router-dom";
 
 import {
-    getProblem,
-    getProblemCategory,
+  getProblem,
+  getProblemCategory,
 } from "../services/courseService";
 
 import type {
-    LocalizedText,
-    Problem,
-    ProblemCategory,
+  LocalizedText,
+  Problem,
+  ProblemCategory,
 } from "../types/course";
 
 import "./ProblemDetails.css";
+
 import CodeBlock from "../components/CodeBlock";
 import ProblemDetailsSkeleton from "../components/ProblemDetailsSkeleton";
+import ErrorState from "../components/ErrorState";
 
 const getDisplayText = (
-    text: LocalizedText
+  text: LocalizedText
 ): string => {
-    if (typeof text === "string") {
-        return text;
-    }
+  if (typeof text === "string") {
+    return text;
+  }
 
-    const value = text.en;
+  const value = text.en;
 
-    if (typeof value === "string") {
-        return value;
-    }
+  if (typeof value === "string") {
+    return value;
+  }
 
-    return value
-        .map((part) =>
-            typeof part === "string"
-                ? part
-                : part.text
-        )
-        .join("");
+  return value
+    .map((part) =>
+      typeof part === "string"
+        ? part
+        : part.text
+    )
+    .join("");
 };
 
 function ProblemDetails() {
-    const {
-        categorySlug,
-        problemSlug,
-    } = useParams<{
-        categorySlug: string;
-        problemSlug: string;
-    }>();
+  const {
+    categorySlug,
+    problemSlug,
+  } = useParams<{
+    categorySlug: string;
+    problemSlug: string;
+  }>();
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const [problem, setProblem] =
-        useState<Problem | null>(null);
+  const [problem, setProblem] =
+    useState<Problem | null>(null);
 
-    const [category, setCategory] =
-        useState<ProblemCategory | null>(null);
+  const [category, setCategory] =
+    useState<ProblemCategory | null>(null);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-    const [error, setError] =
-        useState<string | null>(null);
+  const [error, setError] =
+    useState<string | null>(null);
 
-    const [activeTab, setActiveTab] =
-        useState<
-            "problem" | "approach" | "solution"
-        >("problem");
+  const [activeTab, setActiveTab] =
+    useState<
+      "problem" | "approach" | "solution"
+    >("problem");
 
-    const [selectedLanguage, setSelectedLanguage] =
-        useState<string>("javascript");
+  const [selectedLanguage, setSelectedLanguage] =
+    useState<string>("javascript");
 
-    useEffect(() => {
-        if (!categorySlug || !problemSlug) {
-            setError("Invalid problem");
-            setLoading(false);
-            return;
-        }
+  /* =========================
+     LOAD PROBLEM
+  ========================= */
 
-        const loadProblem = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const [
-                    problemData,
-                    categoryData,
-                ] = await Promise.all([
-                    getProblem(
-                        categorySlug,
-                        problemSlug
-                    ),
-                    getProblemCategory(
-                        categorySlug
-                    ),
-                ]);
-
-                setProblem(problemData);
-                setCategory(categoryData);
-
-                const firstLanguage =
-                    problemData.solutions?.[0]
-                        ?.language;
-
-                setSelectedLanguage(
-                    firstLanguage ?? "javascript"
-                );
-
-                setActiveTab("problem");
-            } catch (error) {
-                console.error(error);
-
-                setError(
-                    "Failed to load problem"
-                );
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadProblem();
-    }, [categorySlug, problemSlug]);
-
-    if (loading) {
-  return <ProblemDetailsSkeleton />;
-}
-
-    if (error || !problem) {
-        return (
-            <div className="problem-details-page">
-                <p>
-                    {error ??
-                        "Problem not found."}
-                </p>
-            </div>
-        );
+  const loadProblem = async () => {
+    if (!categorySlug || !problemSlug) {
+      setError("Invalid problem");
+      setLoading(false);
+      return;
     }
 
-    const title = getDisplayText(
-        problem.title
-    );
+    try {
+      setLoading(true);
+      setError(null);
 
-    const problems =
-        category?.problems ?? [];
+      const [
+        problemData,
+        categoryData,
+      ] = await Promise.all([
+        getProblem(
+          categorySlug,
+          problemSlug
+        ),
 
-    const currentIndex =
-        problems.findIndex(
-            (item) =>
-                item.slug === problemSlug
-        );
+        getProblemCategory(
+          categorySlug
+        ),
+      ]);
 
-    const previousProblem =
-        currentIndex > 0
-            ? problems[currentIndex - 1]
-            : null;
+      setProblem(problemData);
+      setCategory(categoryData);
 
-    const nextProblem =
-        currentIndex >= 0 &&
-            currentIndex <
-            problems.length - 1
-            ? problems[currentIndex + 1]
-            : null;
+      const firstLanguage =
+        problemData.solutions?.[0]
+          ?.language;
 
-    const goToProblem = (
-        targetProblem: Problem
-    ) => {
-        if (!categorySlug) {
-            return;
-        }
+      setSelectedLanguage(
+        firstLanguage ?? "javascript"
+      );
 
-        navigate(
-            `/courses/problem-solving/${categorySlug}/${targetProblem.slug}`
-        );
+      setActiveTab("problem");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "Failed to load problem."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
+  useEffect(() => {
+    const load = async () => {
+      await loadProblem();
     };
 
-    const solution =
-        problem.solutions?.find(
-            (item) =>
-                item.language ===
-                selectedLanguage
-        );
+    load();
+  }, [categorySlug, problemSlug]);
 
+  /* =========================
+     LOADING
+  ========================= */
+
+  if (loading) {
+    return <ProblemDetailsSkeleton />;
+  }
+
+  /* =========================
+     ERROR
+  ========================= */
+
+  if (error || !problem) {
     return (
-        <div className="problem-details-page">
-            {/* Gradient top border */}
-            <div className="problem-details-gradient-border" />
+      <div className="problem-details-page">
+        <ErrorState
+          message={
+            error ??
+            "Problem not found."
+          }
+          onRetry={loadProblem}
+        />
+      </div>
+    );
+  }
 
-            {/* Back */}
-            <Link
-                to={`/courses/problem-solving/${categorySlug}`}
-                className="problem-back-link"
-            >
-                ← Back to Problems
-            </Link>
+  const title = getDisplayText(
+    problem.title
+  );
 
-            {/* Header */}
-            <header className="problem-details-header">
-                <div>
-                    <h1>{title}</h1>
+  const problems =
+    category?.problems ?? [];
 
-                    {/* Problem metadata */}
-                    <div className="problem-meta">
+  const currentIndex =
+    problems.findIndex(
+      (item) =>
+        item.slug === problemSlug
+    );
 
-                        {problem.difficulty && (
-                            <span
-                                className={`problem-difficulty problem-difficulty-${problem.difficulty}`}
-                            >
-                                {problem.difficulty}
-                            </span>
-                        )}
+  const previousProblem =
+    currentIndex > 0
+      ? problems[currentIndex - 1]
+      : null;
 
-                        {problem.rating != null && (
-                            <span className="problem-meta-item">
-                                Rating {problem.rating}
-                            </span>
-                        )}
+  const nextProblem =
+    currentIndex >= 0 &&
+    currentIndex <
+      problems.length - 1
+      ? problems[currentIndex + 1]
+      : null;
 
-                        {problem.judge && (
-                            <a
-                                href={problem.judgeUrl || "#"}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="problem-meta-judge"
-                                onClick={(event) => {
-                                    if (!problem.judgeUrl) {
-                                        event.preventDefault();
-                                    }
-                                }}
-                            >
-                                {problem.judge}
+  /* =========================
+     PREVIOUS / NEXT
+  ========================= */
 
-                                {problem.problemNumber
-                                    ? ` #${problem.problemNumber}`
-                                    : ""}
-                            </a>
-                        )}
+  const goToProblem = (
+    targetProblem: Problem
+  ) => {
+    if (!categorySlug) {
+      return;
+    }
 
-                        {problem.topics.length > 0 && (
-                            <span className="problem-meta-topic">
-                                {problem.topics.join(" · ")}
-                            </span>
-                        )}
+    navigate(
+      `/courses/problem-solving/${categorySlug}/${targetProblem.slug}`
+    );
+  };
 
-                    </div>
-                </div>
-            </header>
+  /* =========================
+     SELECTED SOLUTION
+  ========================= */
 
-            {/* Tabs */}
-            <nav className="problem-tabs">
-                <button
-                    className={
-                        activeTab === "problem"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() =>
-                        setActiveTab("problem")
-                    }
-                >
-                    Problem
-                </button>
+  const solution =
+    problem.solutions?.find(
+      (item) =>
+        item.language ===
+        selectedLanguage
+    );
 
-                <button
-                    className={
-                        activeTab === "approach"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() =>
-                        setActiveTab("approach")
-                    }
-                >
-                    Approach
-                </button>
+  return (
+    <div className="problem-details-page">
 
-                <button
-                    className={
-                        activeTab === "solution"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() =>
-                        setActiveTab("solution")
-                    }
-                >
-                    Solution
-                </button>
-            </nav>
+      {/* Gradient top border */}
+      <div className="problem-details-gradient-border" />
 
-            {/* Content */}
-            <main
-                className={`problem-details-content ${activeTab === "solution"
-                    ? "solution-active"
-                    : ""
-                    }`}
-            >
+      {/* Back */}
+      <Link
+        to={`/courses/problem-solving/${categorySlug}`}
+        className="problem-back-link"
+      >
+        ← Back to Problems
+      </Link>
 
-                {/* =========================
+      {/* Header */}
+      <header className="problem-details-header">
+        <div>
+          <h1>{title}</h1>
+
+          {/* Problem metadata */}
+          <div className="problem-meta">
+
+            {/* Difficulty */}
+            {problem.difficulty && (
+              <span
+                className={`problem-difficulty problem-difficulty-${problem.difficulty}`}
+              >
+                {problem.difficulty}
+              </span>
+            )}
+
+            {/* Rating */}
+            {problem.rating != null && (
+              <span className="problem-meta-item">
+                Rating {problem.rating}
+              </span>
+            )}
+
+            {/* Judge */}
+            {problem.judge && (
+              <a
+                href={
+                  problem.judgeUrl ||
+                  "#"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="problem-meta-judge"
+                onClick={(event) => {
+                  if (
+                    !problem.judgeUrl
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                {problem.judge}
+
+                {problem.problemNumber
+                  ? ` #${problem.problemNumber}`
+                  : ""}
+              </a>
+            )}
+
+            {/* Topics */}
+            {problem.topics.length > 0 && (
+              <span className="problem-meta-topic">
+                {problem.topics.join(
+                  " · "
+                )}
+              </span>
+            )}
+
+          </div>
+        </div>
+      </header>
+
+      {/* Tabs */}
+      <nav className="problem-tabs">
+
+        <button
+          className={
+            activeTab === "problem"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setActiveTab("problem")
+          }
+        >
+          Problem
+        </button>
+
+        <button
+          className={
+            activeTab === "approach"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setActiveTab("approach")
+          }
+        >
+          Approach
+        </button>
+
+        <button
+          className={
+            activeTab === "solution"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setActiveTab("solution")
+          }
+        >
+          Solution
+        </button>
+
+      </nav>
+
+      {/* Content */}
+      <main
+        className={`problem-details-content ${
+          activeTab === "solution"
+            ? "solution-active"
+            : ""
+        }`}
+      >
+
+        {/* =========================
             PROBLEM
         ========================= */}
 
-                {activeTab === "problem" && (
-                    <section>
-                        {problem.problem && (
-                            <>
-                                {/* <h2>
+        {activeTab === "problem" && (
+          <section>
+
+            {problem.problem && (
+              <>
+                <p>
                   {getDisplayText(
-                    problem.problem.title
+                    problem.problem
+                      .description
                   )}
-                </h2> */}
+                </p>
 
-                                <p>
-                                    {getDisplayText(
-                                        problem.problem
-                                            .description
-                                    )}
-                                </p>
+                {/* Examples */}
+                {problem.problem.examples?.map(
+                  (
+                    example,
+                    index
+                  ) => (
+                    <div
+                      className="problem-example"
+                      key={index}
+                    >
+                      <h3>
+                        Example{" "}
+                        {index + 1}
+                      </h3>
 
-                                {problem.problem.examples?.map(
-                                    (
-                                        example,
-                                        index
-                                    ) => (
-                                        <div
-                                            className="problem-example"
-                                            key={index}
-                                        >
-                                            <h3>
-                                                Example{" "}
-                                                {index + 1}
-                                            </h3>
-
-                                            <pre>
-                                                {`Input:
+                      <pre>
+{`Input:
 ${example.input}
 
 Output:
 ${example.output}`}
-                                            </pre>
+                      </pre>
 
-                                            {example.explanation && (
-                                                <p>
-                                                    {getDisplayText(
-                                                        example.explanation
-                                                    )}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )
-                                )}
-
-                                {problem.problem
-                                    .constraints &&
-                                    problem.problem
-                                        .constraints
-                                        .length > 0 && (
-                                        <div>
-                                            <h3>
-                                                Constraints
-                                            </h3>
-
-                                            <ul>
-                                                {problem.problem.constraints.map(
-                                                    (
-                                                        constraint,
-                                                        index
-                                                    ) => (
-                                                        <li
-                                                            key={index}
-                                                        >
-                                                            {getDisplayText(
-                                                                constraint
-                                                            )}
-                                                        </li>
-                                                    )
-                                                )}
-                                            </ul>
-                                        </div>
-                                    )}
-                            </>
-                        )}
-                    </section>
+                      {example.explanation && (
+                        <p>
+                          {getDisplayText(
+                            example.explanation
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )
                 )}
 
-                {/* =========================
+                {/* Constraints */}
+                {problem.problem
+                  .constraints &&
+                  problem.problem
+                    .constraints
+                    .length > 0 && (
+                    <div>
+                      <h3>
+                        Constraints
+                      </h3>
+
+                      <ul>
+                        {problem.problem.constraints.map(
+                          (
+                            constraint,
+                            index
+                          ) => (
+                            <li
+                              key={index}
+                            >
+                              {getDisplayText(
+                                constraint
+                              )}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+              </>
+            )}
+
+          </section>
+        )}
+
+        {/* =========================
             APPROACH
         ========================= */}
 
-                {activeTab === "approach" && (
-                    <section>
-                        {problem.approach && (
-                            <>
-                                <h2>
-                                    {getDisplayText(
-                                        problem.approach.title
-                                    )}
-                                </h2>
+        {activeTab === "approach" && (
+          <section>
 
-                                {problem.approach.sections.map(
-                                    (
-                                        section,
-                                        index
-                                    ) => {
-                                        if (
-                                            section.type ===
-                                            "only-text"
-                                        ) {
-                                            return (
-                                                <p key={index}>
-                                                    {getDisplayText(
-                                                        section.content
-                                                    )}
-                                                </p>
-                                            );
-                                        }
+            {problem.approach && (
+              <>
+                <h2>
+                  {getDisplayText(
+                    problem.approach.title
+                  )}
+                </h2>
 
-                                        if (
-                                            section.type ===
-                                            "bullet-points"
-                                        ) {
-                                            return (
-                                                <ul key={index}>
-                                                    {section.items.map(
-                                                        (
-                                                            item,
-                                                            itemIndex
-                                                        ) => (
-                                                            <li
-                                                                key={
-                                                                    itemIndex
-                                                                }
-                                                            >
-                                                                {getDisplayText(
-                                                                    item
-                                                                )}
-                                                            </li>
-                                                        )
-                                                    )}
-                                                </ul>
-                                            );
-                                        }
+                {problem.approach.sections.map(
+                  (
+                    section,
+                    index
+                  ) => {
 
-                                        return null;
-                                    }
+                    if (
+                      section.type ===
+                      "only-text"
+                    ) {
+                      return (
+                        <p key={index}>
+                          {getDisplayText(
+                            section.content
+                          )}
+                        </p>
+                      );
+                    }
+
+                    if (
+                      section.type ===
+                      "bullet-points"
+                    ) {
+                      return (
+                        <ul key={index}>
+                          {section.items.map(
+                            (
+                              item,
+                              itemIndex
+                            ) => (
+                              <li
+                                key={
+                                  itemIndex
+                                }
+                              >
+                                {getDisplayText(
+                                  item
                                 )}
-                            </>
-                        )}
-                    </section>
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      );
+                    }
+
+                    return null;
+                  }
                 )}
+              </>
+            )}
 
-                {/* =========================
-    SOLUTION
-========================= */}
+          </section>
+        )}
 
-                {/* =========================
-    SOLUTION
-========================= */}
+        {/* =========================
+            SOLUTION
+        ========================= */}
 
-                {activeTab === "solution" && (
-                    <section className="problem-solution-section">
+        {activeTab === "solution" && (
+          <section className="problem-solution-section">
 
-                        {/* Language Selector */}
-                        <div className="problem-solution-languages">
-                            {problem.solutions?.map((item) => (
-                                <button
-                                    key={item.language}
-                                    className={
-                                        selectedLanguage === item.language
-                                            ? "active"
-                                            : ""
-                                    }
-                                    onClick={() =>
-                                        setSelectedLanguage(item.language)
-                                    }
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
+            {/* Language Selector */}
+            <div className="problem-solution-languages">
 
-                        {/* Existing Course CodeBlock */}
-                        {solution && (
-                            <CodeBlock
-                                code={solution.code}
-                                language={solution.language}
-                            />
-                        )}
+              {problem.solutions?.map(
+                (item) => (
+                  <button
+                    key={
+                      item.language
+                    }
+                    className={
+                      selectedLanguage ===
+                      item.language
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() =>
+                      setSelectedLanguage(
+                        item.language
+                      )
+                    }
+                  >
+                    {item.label}
+                  </button>
+                )
+              )}
 
-                    </section>
-                )}
-            </main>
+            </div>
 
-            {/* Previous / Next */}
-            <footer className="topic-navigation">
-                <button
-                    className="topic-navigation-button previous"
-                    disabled={!previousProblem}
-                    onClick={() => {
-                        if (previousProblem) {
-                            goToProblem(
-                                previousProblem
-                            );
-                        }
-                    }}
-                >
-                    <span className="topic-navigation-arrow">
-                        ←
-                    </span>
+            {/* Code */}
+            {solution && (
+              <CodeBlock
+                code={solution.code}
+                language={
+                  solution.language
+                }
+              />
+            )}
 
-                    <span>
-                        Previous Problem
-                    </span>
-                </button>
+          </section>
+        )}
 
-                <button
-                    className="topic-navigation-button next"
-                    disabled={!nextProblem}
-                    onClick={() => {
-                        if (nextProblem) {
-                            goToProblem(
-                                nextProblem
-                            );
-                        }
-                    }}
-                >
-                    <span>
-                        Next Problem
-                    </span>
+      </main>
 
-                    <span className="topic-navigation-arrow">
-                        →
-                    </span>
-                </button>
-            </footer>
-        </div>
-    );
+      {/* Previous / Next */}
+      <footer className="topic-navigation">
+
+        {/* Previous */}
+        <button
+          className="topic-navigation-button previous"
+          disabled={!previousProblem}
+          onClick={() => {
+            if (previousProblem) {
+              goToProblem(
+                previousProblem
+              );
+            }
+          }}
+        >
+          <span className="topic-navigation-arrow">
+            ←
+          </span>
+
+          <span>
+            Previous Problem
+          </span>
+        </button>
+
+        {/* Next */}
+        <button
+          className="topic-navigation-button next"
+          disabled={!nextProblem}
+          onClick={() => {
+            if (nextProblem) {
+              goToProblem(
+                nextProblem
+              );
+            }
+          }}
+        >
+          <span>
+            Next Problem
+          </span>
+
+          <span className="topic-navigation-arrow">
+            →
+          </span>
+        </button>
+
+      </footer>
+
+    </div>
+  );
 }
 
 export default ProblemDetails;

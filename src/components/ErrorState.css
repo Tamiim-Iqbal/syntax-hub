@@ -1,0 +1,132 @@
+.error-state {
+  width: 100%;
+
+  min-height: 280px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  text-align: center;
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg);
+}
+
+.error-state-icon {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 16px;
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--color-primary) 30%,
+    var(--color-border)
+  );
+
+  border-radius: 50%;
+
+  background: color-mix(
+    in srgb,
+    var(--color-primary) 8%,
+    var(--color-bg)
+  );
+
+  color: var(--color-primary);
+
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.error-state h2 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: 1.2rem;
+}
+
+.error-state p {
+  max-width: 420px;
+
+  margin: 8px 0 20px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.85rem;
+
+  line-height: 1.6;
+}
+
+.error-state-button {
+  padding: 9px 16px;
+
+  border: 1px solid var(--color-primary);
+
+  border-radius: var(--radius-md);
+
+  background: var(--color-primary);
+
+  color: #ffffff;
+
+  font: inherit;
+
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.error-state-button:hover {
+  background: var(--color-primary-hover);
+
+  border-color: var(--color-primary-hover);
+
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .error-state {
+    min-height: 220px;
+
+    padding: 30px 16px;
+  }
+
+  .error-state-icon {
+    width: 36px;
+    height: 36px;
+
+    margin-bottom: 12px;
+
+    font-size: 0.95rem;
+  }
+
+  .error-state h2 {
+    font-size: 1rem;
+  }
+
+  .error-state p {
+    font-size: 0.75rem;
+  }
+
+  .error-state-button {
+    padding: 8px 14px;
+
+    font-size: 0.72rem;
+  }
+}

@@ -1,32 +1,65 @@
 import { useEffect, useState } from "react";
 import CourseCard from "../components/CourseCard";
+import CourseCardSkeleton from "../components/CourseCardSkeleton";
+import ErrorState from "../components/ErrorState";
 import { getCourses } from "../services/courseService";
 import type { Course } from "../types/course";
 import "./Courses.css";
-import CourseCardSkeleton from "../components/CourseCardSkeleton";
 
 function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        setLoading(true);
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
+      const data = await getCourses();
+
+      setCourses(data);
+    } catch (error) {
+      console.error(
+        "Failed to load courses:",
+        error
+      );
+
+      setError("Failed to load courses.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
         const data = await getCourses();
 
-        setCourses(data);
+        if (!cancelled) {
+          setCourses(data);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error("Failed to load courses:", error);
-        setError("Failed to load courses.");
-      } finally {
-        setLoading(false);
+        console.error(
+          "Failed to load courses:",
+          error
+        );
+
+        if (!cancelled) {
+          setError("Failed to load courses.");
+          setLoading(false);
+        }
       }
     };
 
-    loadCourses();
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -48,13 +81,25 @@ function Courses() {
         className="courses-page-grid"
         aria-label="Available courses"
       >
+        {/* Loading */}
         {loading &&
-          Array.from({ length: 3 }).map((_, index) => (
-            <CourseCardSkeleton key={index} />
-          ))}
+          Array.from({ length: 3 }).map(
+            (_, index) => (
+              <CourseCardSkeleton
+                key={index}
+              />
+            )
+          )}
 
-        {!loading && error && <p>{error}</p>}
+        {/* Error */}
+        {!loading && error && (
+          <ErrorState
+            message={error}
+            onRetry={loadCourses}
+          />
+        )}
 
+        {/* Courses */}
         {!loading &&
           !error &&
           courses.map((course) => (
