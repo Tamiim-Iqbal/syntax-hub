@@ -1,11 +1,9 @@
 .error-state {
   width: 100%;
-
-  min-height: 280px;
+  min-height: 260px;
 
   display: flex;
   flex-direction: column;
-
   align-items: center;
   justify-content: center;
 
@@ -30,7 +28,7 @@
 
   border: 1px solid color-mix(
     in srgb,
-    var(--color-primary) 30%,
+    var(--color-primary) 35%,
     var(--color-border)
   );
 
@@ -68,19 +66,16 @@
   line-height: 1.6;
 }
 
-.error-state-button {
+.error-state-retry {
   padding: 9px 16px;
 
   border: 1px solid var(--color-primary);
-
   border-radius: var(--radius-md);
 
   background: var(--color-primary);
-
   color: #ffffff;
 
   font: inherit;
-
   font-size: 0.8rem;
   font-weight: 600;
 
@@ -89,15 +84,21 @@
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.error-state-button:hover {
+.error-state-retry:hover {
   background: var(--color-primary-hover);
-
   border-color: var(--color-primary-hover);
 
   transform: translateY(-1px);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.error-state-retry:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 640px) {
@@ -113,7 +114,7 @@
 
     margin-bottom: 12px;
 
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
 
   .error-state h2 {
@@ -121,10 +122,12 @@
   }
 
   .error-state p {
+    margin-bottom: 16px;
+
     font-size: 0.75rem;
   }
 
-  .error-state-button {
+  .error-state-retry {
     padding: 8px 14px;
 
     font-size: 0.72rem;

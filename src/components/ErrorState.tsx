@@ -1,12 +1,14 @@
 import "./ErrorState.css";
 
 type ErrorStateProps = {
+  title?: string;
   message?: string;
   onRetry?: () => void;
 };
 
 function ErrorState({
-  message = "Something went wrong.",
+  title = "Something went wrong",
+  message = "We couldn't load this content. Please try again.",
   onRetry,
 }: ErrorStateProps) {
   return (
@@ -15,14 +17,14 @@ function ErrorState({
         !
       </div>
 
-      <h2>Something went wrong</h2>
+      <h2>{title}</h2>
 
       <p>{message}</p>
 
       {onRetry && (
         <button
           type="button"
-          className="error-state-button"
+          className="error-state-retry"
           onClick={onRetry}
         >
           Try Again
