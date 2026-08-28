@@ -24,8 +24,11 @@
   /* Code */
   --color-code-bg: #0f172a;
 
-  /* Status */
-  --color-success: #16a34a;
+  /* Gradient */
+  --color-grad1: #ec4899;
+  --color-grad2: #8b5cf6
+    /* Status */
+    --color-success: #16a34a;
   --color-danger: #dc2626;
 
   /* Typography */
@@ -64,7 +67,7 @@
 
 :root[data-theme="dark"] {
   /* Background */
-  --color-bg:  #0c0e13;
+  --color-bg: #0c0e13;
   /* #0e1015; #172033;*/
   --color-bg-white: #10151e;
   /* #10151e; #111a28; */
@@ -107,27 +110,19 @@ body {
   overflow-x: hidden;
   min-width: 320px;
   min-height: 100vh;
-  background: 
-    radial-gradient(
-      circle at 10% 30%,
+  background:
+    radial-gradient(circle at 10% 30%,
       rgba(244, 114, 182, 0.18),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 50% 0%,
+      transparent 32%),
+    radial-gradient(circle at 50% 0%,
       rgba(99, 102, 241, 0.05),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 90% 40%,
+      transparent 35%),
+    radial-gradient(circle at 90% 40%,
       rgba(124, 58, 237, 0.18),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 50% 100%,
-    rgba(99, 102, 241, 0.09),
-    transparent 35%
-),
+      transparent 32%),
+    radial-gradient(circle at 50% 100%,
+      rgba(99, 102, 241, 0.09),
+      transparent 35%),
     var(--color-bg);
   background-attachment: fixed;
   color: var(--color-text);
@@ -211,6 +206,7 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -220,6 +216,7 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
 /* =========================
    ROUTE LOADER
 ========================= */
@@ -244,9 +241,13 @@ button:disabled {
 }
 
 @keyframes route-loader-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-loader-spinner { animation: none; }
+  .route-loader-spinner {
+    animation: none;
+  }
 }
