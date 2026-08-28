@@ -95,11 +95,15 @@ function CourseDetails() {
     [languages, selectedLanguageId]
   );
 
-  const topics: Topic[] = course?.type === "multi-language"
-    ? activeLanguage?.topics ?? []
-    : course?.type === "single-language"
-      ? course.topics
-      : [];
+  const topics = useMemo<Topic[]>(
+    () =>
+      course?.type === "multi-language"
+        ? activeLanguage?.topics ?? []
+        : course?.type === "single-language"
+          ? course.topics
+          : [],
+    [course, activeLanguage]
+  );
 
   const activeTopic = topics.find((topic) => topic.slug === selectedTopicSlug);
   const activeSubtopic = activeTopic?.subtopics?.find((subtopic) => subtopic.slug === selectedSubtopicSlug);

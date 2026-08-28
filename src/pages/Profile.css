@@ -1,0 +1,23 @@
+.profile-page{width:min(90%,900px);
+    margin:0 auto;
+    padding:60px 0
+}
+.profile-card{
+    padding:32px;
+    border:1px solid var(--color-border);
+    border-radius:16px;
+    background:var(--color-bg-white)
+}
+.profile-card h1{
+    margin:8px 0
+}
+.profile-card p{
+    color:var(--color-text-secondary)
+}
+.profile-role{
+    display:inline-block;margin-top:10px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:var(--color-surface);
+    font-size:.75rem;text-transform:capitalize
+    }

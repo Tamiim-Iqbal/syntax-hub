@@ -8,6 +8,10 @@ const CourseDetails = lazy(() => import("./pages/CourseDetails"));
 const ProblemSolving = lazy(() => import("./pages/ProblemSolving"));
 const ProblemCategory = lazy(() => import("./pages/ProblemCategory"));
 const ProblemDetails = lazy(() => import("./pages/ProblemDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Profile = lazy(() => import("./pages/Profile"));
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function RouteLoader() {
   return (
@@ -26,6 +30,11 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<Profile />} />
+            </Route>
             <Route path="/courses/problem-solving" element={<ProblemSolving />} />
             <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />
             <Route path="/courses/problem-solving/:categorySlug" element={<ProblemCategory />} />

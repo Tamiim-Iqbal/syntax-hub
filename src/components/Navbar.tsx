@@ -3,6 +3,7 @@ import "./Navbar.css";
 
 import { useLanguage } from "../context/useLanguage";
 import { useTheme } from "../context/useTheme";
+import { useAuth } from "../context/useAuth";
 
 function Navbar() {
   const { language, toggleLanguage } =
@@ -10,6 +11,8 @@ function Navbar() {
 
   const { theme, toggleTheme } =
     useTheme();
+
+  const { user, logout } = useAuth();
 
   const navbarText = {
     home: {
@@ -76,13 +79,26 @@ function Navbar() {
             </span>
           </button>
 
-          {/* Login */}
-          <button
-            type="button"
-            className="navbar-login"
-          >
-            {navbarText.login[language]}
-          </button>
+          {/* Authentication */}
+          {user ? (
+            <>
+              <Link to="/profile" className="navbar-login">
+                {user.name}
+              </Link>
+              <button
+                type="button"
+                className="navbar-login"
+                onClick={logout}
+                aria-label="Logout"
+              >
+                {language === "bn" ? "লগআউট" : "Logout"}
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="navbar-login">
+              {navbarText.login[language]}
+            </Link>
+          )}
 
           {/* Theme */}
           <button
