@@ -5,10 +5,7 @@ import {
   getCourse,
   getProblemSolving,
   getProblemSolvingCategory,
-  getProblem,
-  createNewCourse,
-  updateExistingCourse,
-  removeCourse,
+  getProblem
 } from "../controllers/course.controller.js";
 
 const router = Router();
@@ -23,10 +20,5 @@ router.get("/problem-solving/:categorySlug/:problemSlug", getProblem);
 
 router.get("/:slug", getCourse);
 
-router.post("/", createNewCourse);
-
-router.put("/:id", updateExistingCourse);
-
-router.delete("/:id", removeCourse);
 
 export default router;

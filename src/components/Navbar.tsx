@@ -82,6 +82,12 @@ function Navbar() {
           {/* Authentication */}
           {user ? (
             <>
+              {user.role === "admin" && (
+                <Link to="/admin" className="navbar-admin-link">
+                  Admin
+                </Link>
+              )}
+
               <Link to="/profile" className="navbar-login">
                 {user.name}
               </Link>

@@ -11,7 +11,9 @@ const ProblemDetails = lazy(() => import("./pages/ProblemDetails"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Profile = lazy(() => import("./pages/Profile"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 function RouteLoader() {
   return (
@@ -34,6 +36,9 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
+            </Route>
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminDashboard />} />
             </Route>
             <Route path="/courses/problem-solving" element={<ProblemSolving />} />
             <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />

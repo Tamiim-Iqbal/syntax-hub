@@ -166,3 +166,5 @@ export const hasAuthToken = () =>
   Boolean(
     localStorage.getItem(TOKEN_KEY)
   );
+export const getAuthToken = () =>
+  localStorage.getItem(TOKEN_KEY);

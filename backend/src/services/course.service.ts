@@ -1,7 +1,7 @@
 import Course, { type ICourse } from "../models/Course.js";
 
 export const getAllCourses = async (): Promise<ICourse[]> => {
-  return Course.find()
+  return Course.find({ isPublished: true })
     .sort({ order: 1, createdAt: -1 })
     .lean();
 };
@@ -9,7 +9,7 @@ export const getAllCourses = async (): Promise<ICourse[]> => {
 export const getCourseBySlug = async (
   slug: string
 ): Promise<ICourse | null> => {
-  return Course.findOne({ slug }).lean();
+  return Course.findOne({ slug, isPublished: true }).lean();
 };
 
 export const createCourse = async (
@@ -44,6 +44,7 @@ export const getProblemSolvingCourse = async (): Promise<ICourse | null> => {
   return Course.findOne({
     slug: "problem-solving",
     type: "problem-solving",
+    isPublished: true,
   }).lean();
 };
 
@@ -53,6 +54,7 @@ export const getProblemCategory = async (
   const course = await Course.findOne({
     slug: "problem-solving",
     type: "problem-solving",
+    isPublished: true,
   }).lean();
 
   if (!course) {
@@ -80,6 +82,7 @@ export const getProblemBySlug = async (
   const course = await Course.findOne({
     slug: "problem-solving",
     type: "problem-solving",
+    isPublished: true,
   }).lean();
 
   if (!course) {
