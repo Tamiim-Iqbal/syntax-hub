@@ -1,15 +1,27 @@
 import Course, { type ICourse } from "../models/Course.js";
 
+const normalizeCourseForClient = (course: any) => {
+  if (!course) return course;
+  const content = course.content && typeof course.content === "object" ? course.content : {};
+  const normalized: any = { ...course };
+  if (course.type === "single-language") normalized.topics = content.topics ?? [];
+  if (course.type === "multi-language") normalized.languages = course.languages ?? content.languages ?? [];
+  if (course.type === "problem-solving") normalized.problemSolvingCategories = content.categories ?? [];
+  return normalized;
+};
+
 export const getAllCourses = async (): Promise<ICourse[]> => {
-  return Course.find({ isPublished: true })
+  const courses = await Course.find({ isPublished: true })
     .sort({ order: 1, createdAt: -1 })
     .lean();
+  return courses.map(normalizeCourseForClient) as ICourse[];
 };
 
 export const getCourseBySlug = async (
   slug: string
 ): Promise<ICourse | null> => {
-  return Course.findOne({ slug, isPublished: true }).lean();
+  const course = await Course.findOne({ slug, isPublished: true }).lean();
+  return normalizeCourseForClient(course) as ICourse | null;
 };
 
 export const createCourse = async (
@@ -28,7 +40,7 @@ export const updateCourse = async (
     id,
     courseData,
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   ).lean();
@@ -41,11 +53,12 @@ export const deleteCourse = async (
 };
 
 export const getProblemSolvingCourse = async (): Promise<ICourse | null> => {
-  return Course.findOne({
+  const course = await Course.findOne({
     slug: "problem-solving",
     type: "problem-solving",
     isPublished: true,
   }).lean();
+  return normalizeCourseForClient(course) as ICourse | null;
 };
 
 export const getProblemCategory = async (

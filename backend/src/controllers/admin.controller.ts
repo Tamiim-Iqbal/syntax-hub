@@ -84,7 +84,7 @@ export const updateUserRole = async (
     const user = await User.findByIdAndUpdate(
       id,
       { role },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     )
       .select("_id name email role createdAt updatedAt")
       .lean();

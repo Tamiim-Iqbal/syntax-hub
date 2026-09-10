@@ -21,6 +21,8 @@ export type AdminUser = AuthUser & {
 export type AdminCourse = Course & {
   isPublished: boolean;
   order: number;
+  content?: unknown;
+  languages?: import("../types/course").CourseLanguage[];
 };
 
 const request = async <T>(

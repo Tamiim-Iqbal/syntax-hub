@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
 import ErrorState from "../components/ErrorState";
@@ -22,6 +22,7 @@ const text = {
 
 function CourseDetails() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const { language } = useLanguage();
   const [course, setCourse] = useState<Course>();
   const [loading, setLoading] = useState(true);
@@ -68,9 +69,17 @@ function CourseDetails() {
           setCourse(data);
           setError("");
           setLoading(false);
-          setSelectedTopicSlug(null);
-          setSelectedSubtopicSlug(null);
-          setSelectedLanguageId(data.type === "multi-language" ? data.languages[0]?.id : undefined);
+          const requestedTopic = searchParams.get("topic");
+          const requestedSubtopic = searchParams.get("subtopic");
+          const requestedLanguage = searchParams.get("language");
+          const initialLanguage = data.type === "multi-language"
+            ? data.languages.find((item) => item.name.toLowerCase() === requestedLanguage?.toLowerCase()) ?? data.languages[0]
+            : undefined;
+          setSelectedLanguageId(initialLanguage?.id);
+          const initialTopics = data.type === "multi-language" ? initialLanguage?.topics ?? [] : data.type === "single-language" ? data.topics : [];
+          const initialTopic = initialTopics.find((item) => item.slug === requestedTopic);
+          setSelectedTopicSlug(initialTopic?.slug ?? null);
+          setSelectedSubtopicSlug(initialTopic?.subtopics?.some((item) => item.slug === requestedSubtopic) ? requestedSubtopic : null);
         }
       } catch (requestError) {
         console.error("Failed to load course:", requestError);
@@ -83,7 +92,7 @@ function CourseDetails() {
     };
     void load();
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, searchParams]);
 
   const languages = useMemo<CourseLanguage[]>(
     () => (course?.type === "multi-language" ? course.languages : []),

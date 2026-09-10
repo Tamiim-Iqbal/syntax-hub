@@ -4,6 +4,7 @@ import MainLayout from "./layouts/MainLayout";
 
 const Home = lazy(() => import("./pages/Home"));
 const Courses = lazy(() => import("./pages/Courses"));
+const Search = lazy(() => import("./pages/Search"));
 const CourseDetails = lazy(() => import("./pages/CourseDetails"));
 const ProblemSolving = lazy(() => import("./pages/ProblemSolving"));
 const ProblemCategory = lazy(() => import("./pages/ProblemCategory"));
@@ -32,6 +33,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>

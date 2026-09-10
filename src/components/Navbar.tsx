@@ -1,4 +1,5 @@
-import { Link, NavLink } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 import { useLanguage } from "../context/useLanguage";
@@ -6,6 +7,9 @@ import { useTheme } from "../context/useTheme";
 import { useAuth } from "../context/useAuth";
 
 function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [search, setSearch] = useState("");
   const { language, toggleLanguage } =
     useLanguage();
 
@@ -13,6 +17,18 @@ function Navbar() {
     useTheme();
 
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (location.pathname === "/search") setSearch(params.get("q") ?? "");
+  }, [location.pathname, location.search]);
+
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = search.trim();
+    if (query) navigate(`/search?q=${encodeURIComponent(query)}`);
+    else navigate("/search");
+  };
 
   const navbarText = {
     home: {
@@ -51,6 +67,12 @@ function Navbar() {
             {navbarText.home[language]}
           </NavLink>
         </nav>
+
+        {/* Global Search */}
+        <form className="navbar-search" onSubmit={submitSearch} role="search">
+          <span aria-hidden="true">⌕</span>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={language === "bn" ? "Search" : "Search"} aria-label="Search SyntaxHub" />
+        </form>
 
         {/* Actions */}
         <div className="navbar-actions">
