@@ -51,7 +51,7 @@ const emptyLocalized = (): LocalizedObject => ({ bn: "", en: "" });
 
 const emptySection = (type: SectionKind = "explanation"): ContentSection => {
   if (type === "code") return { type, code: "", language: "javascript" };
-  if (type === "image") return { type, src: "", alt: "", caption: emptyLocalized() };
+  if (type === "image") return { type, src: "", alt: "", width: "", height: "", caption: emptyLocalized() };
   if (type === "bullet-points") return { type, items: [emptyLocalized()] };
   return { type, content: emptyLocalized() };
 };
@@ -272,8 +272,23 @@ function ImageSectionEditor({ section, onChange }: {
       </div>
       <label>Image URL<input value={section.src} onChange={(e) => onChange({ ...section, src: e.target.value })} placeholder="https://..." /></label>
       <label>Alt text<input value={section.alt} onChange={(e) => onChange({ ...section, alt: e.target.value })} /></label>
+      <label>Width<input value={section.width ?? ""} onChange={(e) => onChange({ ...section, width: e.target.value })} placeholder="e.g. 800px, 70%, auto" /></label>
+      <label>Height<input value={section.height ?? ""} onChange={(e) => onChange({ ...section, height: e.target.value })} placeholder="e.g. 450px, auto" /></label>
       <div className="cms-full"><span className="admin-field-label">Caption</span><LocalizedFields value={section.caption ?? emptyLocalized()} onChange={(caption) => onChange({ ...section, caption })} /></div>
-      {section.src && <img className="cms-image-preview" src={section.src} alt={section.alt || "Preview"} />}
+      {section.src && (
+        <div className="cms-full cms-image-preview-wrap">
+          <span className="admin-field-label">Preview</span>
+          <img
+            className="cms-image-preview"
+            src={section.src}
+            alt={section.alt || "Preview"}
+            style={{
+              width: section.width || undefined,
+              height: section.height || undefined,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

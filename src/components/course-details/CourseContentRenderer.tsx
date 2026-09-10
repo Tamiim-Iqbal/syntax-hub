@@ -47,7 +47,16 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
         if (section.type === "image") {
           return (
             <figure className="topic-image" key={`image-${index}`}>
-              <img src={section.src} alt={section.alt} loading="lazy" decoding="async" />
+              <img
+                src={section.src}
+                alt={section.alt}
+                loading="lazy"
+                decoding="async"
+                style={{
+                  width: section.width || undefined,
+                  height: section.height || undefined,
+                }}
+              />
               {section.caption && <figcaption>{getText(section.caption)}</figcaption>}
             </figure>
           );
