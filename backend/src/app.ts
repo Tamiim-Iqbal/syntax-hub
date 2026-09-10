@@ -18,14 +18,17 @@ const configuredOrigins = (process.env.CLIENT_URL ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-// Local development defaults. CLIENT_URL can add/override production origins.
+const isProduction = process.env.NODE_ENV === "production";
+
+// Keep localhost origins for development, but never add them implicitly in production.
+const developmentOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+];
+
 const allowedOrigins = Array.from(
-  new Set([
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    ...configuredOrigins,
-  ])
+  new Set(isProduction ? configuredOrigins : [...developmentOrigins, ...configuredOrigins])
 );
 
 app.use(

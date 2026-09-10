@@ -108,3 +108,14 @@ export const deleteAdminCourse = (id: string) =>
   request<{ message: string }>(`/admin/courses/${id}`, {
     method: "DELETE",
   });
+
+
+export type ImageKitAuth = {
+  token: string;
+  expire: number;
+  signature: string;
+  publicKey: string;
+};
+
+export const getImageKitAuth = () =>
+  request<ImageKitAuth>("/admin/imagekit/auth");

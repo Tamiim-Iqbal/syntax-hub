@@ -7,6 +7,7 @@ import {
 } from "../controllers/admin.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { getImageKitAuth } from "../controllers/imagekit.controller.js";
 import {
   createNewCourse,
   updateExistingCourse,
@@ -21,6 +22,7 @@ router.get("/overview", getAdminOverview);
 router.get("/users", getAdminUsers);
 router.patch("/users/:id/role", updateUserRole);
 router.get("/courses", getAdminCourses);
+router.get("/imagekit/auth", getImageKitAuth);
 
 router.post("/courses", createNewCourse);
 router.put("/courses/:id", updateExistingCourse);

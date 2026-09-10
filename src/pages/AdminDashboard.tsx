@@ -9,6 +9,7 @@ import {
   getAdminUsers,
   updateAdminCourse,
   updateUserRole,
+  getImageKitAuth,
   type AdminOverview,
   type AdminUser,
   type AdminCourse,
@@ -187,13 +188,92 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
           <label className="cms-full">Code<textarea className="admin-code-input" rows={10} value={section.code} onChange={(e) => onChange({ ...section, code: e.target.value })} /></label>
         </div>
       ) : (
-        <div className="admin-form-grid">
-          <label>Image URL<input value={section.src} onChange={(e) => onChange({ ...section, src: e.target.value })} placeholder="https://..." /></label>
-          <label>Alt text<input value={section.alt} onChange={(e) => onChange({ ...section, alt: e.target.value })} /></label>
-          <div className="cms-full"><span className="admin-field-label">Caption</span><LocalizedFields value={section.caption ?? emptyLocalized()} onChange={(caption) => onChange({ ...section, caption })} /></div>
-          {section.src && <img className="cms-image-preview" src={section.src} alt={section.alt || "Preview"} />}
-        </div>
+        <ImageSectionEditor section={section} onChange={onChange} />
       )}
+    </div>
+  );
+}
+
+function ImageSectionEditor({ section, onChange }: {
+  section: Extract<ContentSection, { type: "image" }>;
+  onChange: (section: ContentSection) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [remoteUrl, setRemoteUrl] = useState("");
+
+  const uploadAsset = async (fileOrUrl: File | string, fileName: string) => {
+    setUploading(true);
+    setUploadError("");
+    try {
+      const auth = await getImageKitAuth();
+      const formData = new FormData();
+      formData.append("file", fileOrUrl);
+      formData.append("fileName", fileName);
+      formData.append("publicKey", auth.publicKey);
+      formData.append("signature", auth.signature);
+      formData.append("expire", String(auth.expire));
+      formData.append("token", auth.token);
+      formData.append("folder", "/syntaxhub");
+
+      const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const result = (await response.json()) as { url?: string; message?: string; error?: string };
+      if (!response.ok || !result.url) {
+        throw new Error(result.message || result.error || "Image upload failed");
+      }
+
+      onChange({ ...section, src: result.url });
+      setRemoteUrl("");
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Image upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    void uploadAsset(file, file.name);
+    event.target.value = "";
+  };
+
+  const handleRemoteUpload = () => {
+    const url = remoteUrl.trim();
+    if (!url) return;
+    try {
+      const parsed = new URL(url);
+      if (!/^https?:$/.test(parsed.protocol)) throw new Error();
+      const rawName = parsed.pathname.split("/").filter(Boolean).pop() || `image-${Date.now()}.jpg`;
+      const fileName = rawName.split("?")[0] || `image-${Date.now()}.jpg`;
+      void uploadAsset(url, fileName);
+    } catch {
+      setUploadError("Please enter a valid public http(s) image URL.");
+    }
+  };
+
+  return (
+    <div className="admin-form-grid">
+      <div className="cms-full cms-image-upload-box">
+        <span className="admin-field-label">Image</span>
+        <div className="cms-image-upload-actions">
+          <label className="admin-small-button cms-file-button">
+            {uploading ? "Uploading..." : "Upload Image"}
+            <input type="file" accept="image/*" onChange={handleFile} disabled={uploading} />
+          </label>
+          <span className="cms-image-or">or</span>
+          <input value={remoteUrl} onChange={(e) => setRemoteUrl(e.target.value)} placeholder="Paste public image URL" disabled={uploading} />
+          <button type="button" className="admin-small-button" onClick={handleRemoteUpload} disabled={uploading || !remoteUrl.trim()}>Upload URL</button>
+        </div>
+        {uploadError && <p className="cms-image-error">{uploadError}</p>}
+      </div>
+      <label>Image URL<input value={section.src} onChange={(e) => onChange({ ...section, src: e.target.value })} placeholder="https://..." /></label>
+      <label>Alt text<input value={section.alt} onChange={(e) => onChange({ ...section, alt: e.target.value })} /></label>
+      <div className="cms-full"><span className="admin-field-label">Caption</span><LocalizedFields value={section.caption ?? emptyLocalized()} onChange={(caption) => onChange({ ...section, caption })} /></div>
+      {section.src && <img className="cms-image-preview" src={section.src} alt={section.alt || "Preview"} />}
     </div>
   );
 }
