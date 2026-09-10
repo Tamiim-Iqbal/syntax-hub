@@ -13,8 +13,10 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import AppErrorBoundary from "./components/AppErrorBoundary";
 
 function RouteLoader() {
   return (
@@ -28,8 +30,9 @@ function RouteLoader() {
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<RouteLoader />}>
-        <Routes>
+      <AppErrorBoundary>
+        <Suspense fallback={<RouteLoader />}>
+          <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
@@ -50,9 +53,11 @@ function App() {
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminDashboard />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </Suspense>
+      </AppErrorBoundary>
     </BrowserRouter>
   );
 }

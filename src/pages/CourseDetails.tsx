@@ -37,30 +37,6 @@ function CourseDetails() {
   const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
   const [selectedSubtopicSlug, setSelectedSubtopicSlug] = useState<string | null>(null);
 
-  const loadCourse = async () => {
-    if (!slug) {
-      setCourse(undefined);
-      setError("Invalid course.");
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      setError("");
-      const data = authLoading
-        ? await getCoursePreview(slug)
-        : user
-          ? await getCourseBySlug(slug)
-          : await getCoursePreview(slug);
-      setCourse(data);
-    } catch (requestError) {
-      console.error("Failed to load course:", requestError);
-      setCourse(undefined);
-      setError("Failed to load course.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -221,6 +197,30 @@ function CourseDetails() {
     navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
+  };
+
+  const loadCourse = async () => {
+    if (!slug) {
+      setCourse(undefined);
+      setError("Invalid course.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const data = authenticated
+        ? await getCourseBySlug(slug)
+        : await getCoursePreview(slug);
+      setCourse(data);
+    } catch (requestError) {
+      console.error("Failed to load course:", requestError);
+      setCourse(undefined);
+      setError("Failed to load course.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return <CourseDetailsSkeleton />;

@@ -44,25 +44,7 @@ function Courses() {
   ========================= */
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getCourses();
-
-        setCourses(data);
-        setError("");
-      } catch (error) {
-        console.error(
-          "Failed to load courses:",
-          error
-        );
-
-        setError("Failed to load courses.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
+    void loadCourses();
   }, []);
 
   return (

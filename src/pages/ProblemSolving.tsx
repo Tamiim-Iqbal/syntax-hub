@@ -74,33 +74,7 @@ function ProblemSolving() {
   ========================= */
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getProblemSolving();
-
-        if (data.type !== "problem-solving") {
-          throw new Error(
-            "Invalid problem solving course"
-          );
-        }
-
-        setCourse(data);
-        setError(null);
-      } catch (error) {
-        console.error(
-          "Failed to load problem solving course:",
-          error
-        );
-
-        setError(
-          "Failed to load problem solving course."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
+    void loadCourse();
   }, []);
 
   /* =========================

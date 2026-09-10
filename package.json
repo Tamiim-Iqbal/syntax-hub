@@ -10,7 +10,9 @@
     "build:backend": "npm --prefix backend run build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "dev:backend": "npm --prefix backend run dev"
+    "dev:backend": "npm --prefix backend run dev",
+    "qa:smoke": "node scripts/qa-smoke.mjs",
+    "check": "npm run qa:smoke && npm run lint && npm run build"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

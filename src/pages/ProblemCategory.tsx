@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -42,7 +42,7 @@ function ProblemCategory() {
      RETRY
   ========================= */
 
-  const loadCategory = async () => {
+  const loadCategory = useCallback(async () => {
     if (!categorySlug) {
       setError("Invalid problem category");
       setLoading(false);
@@ -71,41 +71,15 @@ function ProblemCategory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [categorySlug]);
 
   /* =========================
      INITIAL LOAD
   ========================= */
 
   useEffect(() => {
-    const load = async () => {
-      if (!categorySlug) {
-        setError("Invalid problem category");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const data = await getProblemCategory(categorySlug);
-
-        setCategory(data);
-        setError(null);
-      } catch (error) {
-        console.error(
-          "Get problem category error:",
-          error
-        );
-
-        setError(
-          "Failed to load problem category."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [categorySlug]);
+    void loadCategory();
+  }, [loadCategory]);
 
   /* =========================
      LOADING

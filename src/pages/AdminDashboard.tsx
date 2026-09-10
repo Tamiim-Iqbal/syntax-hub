@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
@@ -26,7 +26,6 @@ import type {
 import "./AdminDashboard.css";
 
 type CourseKind = "single-language" | "multi-language" | "problem-solving";
-type ContentTab = "topics" | "problems";
 type SectionKind = ContentSection["type"];
 
 type CourseForm = {
@@ -311,7 +310,6 @@ function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "courses" | "content">("overview");
-  const [contentTab, setContentTab] = useState<ContentTab>("topics");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedLanguageId, setSelectedLanguageId] = useState("");
   const [editingTopic, setEditingTopic] = useState<EditableTopic | null>(null);
@@ -326,33 +324,34 @@ function AdminDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const [o, u, c] = await Promise.all([getAdminOverview(), getAdminUsers(), getAdminCourses()]);
       setOverview(o); setUsers(u); setCourses(c);
-      if (!selectedCourseId && c[0]) setSelectedCourseId(c[0]._id);
+      if (c[0]) setSelectedCourseId((current) => current || c[0]._id);
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); }
     finally { setLoading(false); }
-  };
-  useEffect(() => { void loadDashboard(); }, []);
+  }, []);
+  useEffect(() => { void loadDashboard(); }, [loadDashboard]);
 
   const selectedCourse = useMemo(() => courses.find((course) => course._id === selectedCourseId) ?? null, [courses, selectedCourseId]);
   const courseContent = useMemo(() => {
     const raw = selectedCourse?.content;
-    return raw && typeof raw === "object" ? raw as Record<string, any> : {};
+    return raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   }, [selectedCourse]);
-  const languages = selectedCourse?.type === "multi-language"
-    ? ((selectedCourse.languages?.length ? selectedCourse.languages : courseContent.languages) ?? [])
-    : [];
+  const languages = useMemo<CourseLanguage[]>(() => {
+    if (selectedCourse?.type !== "multi-language") return [];
+    return (selectedCourse.languages?.length ? selectedCourse.languages : courseContent.languages as CourseLanguage[] | undefined) ?? [];
+  }, [selectedCourse, courseContent]);
   const activeLanguage = languages.find((language) => language.id === selectedLanguageId) ?? languages[0];
   const topicList: Topic[] = selectedCourse?.type === "single-language"
-    ? ((selectedCourse.topics?.length ? selectedCourse.topics : courseContent.topics) ?? [])
+    ? ((selectedCourse.topics?.length ? selectedCourse.topics : courseContent.topics as Topic[] | undefined) ?? [])
     : selectedCourse?.type === "multi-language"
       ? (activeLanguage?.topics ?? [])
       : [];
   const problemCategories: ProblemCategory[] = selectedCourse?.type === "problem-solving"
-    ? ((selectedCourse.problemSolvingCategories?.length ? selectedCourse.problemSolvingCategories : courseContent.categories) ?? [])
+    ? ((selectedCourse.problemSolvingCategories?.length ? selectedCourse.problemSolvingCategories : courseContent.categories as ProblemCategory[] | undefined) ?? [])
     : [];
 
   useEffect(() => {
@@ -395,8 +394,6 @@ function AdminDashboard() {
     setEditingTopic(null);
   };
 
-  const deleteTopic = (id: string) => { if (window.confirm("Delete this topic and all its subtopics?")) saveTopics(topicList.filter((topic) => topic._id !== id)); };
-  const moveTopic = (index: number, direction: -1 | 1) => { const target = index + direction; if (target < 0 || target >= topicList.length) return; const next = [...topicList]; [next[index], next[target]] = [next[target], next[index]]; saveTopics(next.map((x, i) => ({ ...x, order: i + 1 }))); };
 
   const saveProblems = (categories: ProblemCategory[]) => {
     if (selectedCourse) void saveCourseContent({ ...courseContent, categories });
@@ -405,7 +402,6 @@ function AdminDashboard() {
   const addProblem = (category: ProblemCategory) => { setEditingCategoryId(category._id); setEditingProblem({ ...emptyProblem(), order: category.problems.length + 1 }); };
   const editProblem = (category: ProblemCategory, problem: Problem) => { setEditingCategoryId(category._id); setEditingProblem(problem); };
   const saveProblem = (saved: Problem) => { if (!editingCategoryId) return; const next = problemCategories.map((category) => category._id === editingCategoryId ? { ...category, problems: category.problems.some((p) => p._id === saved._id) ? category.problems.map((p) => p._id === saved._id ? saved : p) : [...category.problems, saved] } : category); saveProblems(next); setEditingProblem(null); setEditingCategoryId(null); };
-  const deleteProblem = (categoryId: string, problemId: string) => { if (!window.confirm("Delete this problem?")) return; saveProblems(problemCategories.map((category) => category._id === categoryId ? { ...category, problems: category.problems.filter((p) => p._id !== problemId).map((p, i) => ({ ...p, order: i + 1 })) } : category)); };
   const deleteCategory = (id: string) => { if (!window.confirm("Delete this category and its problems?")) return; saveProblems(problemCategories.filter((x) => x._id !== id).map((x, i) => ({ ...x, order: i + 1 }))); };
 
   const openCreateCourse = () => { setEditingId(null); setForm({ title: "", slug: "", category: "", type: "single-language", description: "", level: "Beginner", order: "0", isPublished: true, content: JSON.stringify({ topics: [] }, null, 2) }); setFormOpen(true); };

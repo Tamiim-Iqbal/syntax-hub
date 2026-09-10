@@ -96,9 +96,9 @@ const fetchAuthenticatedApi = async <T>(endpoint: string): Promise<T> => {
   if (!response) throw new Error("Unable to connect to SyntaxHub API.");
 
   const raw = await response.text();
-  let result: { success: boolean; data: T; message?: string } | null = null;
+  let result: { success: boolean; data: T; message?: string } | null;
   try {
-    result = raw ? JSON.parse(raw) : null;
+    result = raw ? JSON.parse(raw) as { success: boolean; data: T; message?: string } : null;
   } catch {
     throw new Error(`SyntaxHub API returned an invalid response (${response.status}).`);
   }
