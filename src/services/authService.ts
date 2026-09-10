@@ -3,7 +3,7 @@ import type {
   AuthUser,
 } from "../types/auth";
 
-const API_URL = "http://localhost:5050/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5050/api";
 const TOKEN_KEY = "syntaxhub-auth-token";
 
 const request = async <T>(
@@ -29,23 +29,52 @@ const request = async <T>(
     );
   }
 
-  const response = await fetch(
-    `${API_URL}${path}`,
-    {
-      ...options,
-      headers,
-    }
-  );
+  let response: Response | undefined;
 
-  const result =
-    (await response.json()) as T & {
-      message?: string;
-    };
+  // A login can happen immediately after navigating from a course page.
+  // Retry one time for a transient browser/network failure so a momentary
+  // connection hiccup does not turn into a misleading login failure.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await fetch(
+        `${API_URL}${path}`,
+        {
+          ...options,
+          headers,
+        }
+      );
+      break;
+    } catch {
+      if (attempt === 1) {
+        throw new Error(
+          `Unable to connect to SyntaxHub API at ${API_URL}. Make sure the backend is running on port 5050.`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+
+  if (!response) {
+    throw new Error("Unable to connect to SyntaxHub API.");
+  }
+
+  const raw = await response.text();
+  let result: (T & { message?: string }) | null = null;
+
+  try {
+    result = raw ? JSON.parse(raw) : null;
+  } catch {
+    // Keep a useful error instead of exposing a JSON parse exception.
+  }
 
   if (!response.ok) {
     throw new Error(
-      result.message ?? "Request failed"
+      result?.message ?? `Request failed (${response.status})`
     );
+  }
+
+  if (!result) {
+    throw new Error("The server returned an empty response.");
   }
 
   return result;

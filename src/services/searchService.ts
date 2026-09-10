@@ -1,5 +1,5 @@
 import type { Course, LocalizedText, Problem, ProblemCategory, Topic } from "../types/course";
-import { getCourses } from "./courseService";
+import { getSearchCourses } from "./courseService";
 
 export type SearchResultType = "course" | "topic" | "subtopic" | "category" | "problem";
 
@@ -130,7 +130,7 @@ let cachedAt = 0;
 
 export const getSearchIndex = async (): Promise<SearchResult[]> => {
   if (cachedIndex && Date.now() - cachedAt < 5 * 60 * 1000) return cachedIndex;
-  const courses = await getCourses();
+  const courses = await getSearchCourses();
   cachedIndex = buildIndex(courses);
   cachedAt = Date.now();
   return cachedIndex;

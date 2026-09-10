@@ -66,6 +66,17 @@ function Navbar() {
           >
             {navbarText.home[language]}
           </NavLink>
+
+          <NavLink
+            to="/courses"
+            className={({ isActive }) =>
+              isActive || location.pathname.startsWith("/courses")
+                ? "nav-link active"
+                : "nav-link"
+            }
+          >
+            {language === "bn" ? "কোর্স" : "Courses"}
+          </NavLink>
         </nav>
 
         {/* Global Search */}
@@ -110,7 +121,7 @@ function Navbar() {
                 </Link>
               )}
 
-              <Link to="/profile" className="navbar-login">
+              <Link to="/profile" className="navbar-user-name" aria-label="Open profile">
                 {user.name}
               </Link>
               <button

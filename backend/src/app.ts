@@ -5,20 +5,42 @@ import courseRoutes from "./routes/course.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
+import { apiRateLimit, securityHeaders } from "./middleware/security.middleware.js";
 
 const app = express();
 
-const allowedOrigin =
-  process.env.CLIENT_URL ??
-  "http://localhost:5173";
+app.disable("x-powered-by");
+app.use(securityHeaders);
+app.use(apiRateLimit);
+
+const configuredOrigins = (process.env.CLIENT_URL ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+// Local development defaults. CLIENT_URL can add/override production origins.
+const allowedOrigins = Array.from(
+  new Set([
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    ...configuredOrigins,
+  ])
+);
 
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Origin not allowed by CORS"));
+    },
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({

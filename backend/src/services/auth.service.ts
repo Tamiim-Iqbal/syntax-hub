@@ -13,9 +13,13 @@ import type {
   AuthUser,
 } from "../types/auth.js";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ??
-  "syntaxhub-development-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Keep existing local development secrets working.
+// For production, use a long random secret (32+ characters recommended).
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET must be set in backend/.env.");
+}
 
 const JWT_EXPIRES_IN_SECONDS =
   60 * 60 * 24 * 7;
@@ -112,9 +116,12 @@ export const verifyToken = (
       ).toString()
     ) as JwtPayload;
 
+    const now = Math.floor(Date.now() / 1000);
     if (
-      payload.exp <=
-      Math.floor(Date.now() / 1000)
+      !Number.isFinite(payload.iat) ||
+      !Number.isFinite(payload.exp) ||
+      payload.exp <= now ||
+      payload.iat > now + 60
     ) {
       return null;
     }

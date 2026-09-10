@@ -18,6 +18,41 @@
   overflow: hidden;
 }
 
+/* =========================================================
+   BACK TO COURSES
+   ========================================================= */
+
+.course-back-bar {
+  flex: 0 0 auto;
+  width: var(--content-width);
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 14px 0 0;
+}
+
+.course-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.course-back-button:hover {
+  color: var(--color-primary);
+  transform: translateX(-2px);
+}
+
+.course-back-button span {
+  font-size: 1rem;
+}
+
 
 /* =========================================================
    LANGUAGE SELECTOR
@@ -1798,3 +1833,11 @@
   }
 }
 
+
+
+@media (max-width: 768px) {
+  .course-back-bar {
+    width: var(--content-width);
+    padding-top: 10px;
+  }
+}

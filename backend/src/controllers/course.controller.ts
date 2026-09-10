@@ -2,9 +2,13 @@ import type { Request, Response } from "express";
 
 import {
   getAllCourses,
+  getCoursePreview,
+  getSearchCourses,
   getCourseBySlug,
   getProblemSolvingCourse,
+  getProblemSolvingPreview,
   getProblemCategory,
+  getProblemCategoryPreview,
   getProblemBySlug,
   createCourse,
   updateCourse,
@@ -65,6 +69,55 @@ export const getCourses = async (
       success: false,
       message: "Failed to fetch courses",
     });
+  }
+};
+
+
+/* =========================================
+   GET SEARCH INDEX (AUTHENTICATED)
+========================================= */
+
+export const getSearchIndex = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const courses = await getSearchCourses();
+    res.status(200).json({ success: true, data: courses });
+  } catch (error) {
+    console.error("Get search index error:", error);
+    res.status(500).json({ success: false, message: "Failed to load search index" });
+  }
+};
+
+/* =========================================
+   GET COURSE PREVIEW
+   Public metadata only — never includes lesson content.
+========================================= */
+
+export const getCoursePreviewController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { slug } = req.params;
+
+    if (typeof slug !== "string") {
+      res.status(400).json({ success: false, message: "Invalid course slug" });
+      return;
+    }
+
+    const course = await getCoursePreview(slug);
+
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    res.status(200).json({ success: true, data: course });
+  } catch (error) {
+    console.error("Get course preview error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch course preview" });
   }
 };
 
@@ -302,7 +355,7 @@ export const getProblemSolving = async (
 ) => {
   try {
     const course =
-      await getProblemSolvingCourse();
+      await getProblemSolvingPreview();
 
     if (!course) {
       res.status(404).json({
@@ -357,7 +410,7 @@ export const getProblemSolvingCategory =
       }
 
       const category =
-        await getProblemCategory(
+        await getProblemCategoryPreview(
           categorySlug
         );
 

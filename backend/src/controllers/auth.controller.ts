@@ -29,8 +29,11 @@ const validCredentials = (
   password: string
 ) =>
   name.trim().length >= 2 &&
+  name.trim().length <= 80 &&
+  email.trim().length <= 254 &&
   email.includes("@") &&
-  password.length >= 8;
+  password.length >= 8 &&
+  password.length <= 128;
 
 /* =========================================
    REGISTER
@@ -129,7 +132,8 @@ export const login = async (
       typeof email !== "string" ||
       typeof password !== "string" ||
       !email.includes("@") ||
-      password.length < 8
+      password.length < 8 ||
+      password.length > 128
     ) {
       res.status(400).json({
         success: false,

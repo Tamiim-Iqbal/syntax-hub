@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import CourseDetailsSkeleton from "../components/CourseDetailsSkeleton";
 import ErrorState from "../components/ErrorState";
@@ -9,8 +9,10 @@ import CourseContentRenderer from "../components/course-details/CourseContentRen
 import CourseTopicNavigation from "../components/course-details/CourseTopicNavigation";
 import type { ContentSource } from "../components/course-details/types";
 import type { Course, CourseLanguage, LocalizedText, RichTextContent, Subtopic, Topic } from "../types/course";
-import { getCourseBySlug } from "../services/courseService";
+import { getCourseBySlug, getCoursePreview } from "../services/courseService";
+import { hasAuthToken } from "../services/authService";
 import { useLanguage } from "../context/useLanguage";
+import { useAuth } from "../context/useAuth";
 import "./CourseDetails.css";
 
 const text = {
@@ -23,7 +25,11 @@ const text = {
 function CourseDetails() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { language } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const authenticated = Boolean(user) || hasAuthToken();
   const [course, setCourse] = useState<Course>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -41,7 +47,11 @@ function CourseDetails() {
     try {
       setLoading(true);
       setError("");
-      const data = await getCourseBySlug(slug);
+      const data = authLoading
+        ? await getCoursePreview(slug)
+        : user
+          ? await getCourseBySlug(slug)
+          : await getCoursePreview(slug);
       setCourse(data);
     } catch (requestError) {
       console.error("Failed to load course:", requestError);
@@ -54,6 +64,7 @@ function CourseDetails() {
 
   useEffect(() => {
     let cancelled = false;
+
     const load = async () => {
       if (!slug) {
         if (!cancelled) {
@@ -63,12 +74,27 @@ function CourseDetails() {
         }
         return;
       }
+
+      // Wait for the auth session to be restored before deciding whether
+      // to request the protected lesson content.
+      if (authLoading) return;
+
       try {
-        const data = await getCourseBySlug(slug);
+        setLoading(true);
+        setError("");
+
+        // Guests receive only the public course preview (sidebar metadata).
+        // Authenticated users receive the full course content.
+        // A freshly completed login stores the token before React finishes
+        // propagating the user state. Treat a valid stored token as
+        // authenticated here so the course never flashes the guest state.
+        const data = authenticated
+          ? await getCourseBySlug(slug)
+          : await getCoursePreview(slug);
+
         if (!cancelled) {
           setCourse(data);
-          setError("");
-          setLoading(false);
+
           const requestedTopic = searchParams.get("topic");
           const requestedSubtopic = searchParams.get("subtopic");
           const requestedLanguage = searchParams.get("language");
@@ -76,23 +102,38 @@ function CourseDetails() {
             ? data.languages.find((item) => item.name.toLowerCase() === requestedLanguage?.toLowerCase()) ?? data.languages[0]
             : undefined;
           setSelectedLanguageId(initialLanguage?.id);
-          const initialTopics = data.type === "multi-language" ? initialLanguage?.topics ?? [] : data.type === "single-language" ? data.topics : [];
-          const initialTopic = initialTopics.find((item) => item.slug === requestedTopic);
+
+          const initialTopics = data.type === "multi-language"
+            ? initialLanguage?.topics ?? []
+            : data.type === "single-language"
+              ? data.topics
+              : [];
+          // Logged-in users should land directly on the first lesson when
+          // they open a course without a topic in the URL. Guests keep the
+          // Ready to Start Learning panel.
+          const initialTopic = initialTopics.find((item) => item.slug === requestedTopic)
+            ?? (authenticated ? initialTopics[0] : undefined);
           setSelectedTopicSlug(initialTopic?.slug ?? null);
-          setSelectedSubtopicSlug(initialTopic?.subtopics?.some((item) => item.slug === requestedSubtopic) ? requestedSubtopic : null);
+          setSelectedSubtopicSlug(
+            initialTopic?.subtopics?.some((item) => item.slug === requestedSubtopic)
+              ? requestedSubtopic
+              : null
+          );
         }
       } catch (requestError) {
         console.error("Failed to load course:", requestError);
         if (!cancelled) {
           setCourse(undefined);
           setError("Failed to load course.");
-          setLoading(false);
         }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
+
     void load();
     return () => { cancelled = true; };
-  }, [slug, searchParams]);
+  }, [slug, searchParams, user, authLoading, authenticated]);
 
   const languages = useMemo<CourseLanguage[]>(
     () => (course?.type === "multi-language" ? course.languages : []),
@@ -176,6 +217,12 @@ function CourseDetails() {
     setSelectedSubtopicSlug(topic.subtopics?.some((item) => item.slug === selectedSubtopicSlug) ? selectedSubtopicSlug : null);
   };
 
+  const handleLogin = () => {
+    navigate("/login", {
+      state: { from: `${location.pathname}${location.search}` },
+    });
+  };
+
   if (loading) return <CourseDetailsSkeleton />;
 
   if (error || !course) {
@@ -194,6 +241,17 @@ function CourseDetails() {
 
   return (
     <div className="course-details">
+      <div className="course-back-bar">
+        <button
+          type="button"
+          className="course-back-button"
+          onClick={() => navigate("/courses")}
+        >
+          <span aria-hidden="true">←</span>
+          {language === "bn" ? "কোর্সে ফিরে যান" : "Back to Courses"}
+        </button>
+      </div>
+
       <CourseLanguageSelector languages={languages} selectedLanguageId={activeLanguage?.id} onSelect={selectLanguage} />
 
       <section className="course-learning">
@@ -213,7 +271,7 @@ function CourseDetails() {
             {activeContent && <h1 className="course-topic-title">{getText(activeContent.title)}</h1>}
           </div>
 
-          {activeContent ? (
+          {authenticated && activeContent ? (
             <>
               <CourseContentRenderer
                 content={activeContent}
@@ -236,7 +294,7 @@ function CourseDetails() {
               <p className="section-label">{course.title.toUpperCase()}</p>
               <h2>{text.ready[language]}</h2>
               <p>{text.select[language]}</p>
-              <button type="button">{text.login[language]}</button>
+              <button type="button" onClick={handleLogin}>{text.login[language]}</button>
             </div>
           )}
         </main>

@@ -46,7 +46,7 @@ function Login() {
   const from =
     (location.state as {
       from?: string;
-    } | null)?.from ?? "/courses";
+    } | null)?.from ?? "/";
 
   /* =========================================
      RESPONSIVE GOOGLE BUTTON WIDTH

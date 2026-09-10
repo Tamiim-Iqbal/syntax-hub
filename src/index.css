@@ -12,6 +12,7 @@
   --color-bg-white: #ffffff;
   --color-surface: #f8fafc;
   --color-surface-hover: #f1f5f9;
+  --color-bg-soft: #fafafa;
 
   /* Text */
   --color-text: #0f172a;
@@ -26,9 +27,10 @@
 
   /* Gradient */
   --color-grad1: #ec4899;
-  --color-grad2: #8b5cf6
-    /* Status */
-    --color-success: #16a34a;
+  --color-grad2: #8b5cf6;
+
+  /* Status */
+  --color-success: #16a34a;
   --color-danger: #dc2626;
 
   /* Typography */
@@ -74,6 +76,7 @@
 
   --color-surface: #1e293b;
   --color-surface-hover: #334155;
+  --color-bg-soft: #151a23;
 
   /* Text */
   --color-text: #f8fafc;
@@ -85,6 +88,10 @@
 
   /* Code */
   --color-code-bg: #020617;
+
+  /* Status */
+  --color-success: #4ade80;
+  --color-danger: #f87171;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);

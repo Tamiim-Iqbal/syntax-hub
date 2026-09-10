@@ -33,7 +33,15 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
-            <Route path="/search" element={<Search />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/search" element={<Search />} />
+            </Route>
+            <Route path="/courses/problem-solving" element={<ProblemSolving />} />
+            <Route path="/courses/problem-solving/:categorySlug" element={<ProblemCategory />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />
+            </Route>
+            <Route path="/courses/:slug" element={<CourseDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>
@@ -42,10 +50,6 @@ function App() {
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminDashboard />} />
             </Route>
-            <Route path="/courses/problem-solving" element={<ProblemSolving />} />
-            <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />
-            <Route path="/courses/problem-solving/:categorySlug" element={<ProblemCategory />} />
-            <Route path="/courses/:slug" element={<CourseDetails />} />
           </Route>
         </Routes>
       </Suspense>
