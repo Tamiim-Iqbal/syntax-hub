@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
+import { setPageMeta } from "../utils/pageMeta";
 export default function NotFound() {
+  setPageMeta("Page Not Found", "The requested SyntaxHub page could not be found.");
   return (
     <main className="not-found-page">
       <section className="not-found-card">
