@@ -495,7 +495,7 @@
 .topic-description {
   margin: 0;
 
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 
   font-size: 0.98rem;
   line-height: 1.85;
