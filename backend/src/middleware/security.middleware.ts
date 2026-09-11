@@ -5,6 +5,16 @@ const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 120;
 const AUTH_MAX_REQUESTS = 12;
 
+// Prevent expired IP buckets from accumulating forever in a long-running process.
+const cleanupBuckets = () => {
+  const now = Date.now();
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) {
+      buckets.delete(key);
+    }
+  }
+};
+
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
@@ -19,6 +29,11 @@ export const apiRateLimit = (req: Request, res: Response, next: NextFunction) =>
   const key = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   const bucket = buckets.get(key);
+
+  // Occasional cleanup keeps the in-memory limiter bounded.
+  if (buckets.size > 1000) {
+    cleanupBuckets();
+  }
 
   if (!bucket || bucket.resetAt <= now) {
     buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });

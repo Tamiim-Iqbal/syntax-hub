@@ -9,6 +9,9 @@ import { apiRateLimit, securityHeaders } from "./middleware/security.middleware.
 
 const app = express();
 
+// Render sits behind a reverse proxy; trust the first proxy hop so req.ip
+// reflects the client IP used by the rate limiter.
+app.set("trust proxy", 1);
 app.disable("x-powered-by");
 app.use(securityHeaders);
 app.use(apiRateLimit);
