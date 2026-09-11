@@ -53,6 +53,7 @@ export const getCourses = async (
   try {
     const courses = await getAllCourses();
 
+    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
     res.status(200).json({
       success: true,
       data: courses,
@@ -81,6 +82,7 @@ export const getSearchIndex = async (
 ) => {
   try {
     const courses = await getSearchCourses();
+    res.set("Cache-Control", "private, max-age=30, stale-while-revalidate=120");
     res.status(200).json({ success: true, data: courses });
   } catch (error) {
     console.error("Get search index error:", error);
@@ -112,6 +114,7 @@ export const getCoursePreviewController = async (
       return;
     }
 
+    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
     res.status(200).json({ success: true, data: course });
   } catch (error) {
     console.error("Get course preview error:", error);
@@ -151,6 +154,7 @@ export const getCourse = async (
       return;
     }
 
+    res.set("Cache-Control", "private, max-age=30, stale-while-revalidate=120");
     res.status(200).json({
       success: true,
       data: course,
@@ -365,6 +369,7 @@ export const getProblemSolving = async (
       return;
     }
 
+    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
     res.status(200).json({
       success: true,
       data: course,
@@ -422,6 +427,7 @@ export const getProblemSolvingCategory =
         return;
       }
 
+      res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
       res.status(200).json({
         success: true,
         data: category,
@@ -482,6 +488,7 @@ export const getProblem = async (
       return;
     }
 
+    res.set("Cache-Control", "private, max-age=30, stale-while-revalidate=120");
     res.status(200).json({
       success: true,
       data: problem,

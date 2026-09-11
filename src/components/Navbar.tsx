@@ -116,14 +116,9 @@ function Navbar() {
           {user ? (
             <>
               {user.role === "admin" && (
-                <NavLink
-  to="/admin"
-  className={({ isActive }) =>
-    `navbar-admin-link ${isActive ? "active" : ""}`
-  }
->
-  Admin
-</NavLink>
+                <Link to="/admin" className="navbar-admin-link">
+                  Admin
+                </Link>
               )}
 
               <Link to="/profile" className="navbar-user-name" aria-label="Open profile">

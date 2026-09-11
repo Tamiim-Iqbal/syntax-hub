@@ -49,7 +49,8 @@ const fetchApi = async <T>(
   endpoint: string
 ): Promise<T> => {
   const response = await fetch(
-    `${API_URL}${endpoint}`
+    `${API_URL}${endpoint}`,
+    { cache: "default" }
   );
 
   if (!response.ok) {
@@ -206,15 +207,31 @@ export const getSearchCourses = async (): Promise<Course[]> => {
    GET ALL COURSES
 ========================================= */
 
-export const getCourses = async (): Promise<
-  Course[]
-> => {
-  const data =
-    await fetchApi<ApiCourse[]>(
-      "/courses"
-    );
+let coursesCache: { data: Course[]; expiresAt: number } | null = null;
+let coursesPromise: Promise<Course[]> | null = null;
+const COURSE_CACHE_TTL = 30_000;
 
-  return data.map(normalizeCourse);
+export const getCourses = async (): Promise<Course[]> => {
+  if (coursesCache && coursesCache.expiresAt > Date.now()) {
+    return coursesCache.data;
+  }
+  if (coursesPromise) return coursesPromise;
+
+  coursesPromise = fetchApi<ApiCourse[]>("/courses")
+    .then((data) => data.map(normalizeCourse))
+    .then((courses) => {
+      coursesCache = { data: courses, expiresAt: Date.now() + COURSE_CACHE_TTL };
+      return courses;
+    })
+    .finally(() => {
+      coursesPromise = null;
+    });
+
+  return coursesPromise;
+};
+
+export const clearCourseListCache = () => {
+  coursesCache = null;
 };
 
 /* =========================================

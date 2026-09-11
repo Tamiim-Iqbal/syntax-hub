@@ -13,6 +13,7 @@ app.disable("x-powered-by");
 app.use(securityHeaders);
 app.use(apiRateLimit);
 
+
 const configuredOrigins = (process.env.CLIENT_URL ?? "")
   .split(",")
   .map((origin) => origin.trim())
@@ -46,6 +47,7 @@ app.use(
 app.use(express.json({ limit: "100kb" }));
 
 app.get("/api/health", (_req, res) => {
+  res.set("Cache-Control", "no-store");
   res.json({
     success: true,
     message: "SyntaxHub API is running",

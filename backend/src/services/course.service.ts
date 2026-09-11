@@ -96,7 +96,15 @@ export const getCoursePreview = async (slug: string): Promise<any | null> => {
 };
 
 export const getAllCourses = async (): Promise<any[]> => {
+  // The public course cards only need metadata and topic counts. Avoid loading
+  // lesson text, code, images, and other large content blocks from MongoDB.
   const courses = await Course.find({ isPublished: true })
+    .select(
+      "title slug category type description level isPublished order " +
+      "languages.id languages.name languages.color " +
+      "content.topics._id content.languages.id content.languages.name content.languages.color " +
+      "content.languages.topics._id content.categories._id content.categories.problems._id"
+    )
     .sort({ order: 1, createdAt: -1 })
     .lean();
   return courses.map(toPublicSummary);
