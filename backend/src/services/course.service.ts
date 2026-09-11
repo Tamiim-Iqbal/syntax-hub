@@ -1,42 +1,117 @@
 import Course, { type ICourse } from "../models/Course.js";
 
+const getCourseContent = (course: any) =>
+  course?.content && typeof course.content === "object"
+    ? course.content
+    : {};
+
+/**
+ * Multi-language courses have existed in two shapes in the project:
+ *
+ * 1. course.languages
+ * 2. course.content.languages
+ *
+ * Some older documents can have an empty `course.languages` array while the
+ * real topics still live under `content.languages`. Always prefer the source
+ * that actually contains topics so public course cards never report 0 by
+ * mistake.
+ */
+const getCourseLanguages = (course: any): any[] => {
+  const content = getCourseContent(course);
+  const topLevelLanguages = Array.isArray(course?.languages)
+    ? course.languages
+    : [];
+  const contentLanguages = Array.isArray(content.languages)
+    ? content.languages
+    : [];
+
+  const topLevelTopicCount = topLevelLanguages.reduce(
+    (total: number, language: any) =>
+      total + (Array.isArray(language?.topics) ? language.topics.length : 0),
+    0
+  );
+
+  if (topLevelTopicCount > 0) return topLevelLanguages;
+  if (contentLanguages.length > 0) return contentLanguages;
+  return topLevelLanguages;
+};
+
+const getTopicCount = (course: any): number => {
+  const content = getCourseContent(course);
+
+  if (course?.type === "single-language") {
+    return Array.isArray(content.topics) ? content.topics.length : 0;
+  }
+
+  if (course?.type === "multi-language") {
+    const languages = getCourseLanguages(course);
+
+    return languages.reduce(
+      (total: number, language: any) =>
+        total + (Array.isArray(language?.topics) ? language.topics.length : 0),
+      0
+    );
+  }
+
+  const categories = Array.isArray(content.categories)
+    ? content.categories
+    : [];
+
+  return categories.reduce(
+    (total: number, category: any) =>
+      total + (Array.isArray(category?.problems) ? category.problems.length : 0),
+    0
+  );
+};
+
 const normalizeCourseForClient = (course: any) => {
   if (!course) return course;
-  const content = course.content && typeof course.content === "object" ? course.content : {};
+
+  const content = getCourseContent(course);
   const normalized: any = { ...course };
-  if (course.type === "single-language") normalized.topics = content.topics ?? [];
-  if (course.type === "multi-language") normalized.languages = course.languages ?? content.languages ?? [];
-  if (course.type === "problem-solving") normalized.problemSolvingCategories = content.categories ?? [];
+
+  if (course.type === "single-language") {
+    normalized.topics = Array.isArray(content.topics) ? content.topics : [];
+  }
+
+  if (course.type === "multi-language") {
+    normalized.languages = getCourseLanguages(course);
+  }
+
+  if (course.type === "problem-solving") {
+    normalized.problemSolvingCategories = Array.isArray(content.categories)
+      ? content.categories
+      : [];
+  }
+
   return normalized;
 };
 
-const getTopicCount = (course: any) => {
-  const content = course.content && typeof course.content === "object" ? course.content : {};
-  if (course.type === "single-language") return Array.isArray(content.topics) ? content.topics.length : 0;
-  if (course.type === "multi-language") {
-    const languages = Array.isArray(course.languages) ? course.languages : (Array.isArray(content.languages) ? content.languages : []);
-    return languages.reduce((total: number, language: any) => total + (Array.isArray(language.topics) ? language.topics.length : 0), 0);
-  }
-  const categories = Array.isArray(content.categories) ? content.categories : [];
-  return categories.reduce((total: number, category: any) => total + (Array.isArray(category.problems) ? category.problems.length : 0), 0);
+const toPublicSummary = (course: any) => {
+  const languages =
+    course.type === "multi-language" ? getCourseLanguages(course) : [];
+
+  return {
+    _id: course._id,
+    title: course.title,
+    slug: course.slug,
+    category: course.category,
+    type: course.type,
+    description: course.description,
+    level: course.level,
+    topicsCount: getTopicCount(course),
+    languages:
+      course.type === "multi-language"
+        ? languages.map((language: any) => ({
+            id: language.id,
+            name: language.name,
+            color: language.color,
+          }))
+        : undefined,
+    isPublished: course.isPublished,
+    order: course.order,
+  };
 };
-
-const toPublicSummary = (course: any) => ({
-  _id: course._id,
-  title: course.title,
-  slug: course.slug,
-  category: course.category,
-  type: course.type,
-  description: course.description,
-  level: course.level,
-  topicsCount: getTopicCount(course),
-  languages: course.type === "multi-language"
-    ? (Array.isArray(course.languages) ? course.languages : []).map((language: any) => ({ id: language.id, name: language.name, color: language.color }))
-    : undefined,
-  isPublished: course.isPublished,
-  order: course.order,
-});
-
 
 const toCoursePreview = (course: any) => {
   const previewTopic = (topic: any) => ({
@@ -68,16 +143,12 @@ const toCoursePreview = (course: any) => {
   };
 
   if (course.type === "single-language") {
-    preview.topics = Array.isArray(course.content?.topics)
-      ? course.content.topics.map(previewTopic)
+    const content = getCourseContent(course);
+    preview.topics = Array.isArray(content.topics)
+      ? content.topics.map(previewTopic)
       : [];
   } else if (course.type === "multi-language") {
-    const languages = Array.isArray(course.languages)
-      ? course.languages
-      : Array.isArray(course.content?.languages)
-        ? course.content.languages
-        : [];
-    preview.languages = languages.map((language: any) => ({
+    preview.languages = getCourseLanguages(course).map((language: any) => ({
       id: language.id,
       name: language.name,
       color: language.color,
@@ -101,7 +172,7 @@ export const getAllCourses = async (): Promise<any[]> => {
   const courses = await Course.find({ isPublished: true })
     .select(
       "title slug category type description level isPublished order " +
-      "languages.id languages.name languages.color " +
+      "languages.id languages.name languages.color languages.topics._id " +
       "content.topics._id content.languages.id content.languages.name content.languages.color " +
       "content.languages.topics._id content.categories._id content.categories.problems._id"
     )
