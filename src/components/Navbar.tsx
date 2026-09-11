@@ -32,12 +32,12 @@ function Navbar() {
 
   const navbarText = {
     home: {
-      bn: "হোম",
+      bn: "Home",
       en: "Home",
     },
 
     login: {
-      bn: "লগইন",
+      bn: "Login",
       en: "Login",
     },
   };
@@ -75,7 +75,7 @@ function Navbar() {
                 : "nav-link"
             }
           >
-            {language === "bn" ? "কোর্স" : "Courses"}
+            {language === "bn" ? "Courses" : "Courses"}
           </NavLink>
         </nav>
 
@@ -135,7 +135,7 @@ function Navbar() {
                 onClick={logout}
                 aria-label="Logout"
               >
-                {language === "bn" ? "লগআউট" : "Logout"}
+                {language === "bn" ? "Logout" : "Logout"}
               </button>
             </>
           ) : (

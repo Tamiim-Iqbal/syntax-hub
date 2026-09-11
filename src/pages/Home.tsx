@@ -41,7 +41,7 @@ function Home() {
       <section className="hero">
         <div className="hero-content">
           <span className="hero-badge">
-            Learn • Understand • Build
+            Learn • Build • Grow
           </span>
 
           <h1>
@@ -51,8 +51,7 @@ function Home() {
           </h1>
 
           <p className="hero-description">
-            Programming concepts সহজভাবে শিখুন, বুঝুন এবং
-            step-by-step নিজের skills build করুন।
+            Master programming concepts step by step and turn your ideas into real-world skills.
           </p>
 
           <div className="hero-actions">

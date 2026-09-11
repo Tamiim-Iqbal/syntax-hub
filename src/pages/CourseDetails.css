@@ -1538,19 +1538,19 @@
 .topic-navigation {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 30px;
-  padding: 10px;
+  gap: 20vw;
+  margin-top: 15px;
+  padding: 5px;
 }
 
 .topic-navigation-button {
-  min-height: 56px;
+  min-height: 45px;
 
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 
-  padding: 10px 20px;
+  padding: 0 20px;
   justify-items: center;
 
   justify-self: center;

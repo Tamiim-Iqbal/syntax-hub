@@ -15,19 +15,19 @@ function CourseTopicNavigation({ previousContent, nextContent, language, onSelec
         className="topic-navigation-button previous"
         onClick={() => previousContent && onSelect(previousContent)}
         disabled={!previousContent}
-        aria-label={language === "bn" ? "আগের টপিক" : "Previous Topic"}
+        aria-label={language === "bn" ? "Previous Topic" : "Previous Topic"}
       >
         <span className="topic-navigation-arrow" aria-hidden="true">←</span>
-        <span>{language === "bn" ? "আগের টপিক" : "Previous Topic"}</span>
+        <span>{language === "bn" ? "Previous Topic" : "Previous Topic"}</span>
       </button>
       <button
         type="button"
         className="topic-navigation-button next"
         onClick={() => nextContent && onSelect(nextContent)}
         disabled={!nextContent}
-        aria-label={language === "bn" ? "পরের টপিক" : "Next Topic"}
+        aria-label={language === "bn" ? "Next Topic" : "Next Topic"}
       >
-        <span>{language === "bn" ? "পরের টপিক" : "Next Topic"}</span>
+        <span>{language === "bn" ? "Next Topic" : "Next Topic"}</span>
         <span className="topic-navigation-arrow" aria-hidden="true">→</span>
       </button>
     </nav>

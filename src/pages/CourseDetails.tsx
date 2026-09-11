@@ -248,7 +248,7 @@ function CourseDetails() {
           onClick={() => navigate("/courses")}
         >
           <span aria-hidden="true">←</span>
-          {language === "bn" ? "কোর্সে ফিরে যান" : "Back to Courses"}
+          {language === "bn" ? "Back to Courses" : "Back to Courses"}
         </button>
       </div>
 
