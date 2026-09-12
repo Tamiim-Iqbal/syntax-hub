@@ -632,7 +632,7 @@ class Dog implements Animal {
     description:
       "Improve your programming skills through carefully selected problems from different online judges.",
     level: "Beginner",
-    topicsCount: 2,
+    topicsCount: 3,
 
     content: {
       categories: [

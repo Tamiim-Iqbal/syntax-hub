@@ -34,8 +34,19 @@ export function AuthProvider({
     authService
       .getCurrentUser()
       .then(setUser)
-      .catch(() => {
-        authService.logout();
+      .catch((error: unknown) => {
+        // Only clear the stored session when the server explicitly says the
+        // token is invalid/unauthorized. Network failures, cold starts and
+        // temporary 5xx responses must not silently log a user out.
+        const status =
+          error && typeof error === "object" && "status" in error
+            ? Number((error as { status?: unknown }).status)
+            : undefined;
+
+        if (status === 401 || status === 403) {
+          authService.logout();
+          setUser(null);
+        }
       })
       .finally(() => {
         setLoading(false);

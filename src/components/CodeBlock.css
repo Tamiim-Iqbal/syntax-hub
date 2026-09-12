@@ -1,0 +1,252 @@
+/* Shared SyntaxHub code block — matches the existing course code block exactly. */
+
+/* =========================================================
+   CODE EXAMPLE
+   ========================================================= */
+
+.topic-code-section {
+  margin-top: 25px;
+}
+
+.code-block {
+  margin-top: 15px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+
+  background: var(--color-surface);
+
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+
+/* =========================================================
+   CODE HEADER
+   ========================================================= */
+
+.code-block-header {
+  display: grid;
+
+  grid-template-columns: 70px 1fr auto;
+
+  align-items: center;
+
+  min-height: 58px;
+
+  padding: 0 14px;
+
+  border-bottom: 1px solid var(--color-border);
+
+  background: color-mix(
+    in srgb,
+    var(--color-surface),
+    var(--color-text) 5%
+  );
+}
+
+
+/* =========================================================
+   MAC CONTROLS
+   ========================================================= */
+
+.code-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.code-dot {
+  width: 12px;
+  height: 12px;
+
+  border-radius: 50%;
+}
+
+.code-dot.red {
+  background: #ff5f57;
+}
+
+.code-dot.yellow {
+  background: #febc2e;
+}
+
+.code-dot.green {
+  background: #28c840;
+}
+
+
+/* =========================================================
+   CODE LANGUAGE
+   ========================================================= */
+
+.code-language {
+  justify-self: start;
+
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  color: var(--color-primary);
+  margin-left: 10px;
+
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   COPY BUTTON
+   ========================================================= */
+
+.code-copy-button {
+  padding: 8px 14px;
+
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+
+  background: var(--color-primary);
+  color: #ffffff;
+
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.code-copy-button:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+.code-copy-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   CODE BODY
+   ========================================================= */
+
+.code-block-content {
+  margin: 0;
+
+  padding: 22px 24px;
+
+  overflow-x: auto;
+
+  background: var(--color-bg-white);
+  color: var(--color-text);
+
+  opacity: 1;
+
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.75;
+
+  text-align: left;
+}
+
+.code-block-content code {
+  padding: 0;
+
+  background: transparent;
+  color: var(--color-text);
+
+  opacity: 1;
+}
+
+.code-block-content span {
+  opacity: 1;
+}
+
+
+/* =========================================================
+   SYNTAX COLORS
+   ========================================================= */
+
+.code-block-content .hljs {
+  background: transparent;
+  color: var(--code-text, #111827);
+
+  opacity: 1;
+}
+
+.code-block-content .hljs-keyword,
+.code-block-content .hljs-selector-tag,
+.code-block-content .hljs-literal,
+.code-block-content .hljs-section,
+.code-block-content .hljs-link {
+  color: color-mix(
+    in srgb,
+    #dc2626 78%,
+    var(--color-text) 22%
+  );
+}
+
+.code-block-content .hljs-title,
+.code-block-content .hljs-title.class_,
+.code-block-content .hljs-title.class_.inherited__ {
+  color: color-mix(
+    in srgb,
+    #7c3aed 78%,
+    var(--color-text) 22%
+  );
+}
+
+.code-block-content .hljs-type,
+.code-block-content .hljs-built_in,
+.code-block-content .hljs-params,
+.code-block-content .hljs-variable.language_ {
+  color: color-mix(
+    in srgb,
+    #c2410c 78%,
+    var(--color-text) 22%
+  );
+}
+
+.code-block-content .hljs-string,
+.code-block-content .hljs-attr,
+.code-block-content .hljs-template-variable {
+  color: color-mix(
+    in srgb,
+    #047857 78%,
+    var(--color-text) 22%
+  );
+}
+
+.code-block-content .hljs-number,
+.code-block-content .hljs-symbol,
+.code-block-content .hljs-bullet {
+  color: color-mix(
+    in srgb,
+    #b45309 78%,
+    var(--color-text) 22%
+  );
+}
+
+.code-block-content .hljs-comment,
+.code-block-content .hljs-quote {
+  color: color-mix(
+    in srgb,
+    #64748b 78%,
+    var(--color-text) 22%
+  );
+
+  font-style: italic;
+}
+
+.code-block-content .hljs-meta,
+.code-block-content .hljs-meta .hljs-keyword {
+  color: color-mix(
+    in srgb,
+    #0369a1 78%,
+    var(--color-text) 22%
+  );
+}

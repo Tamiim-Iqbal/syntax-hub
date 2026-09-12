@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seed.ts",
-    "make-admin": "tsx src/promote-admin.ts"
+    "make-admin": "tsx src/promote-admin.ts",
+    "seed:nested": "tsx src/seed-nested.ts"
   },
   "keywords": [],
   "author": "",

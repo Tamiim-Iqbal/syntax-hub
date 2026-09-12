@@ -31,7 +31,14 @@ const getCourseLanguages = (course: any): any[] => {
     0
   );
 
+  const contentTopicCount = contentLanguages.reduce(
+    (total: number, language: any) =>
+      total + (Array.isArray(language?.topics) ? language.topics.length : 0),
+    0
+  );
+
   if (topLevelTopicCount > 0) return topLevelLanguages;
+  if (contentTopicCount > 0) return contentLanguages;
   if (contentLanguages.length > 0) return contentLanguages;
   return topLevelLanguages;
 };
@@ -40,12 +47,12 @@ const getTopicCount = (course: any): number => {
   const content = getCourseContent(course);
 
   if (course?.type === "single-language") {
-    return Array.isArray(content.topics) ? content.topics.length : 0;
+    const topics = Array.isArray(content.topics) ? content.topics : [];
+    return topics.length;
   }
 
   if (course?.type === "multi-language") {
     const languages = getCourseLanguages(course);
-
     return languages.reduce(
       (total: number, language: any) =>
         total + (Array.isArray(language?.topics) ? language.topics.length : 0),
@@ -53,10 +60,29 @@ const getTopicCount = (course: any): number => {
     );
   }
 
-  const categories = Array.isArray(content.categories)
-    ? content.categories
+  if (course?.type === "nested") {
+    const contentCourses = Array.isArray(content.courses) ? content.courses : [];
+    const rootCourses = Array.isArray(course?.nestedCourses) ? course.nestedCourses : [];
+    return contentCourses.length > 0 ? contentCourses.length : rootCourses.length;
+  }
+
+  const contentCategories = Array.isArray(content.categories) ? content.categories : [];
+  const legacyContentCategories = Array.isArray(content.problemSolvingCategories)
+    ? content.problemSolvingCategories
+    : [];
+  const rootCategories = Array.isArray(course?.problemSolvingCategories)
+    ? course.problemSolvingCategories
     : [];
 
+  const categories =
+    contentCategories.length > 0
+      ? contentCategories
+      : legacyContentCategories.length > 0
+        ? legacyContentCategories
+        : rootCategories;
+
+  // Problem Solving's count is the total number of problems across all
+  // categories, not the number of categories.
   return categories.reduce(
     (total: number, category: any) =>
       total + (Array.isArray(category?.problems) ? category.problems.length : 0),
@@ -78,10 +104,27 @@ const normalizeCourseForClient = (course: any) => {
     normalized.languages = getCourseLanguages(course);
   }
 
+  if (course.type === "nested") {
+    const nestedCourses = Array.isArray(content.courses)
+      ? content.courses
+      : Array.isArray(course?.nestedCourses)
+        ? course.nestedCourses
+        : [];
+    normalized.nestedCourses = nestedCourses.map((item: any) => ({ ...item, type: item.type ?? "single-language" }));
+  }
+
   if (course.type === "problem-solving") {
-    normalized.problemSolvingCategories = Array.isArray(content.categories)
+    const categories = Array.isArray(content.categories) && content.categories.length > 0
       ? content.categories
-      : [];
+      : Array.isArray(content.problemSolvingCategories) && content.problemSolvingCategories.length > 0
+        ? content.problemSolvingCategories
+        : Array.isArray(course?.problemSolvingCategories)
+          ? course.problemSolvingCategories
+          : [];
+    normalized.problemSolvingCategories = categories.map((category: any) => ({
+      ...category,
+      problems: Array.isArray(category?.problems) ? category.problems : [],
+    }));
   }
 
   return normalized;
@@ -109,11 +152,12 @@ const toPublicSummary = (course: any) => {
           }))
         : undefined,
     isPublished: course.isPublished,
+    isTopLevel: course.isTopLevel !== false,
     order: course.order,
   };
 };
 
-const toCoursePreview = (course: any) => {
+const toCoursePreview = async (course: any) => {
   const previewTopic = (topic: any) => ({
     _id: topic._id,
     title: topic.title,
@@ -156,6 +200,43 @@ const toCoursePreview = (course: any) => {
         ? language.topics.map(previewTopic)
         : [],
     }));
+  } else if (course.type === "nested") {
+    const content = getCourseContent(course);
+    const refs = Array.isArray(content.courses) && content.courses.length > 0
+      ? content.courses
+      : Array.isArray(course?.nestedCourses)
+        ? course.nestedCourses
+        : [];
+    const ids = refs.map((item: any) => String(item?._id ?? item?.id ?? item?.courseId ?? "")).filter(Boolean);
+    const slugs = refs.map((item: any) => String(item?.slug ?? "")).filter(Boolean);
+    const children = ids.length || slugs.length
+      ? await Course.find({
+          isPublished: true,
+          $or: [
+            ...(ids.length ? [{ _id: { $in: ids.filter((id: string) => /^[a-f0-9]{24}$/i.test(id)) } }] : []),
+            ...(slugs.length ? [{ slug: { $in: slugs } }] : []),
+          ],
+        })
+          .select("_id title slug category type description level isPublished order content languages")
+          .lean()
+      : [];
+    const byId = new Map(children.map((child: any) => [String(child._id), child]));
+    const bySlug = new Map(children.map((child: any) => [child.slug, child]));
+    preview.nestedCourses = refs.map((ref: any, index: number) => {
+      const child = byId.get(String(ref?._id ?? ref?.id ?? ref?.courseId ?? "")) ?? bySlug.get(String(ref?.slug ?? ""));
+      if (!child) return null;
+      return {
+        _id: child._id,
+        type: child.type,
+        title: child.title,
+        slug: child.slug,
+        category: child.category,
+        description: child.description,
+        level: child.level,
+        topicsCount: getTopicCount(child),
+        order: ref?.order ?? child.order ?? index + 1,
+      };
+    }).filter(Boolean).sort((a: any, b: any) => a.order - b.order);
   }
 
   return preview;
@@ -163,26 +244,30 @@ const toCoursePreview = (course: any) => {
 
 export const getCoursePreview = async (slug: string): Promise<any | null> => {
   const course = await Course.findOne({ slug, isPublished: true }).lean();
-  return course ? toCoursePreview(course) : null;
+  return course ? await toCoursePreview(course) : null;
 };
 
 export const getAllCourses = async (): Promise<any[]> => {
-  // The public course cards only need metadata and topic counts. Avoid loading
-  // lesson text, code, images, and other large content blocks from MongoDB.
-  const courses = await Course.find({ isPublished: true })
-    .select(
-      "title slug category type description level isPublished order " +
-      "languages.id languages.name languages.color languages.topics._id " +
-      "content.topics._id content.languages.id content.languages.name content.languages.color " +
-      "content.languages.topics._id content.categories._id content.categories.problems._id"
-    )
-    .sort({ order: 1, createdAt: -1 })
+  // Keep the public summary calculation based on the complete course document.
+  // The previous aggregation projected the root `languages` field down to
+  // metadata-only objects, which could make multi-language topic counts zero
+  // when the real topics lived in that root field.
+  //
+  // Course cards only receive the small summary returned by toPublicSummary,
+  // so reading the source document here does not expose lesson/problem bodies
+  // to the client.
+  const courses = await Course.find({
+    isPublished: true,
+    isTopLevel: { $ne: false },
+  })
+    .sort({ order: 1, _id: 1 })
     .lean();
-  return courses.map(toPublicSummary);
+
+  return courses.map((course: any) => toPublicSummary(course));
 };
 
 export const getSearchCourses = async (): Promise<ICourse[]> => {
-  const courses = await Course.find({ isPublished: true })
+  const courses = await Course.find({ isPublished: true, isTopLevel: { $ne: false } })
     .sort({ order: 1, createdAt: -1 })
     .lean();
   return courses.map(normalizeCourseForClient) as ICourse[];
@@ -225,11 +310,17 @@ const toProblemCategoryPreview = (category: any) => ({
 });
 
 export const getProblemSolvingPreview = async () => {
-  const course = await Course.findOne({ slug: "problem-solving", type: "problem-solving", isPublished: true }).lean();
+  const course = await Course.findOne({ type: "problem-solving", isPublished: true }).sort({ order: 1, createdAt: 1 }).lean();
   if (!course) return null;
-  const categories = Array.isArray((course.content as any)?.categories)
-    ? (course.content as any).categories.map(toProblemCategoryPreview)
-    : [];
+  const content = getCourseContent(course);
+  const rawCategories = Array.isArray(content.categories) && content.categories.length > 0
+    ? content.categories
+    : Array.isArray(content.problemSolvingCategories) && content.problemSolvingCategories.length > 0
+      ? content.problemSolvingCategories
+      : Array.isArray((course as any).problemSolvingCategories)
+        ? (course as any).problemSolvingCategories
+        : [];
+  const categories = rawCategories.map(toProblemCategoryPreview);
   return {
     _id: course._id,
     title: course.title,
@@ -244,7 +335,7 @@ export const getProblemSolvingPreview = async () => {
 };
 
 export const getProblemCategoryPreview = async (categorySlug: string) => {
-  const course = await Course.findOne({ slug: "problem-solving", type: "problem-solving", isPublished: true }).lean();
+  const course = await Course.findOne({ type: "problem-solving", isPublished: true }).sort({ order: 1, createdAt: 1 }).lean();
   if (!course) return null;
   const categories = Array.isArray((course.content as any)?.categories) ? (course.content as any).categories : [];
   const category = categories.find((item: any) => item.slug === categorySlug);
@@ -252,19 +343,19 @@ export const getProblemCategoryPreview = async (categorySlug: string) => {
 };
 
 export const getProblemSolvingCourse = async (): Promise<ICourse | null> => {
-  const course = await Course.findOne({ slug: "problem-solving", type: "problem-solving", isPublished: true }).lean();
+  const course = await Course.findOne({ type: "problem-solving", isPublished: true }).sort({ order: 1, createdAt: 1 }).lean();
   return normalizeCourseForClient(course) as ICourse | null;
 };
 
 export const getProblemCategory = async (categorySlug: string) => {
-  const course = await Course.findOne({ slug: "problem-solving", type: "problem-solving", isPublished: true }).lean();
+  const course = await Course.findOne({ type: "problem-solving", isPublished: true }).sort({ order: 1, createdAt: 1 }).lean();
   if (!course) return null;
   const content = course.content as { categories?: Array<{ slug: string; [key: string]: unknown }> };
   return content.categories?.find((item) => item.slug === categorySlug) ?? null;
 };
 
 export const getProblemBySlug = async (categorySlug: string, problemSlug: string) => {
-  const course = await Course.findOne({ slug: "problem-solving", type: "problem-solving", isPublished: true }).lean();
+  const course = await Course.findOne({ type: "problem-solving", isPublished: true }).sort({ order: 1, createdAt: 1 }).lean();
   if (!course) return null;
   const content = course.content as { categories?: Array<{ slug: string; problems?: Array<{ slug: string; [key: string]: unknown }> }> };
   const category = content.categories?.find((item) => item.slug === categorySlug);

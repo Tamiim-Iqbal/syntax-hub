@@ -68,9 +68,11 @@ const request = async <T>(
   }
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       result?.message ?? `Request failed (${response.status})`
-    );
+    ) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
 
   if (!result) {

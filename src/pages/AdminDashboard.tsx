@@ -26,7 +26,7 @@ import type {
 } from "../types/course";
 import "./AdminDashboard.css";
 
-type CourseKind = "single-language" | "multi-language" | "problem-solving";
+type CourseKind = "single-language" | "multi-language" | "problem-solving" | "nested";
 type SectionKind = ContentSection["type"];
 
 type CourseForm = {
@@ -38,7 +38,9 @@ type CourseForm = {
   level: string;
   order: string;
   isPublished: boolean;
+  isTopLevel: boolean;
   content: string;
+  copySourceCourseId: string;
 };
 
 type EditableTopic = Topic | Subtopic;
@@ -202,14 +204,65 @@ function ImageSectionEditor({ section, onChange }: {
   const [uploadError, setUploadError] = useState("");
   const [remoteUrl, setRemoteUrl] = useState("");
 
+  const compressImageForUpload = async (file: File): Promise<{ file: File; originalBytes: number; compressedBytes: number }> => {
+    // Keep vector images untouched; raster images are resized/compressed before
+    // they ever reach ImageKit so large originals do not consume storage.
+    if (file.type === "image/svg+xml" || file.type === "image/gif") {
+      return { file, originalBytes: file.size, compressedBytes: file.size };
+    }
+
+    const bitmap = await createImageBitmap(file);
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      bitmap.close();
+      throw new Error("Could not prepare image for upload");
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.80)
+    );
+
+    if (!blob) {
+      throw new Error("Could not compress image");
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+    const optimizedFile = new File([blob], `${baseName}.webp`, { type: "image/webp" });
+    return {
+      file: optimizedFile,
+      originalBytes: file.size,
+      compressedBytes: optimizedFile.size,
+    };
+  };
+
   const uploadAsset = async (fileOrUrl: File | string, fileName: string) => {
     setUploading(true);
     setUploadError("");
     try {
       const auth = await getImageKitAuth();
+      let uploadFile: File | string = fileOrUrl;
+      let uploadFileName = fileName;
+
+      if (fileOrUrl instanceof File) {
+        const optimized = await compressImageForUpload(fileOrUrl);
+        uploadFile = optimized.file;
+        uploadFileName = optimized.file.name;
+      }
+
       const formData = new FormData();
-      formData.append("file", fileOrUrl);
-      formData.append("fileName", fileName);
+      formData.append("file", uploadFile);
+      formData.append("fileName", uploadFileName);
       formData.append("publicKey", auth.publicKey);
       formData.append("signature", auth.signature);
       formData.append("expire", String(auth.expire));
@@ -371,7 +424,7 @@ function ProblemEditor({ problem, onSave, onCancel }: { problem: ProblemEditor; 
         <label>Judge URL<input value={draft.judgeUrl ?? ""} onChange={(e) => updateProblem({ judgeUrl: e.target.value })} /></label>
         <label>Problem Number<input value={draft.problemNumber} onChange={(e) => updateProblem({ problemNumber: e.target.value })} /></label>
         <label>Rating<input type="number" value={draft.rating ?? 0} onChange={(e) => updateProblem({ rating: Number(e.target.value) || 0 })} /></label>
-        <label className="cms-full">Topics (comma separated)<input value={draft.topics.join(", ")} onChange={(e) => updateProblem({ topics: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></label>
+        <label className="cms-full">Topics (comma separated)<input value={(Array.isArray(draft.topics) ? draft.topics : []).join(", ")} onChange={(e) => updateProblem({ topics: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></label>
       </div>
 
       <h4>Problem Statement</h4>
@@ -399,6 +452,161 @@ function ProblemEditor({ problem, onSave, onCancel }: { problem: ProblemEditor; 
   );
 }
 
+function resolveCourseReference(
+  courses: AdminCourse[],
+  ref: { _id?: string; id?: string; courseId?: string; slug?: string } | null | undefined,
+): AdminCourse | null {
+  if (!ref) return null;
+  const id = String(ref._id ?? ref.id ?? ref.courseId ?? "");
+  const slug = String(ref.slug ?? "");
+  return courses.find((course) => course._id === id)
+    ?? courses.find((course) => course.slug === slug)
+    ?? courses.find((course) => course.slug === id)
+    ?? null;
+}
+
+const safeTopics = (course: AdminCourse | null | undefined): Topic[] => {
+  if (!course) return [];
+  const content = course.content && typeof course.content === "object" ? course.content as Record<string, unknown> : {};
+  return Array.isArray(course.topics)
+    ? course.topics
+    : Array.isArray(content.topics)
+      ? content.topics as Topic[]
+      : [];
+};
+
+const safeProblemCategories = (course: AdminCourse | null | undefined): ProblemCategory[] => {
+  if (!course) return [];
+  const content = course.content && typeof course.content === "object" ? course.content as Record<string, unknown> : {};
+  const raw = Array.isArray(course.problemSolvingCategories)
+    ? course.problemSolvingCategories
+    : Array.isArray(content.categories)
+      ? content.categories as ProblemCategory[]
+      : [];
+  return raw.map((category) => ({ ...category, problems: Array.isArray(category.problems) ? category.problems : [] }));
+};
+
+const safeNestedItems = (course: AdminCourse | null | undefined) => {
+  if (!course || course.type !== "nested") return [];
+  const content = course.content && typeof course.content === "object" ? course.content as Record<string, unknown> : {};
+  const raw = Array.isArray(content.courses)
+    ? content.courses
+    : Array.isArray((course as any).nestedCourses)
+      ? (course as any).nestedCourses
+      : [];
+
+  return (raw as Array<Record<string, unknown>>).map((item, index) => {
+    const id = String(item?._id ?? item?.id ?? item?.courseId ?? item?.slug ?? `nested-${index}`);
+    return {
+      _id: id,
+      id,
+      courseId: typeof item?.courseId === "string" ? item.courseId : undefined,
+      type: item?.type as CourseKind | undefined,
+      title: String(item?.title ?? "Untitled Course"),
+      slug: String(item?.slug ?? id),
+      category: typeof item?.category === "string" ? item.category : undefined,
+      description: typeof item?.description === "string" ? item.description : undefined,
+      level: typeof item?.level === "string" ? item.level : undefined,
+      topicsCount: Number.isFinite(Number(item?.topicsCount)) ? Number(item.topicsCount) : undefined,
+    };
+  });
+};
+
+
+const cloneCourseContentForCopy = (type: CourseKind, rawContent: unknown, rawLanguages?: unknown[]) => {
+  const content = rawContent && typeof rawContent === "object" ? JSON.parse(JSON.stringify(rawContent)) : {};
+  const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const cloneLocalized = (value: unknown) => {
+    if (value && typeof value === "object") return JSON.parse(JSON.stringify(value));
+    return value;
+  };
+  const cloneSections = (sections: unknown) => Array.isArray(sections) ? sections.map((section) => ({ ...(section as Record<string, unknown>), ...(section && typeof section === "object" && "items" in (section as Record<string, unknown>) && Array.isArray((section as Record<string, unknown>).items) ? { items: ((section as Record<string, unknown>).items as unknown[]).map((item) => cloneLocalized(item)) } : {}), ...(section && typeof section === "object" && "content" in (section as Record<string, unknown>) ? { content: cloneLocalized((section as Record<string, unknown>).content) } : {}) })) : [];
+
+  if (type === "single-language") {
+    const topics = Array.isArray((content as any).topics) ? (content as any).topics : [];
+    (content as any).topics = topics.map((topic: any, index: number) => ({
+      ...topic,
+      _id: newId("topic"),
+      order: index + 1,
+      title: cloneLocalized(topic.title),
+      sections: cloneSections(topic.sections),
+      subtopics: Array.isArray(topic.subtopics) ? topic.subtopics.map((subtopic: any, subIndex: number) => ({
+        ...subtopic,
+        _id: newId("subtopic"),
+        order: subIndex + 1,
+        title: cloneLocalized(subtopic.title),
+        sections: cloneSections(subtopic.sections),
+      })) : [],
+    }));
+    return { content, languages: undefined };
+  }
+
+  if (type === "multi-language") {
+    const sourceLanguages = Array.isArray(rawLanguages) && rawLanguages.length
+      ? rawLanguages
+      : (Array.isArray((content as any).languages) ? (content as any).languages : []);
+    const languages = sourceLanguages.map((language: any) => ({
+      ...language,
+      id: newId("language"),
+      topics: Array.isArray(language.topics) ? language.topics.map((topic: any, index: number) => ({
+        ...topic,
+        _id: newId("topic"),
+        order: index + 1,
+        title: cloneLocalized(topic.title),
+        sections: cloneSections(topic.sections),
+        subtopics: Array.isArray(topic.subtopics) ? topic.subtopics.map((subtopic: any, subIndex: number) => ({
+          ...subtopic,
+          _id: newId("subtopic"),
+          order: subIndex + 1,
+          title: cloneLocalized(subtopic.title),
+          sections: cloneSections(subtopic.sections),
+        })) : [],
+      })) : [],
+    }));
+    (content as any).languages = languages;
+    return { content, languages };
+  }
+
+  if (type === "problem-solving") {
+    const categories = Array.isArray((content as any).categories)
+      ? (content as any).categories
+      : Array.isArray((content as any).problemSolvingCategories)
+        ? (content as any).problemSolvingCategories
+        : [];
+    (content as any).categories = categories.map((category: any, index: number) => ({
+      ...category,
+      _id: newId("category"),
+      order: index + 1,
+      title: cloneLocalized(category.title),
+      description: cloneLocalized(category.description),
+      problems: Array.isArray(category.problems) ? category.problems.map((problem: any, problemIndex: number) => ({
+        ...problem,
+        _id: newId("problem"),
+        order: problemIndex + 1,
+        title: cloneLocalized(problem.title),
+        topics: Array.isArray(problem.topics) ? [...problem.topics] : [],
+        problem: problem.problem ? {
+          ...problem.problem,
+          title: cloneLocalized(problem.problem.title),
+          description: cloneLocalized(problem.problem.description),
+          examples: Array.isArray(problem.problem.examples) ? problem.problem.examples.map((example: any) => ({ ...example, explanation: cloneLocalized(example.explanation) })) : [],
+          constraints: Array.isArray(problem.problem.constraints) ? problem.problem.constraints.map((item: any) => cloneLocalized(item)) : [],
+        } : problem.problem,
+        approach: problem.approach ? { ...problem.approach, title: cloneLocalized(problem.approach.title), sections: cloneSections(problem.approach.sections) } : problem.approach,
+        solutions: Array.isArray(problem.solutions) ? problem.solutions.map((solution: any) => ({ ...solution })) : [],
+      })) : [],
+    }));
+    delete (content as any).problemSolvingCategories;
+    return { content, languages: undefined };
+  }
+
+  // Nested course copies its learning-path structure. Child course references
+  // intentionally remain intact because they point to real course documents.
+  const nested = Array.isArray((content as any).courses) ? (content as any).courses : [];
+  (content as any).courses = nested.map((item: any, index: number) => ({ ...item, order: index + 1 }));
+  return { content, languages: undefined };
+};
+
 function AdminDashboard() {
   const { user } = useAuth();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -407,26 +615,57 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "courses" | "content">("overview");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedLanguageId, setSelectedLanguageId] = useState("");
+  const [selectedNestedCourseId, setSelectedNestedCourseId] = useState("");
+  const [selectedNestedGrandchildId, setSelectedNestedGrandchildId] = useState("");
+  const [nestedCreateMode, setNestedCreateMode] = useState(false);
+  const [nestedCreateParentId, setNestedCreateParentId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<EditableTopic | null>(null);
   const [editingSubtopic, setEditingSubtopic] = useState<Subtopic | null>(null);
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [selectedProblemCategoryId, setSelectedProblemCategoryId] = useState<string | null>(null);
   const [savingContent, setSavingContent] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<CourseForm>({ title: "", slug: "", category: "", type: "single-language", description: "", level: "Beginner", order: "0", isPublished: true, content: JSON.stringify({ topics: [] }, null, 2) });
+  const [form, setForm] = useState<CourseForm>({ title: "", slug: "", category: "", type: "single-language", description: "", level: "Beginner", order: "0", isPublished: true, isTopLevel: true, content: JSON.stringify({ topics: [] }, null, 2), copySourceCourseId: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const loadDashboard = useCallback(async () => {
     setLoading(true); setError("");
-    try {
-      const [o, u, c] = await Promise.all([getAdminOverview(), getAdminUsers(), getAdminCourses()]);
-      setOverview(o); setUsers(u); setCourses(c);
-      if (c[0]) setSelectedCourseId((current) => current || c[0]._id);
-    } catch (err) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); }
-    finally { setLoading(false); }
+    const [overviewResult, usersResult, coursesResult] = await Promise.allSettled([
+      getAdminOverview(),
+      getAdminUsers(),
+      getAdminCourses(),
+    ]);
+
+    const failures: string[] = [];
+    if (overviewResult.status === "fulfilled") setOverview(overviewResult.value);
+    else failures.push("overview");
+
+    if (usersResult.status === "fulfilled") setUsers(usersResult.value);
+    else failures.push("users");
+
+    if (coursesResult.status === "fulfilled") {
+      const nextCourses = Array.isArray(coursesResult.value) ? coursesResult.value : [];
+      setCourses(nextCourses);
+      setSelectedCourseId((current) =>
+        nextCourses.some((course) => course._id === current) ? current : (nextCourses[0]?._id ?? "")
+      );
+    } else {
+      failures.push("courses");
+      setCourses([]);
+    }
+
+    if (failures.includes("courses")) {
+      const reason = coursesResult.status === "rejected" ? coursesResult.reason : null;
+      setError(reason instanceof Error ? reason.message : "Failed to load courses. Check that the backend is running and your admin session is valid.");
+    } else if (failures.length) {
+      // A broken overview/users request must not prevent Content Management from working.
+      setError("");
+    }
+    setLoading(false);
   }, []);
   useEffect(() => { void loadDashboard(); }, [loadDashboard]);
 
@@ -441,17 +680,77 @@ function AdminDashboard() {
   }, [selectedCourse, courseContent]);
   const activeLanguage = languages.find((language) => language.id === selectedLanguageId) ?? languages[0];
   const topicList: Topic[] = selectedCourse?.type === "single-language"
-    ? ((selectedCourse.topics?.length ? selectedCourse.topics : courseContent.topics as Topic[] | undefined) ?? [])
+    ? safeTopics(selectedCourse)
     : selectedCourse?.type === "multi-language"
       ? (activeLanguage?.topics ?? [])
       : [];
+
+  const nestedCourseItems = useMemo(() => safeNestedItems(selectedCourse), [selectedCourse]);
+
+
+  const selectedNestedChild = useMemo(() => {
+    if (!selectedNestedCourseId) return null;
+    return courses.find((course) => course._id === selectedNestedCourseId)
+      ?? courses.find((course) => course.slug === selectedNestedCourseId)
+      ?? nestedCourseItems.map((item) => ({ item, course: resolveCourseReference(courses, item) })).find(({ item }) => String(item._id ?? item.id ?? item.courseId ?? item.slug ?? "") === selectedNestedCourseId)?.course
+      ?? null;
+  }, [courses, selectedNestedCourseId, nestedCourseItems]);
+
+  const getNestedItems = (course: AdminCourse | null) => safeNestedItems(course);
+
+  const nestedChildItems = useMemo(() => getNestedItems(selectedNestedChild), [selectedNestedChild]);
+  const selectedNestedGrandchild = useMemo(() => {
+    if (!selectedNestedGrandchildId) return null;
+    return courses.find((course) => course._id === selectedNestedGrandchildId)
+      ?? courses.find((course) => course.slug === selectedNestedGrandchildId)
+      ?? nestedChildItems
+        .filter((item) => String(item._id ?? item.id ?? item.courseId ?? item.slug ?? "") === selectedNestedGrandchildId)
+        .map((item) => resolveCourseReference(courses, item))[0]
+      ?? null;
+  }, [courses, selectedNestedGrandchildId, nestedChildItems]);
+
+  const nestedChildTopics = useMemo<Topic[]>(() => {
+    if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return [];
+    const raw = selectedNestedChild.content;
+    if (!raw || typeof raw !== "object") return selectedNestedChild.topics ?? [];
+    return ((selectedNestedChild.topics?.length ? selectedNestedChild.topics : (raw as any).topics) ?? []) as Topic[];
+  }, [selectedNestedChild]);
+
+  const nestedGrandchildTopics = useMemo<Topic[]>(() => {
+    if (!selectedNestedGrandchild || selectedNestedGrandchild.type !== "single-language") return [];
+    const raw = selectedNestedGrandchild.content;
+    if (!raw || typeof raw !== "object") return selectedNestedGrandchild.topics ?? [];
+    return ((selectedNestedGrandchild.topics?.length ? selectedNestedGrandchild.topics : (raw as any).topics) ?? []) as Topic[];
+  }, [selectedNestedGrandchild]);
   const problemCategories: ProblemCategory[] = selectedCourse?.type === "problem-solving"
-    ? ((selectedCourse.problemSolvingCategories?.length ? selectedCourse.problemSolvingCategories : courseContent.categories as ProblemCategory[] | undefined) ?? [])
+    ? safeProblemCategories(selectedCourse)
     : [];
 
   useEffect(() => {
     if (languages[0] && !languages.some((x) => x.id === selectedLanguageId)) setSelectedLanguageId(languages[0].id);
   }, [selectedCourseId, languages, selectedLanguageId]);
+
+  useEffect(() => {
+    if (selectedCourse?.type !== "nested") {
+      setSelectedNestedCourseId("");
+      setSelectedNestedGrandchildId("");
+      setEditingTopic(null);
+      return;
+    }
+    if (nestedCourseItems[0] && !nestedCourseItems.some((item) => item._id === selectedNestedCourseId)) {
+      setSelectedNestedCourseId(String(nestedCourseItems[0]._id));
+    }
+  }, [selectedCourseId, selectedCourse?.type, nestedCourseItems, selectedNestedCourseId]);
+
+  useEffect(() => {
+    if (selectedNestedChild?.type !== "nested") {
+      setSelectedNestedGrandchildId("");
+      return;
+    }
+    if (nestedChildItems[0] && !nestedChildItems.some((item) => item._id === selectedNestedGrandchildId)) {
+      setSelectedNestedGrandchildId(String(nestedChildItems[0]._id));
+    }
+  }, [selectedNestedChild, nestedChildItems, selectedNestedGrandchildId]);
 
   const saveCourseContent = async (content: unknown, languagesOverride?: CourseLanguage[]) => {
     if (!selectedCourse) return;
@@ -476,7 +775,79 @@ function AdminDashboard() {
     }
   };
 
+  const saveCourseItems = async (parent: AdminCourse, items: Array<{ _id: string; type?: CourseKind; title: string; slug: string; category?: string; description?: string; level?: string; topicsCount?: number }>) => {
+    setSavingContent(true); setError(""); setNotice("");
+    try {
+      const raw = parent.content && typeof parent.content === "object" ? parent.content as Record<string, unknown> : {};
+      const updated = await updateAdminCourse(parent._id, { content: { ...raw, courses: items } });
+      setCourses((current) => current.map((course) => course._id === updated._id ? updated : course));
+      setNotice(`Learning path \"${parent.title}\" updated successfully.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update learning path");
+    } finally { setSavingContent(false); }
+  };
+
+  const saveNestedChildTopics = async (nextTopics: Topic[]) => {
+    if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return;
+    setSavingContent(true); setError(""); setNotice("");
+    try {
+      const raw = selectedNestedChild.content && typeof selectedNestedChild.content === "object" ? selectedNestedChild.content as Record<string, unknown> : {};
+      const updated = await updateAdminCourse(selectedNestedChild._id, { content: { ...raw, topics: nextTopics } });
+      setCourses((current) => current.map((course) => course._id === updated._id ? updated : course));
+      if (selectedCourse?.type === "nested") {
+        const nextNestedItems = nestedCourseItems.map((item) => item._id === updated._id ? { ...item, title: updated.title, slug: updated.slug, category: updated.category, description: updated.description, level: updated.level, topicsCount: nextTopics.length } : item);
+        await saveCourseContent({ ...courseContent, courses: nextNestedItems });
+      }
+      setNotice("Nested course topic saved successfully.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to save nested course topic"); }
+    finally { setSavingContent(false); }
+  };
+
+  const saveNestedGrandchildTopics = async (nextTopics: Topic[]) => {
+    if (!selectedNestedGrandchild || selectedNestedGrandchild.type !== "single-language" || !selectedNestedChild || selectedNestedChild.type !== "nested") return;
+    setSavingContent(true); setError(""); setNotice("");
+    try {
+      const raw = selectedNestedGrandchild.content && typeof selectedNestedGrandchild.content === "object" ? selectedNestedGrandchild.content as Record<string, unknown> : {};
+      const updated = await updateAdminCourse(selectedNestedGrandchild._id, { content: { ...raw, topics: nextTopics } });
+      setCourses((current) => current.map((course) => course._id === updated._id ? updated : course));
+      const nextItems = nestedChildItems.map((item) => item._id === updated._id ? { ...item, title: updated.title, slug: updated.slug, category: updated.category, description: updated.description, level: updated.level, topicsCount: nextTopics.length } : item);
+      await saveCourseItems(selectedNestedChild, nextItems);
+
+      // Keep the top-level learning path metadata in sync as well.
+      if (selectedCourse?.type === "nested") {
+        const updatedChildItem = { ...courseItem(updated), topicsCount: nextTopics.length };
+        const nextTopLevelItems = nestedCourseItems.map((item) => item._id === updated._id ? updatedChildItem : item);
+        await saveCourseContent({ ...courseContent, courses: nextTopLevelItems });
+      }
+      setNotice("Course topic saved successfully.");
+    } catch (err) { setError(err instanceof Error ? err.message : "Failed to save course topic"); }
+    finally { setSavingContent(false); }
+  };
+
+  const deleteTopic = (topicId: string) => {
+    if (!selectedCourse) return;
+    if (!window.confirm("Delete this topic and all of its subtopics?")) return;
+    saveTopics(topicList.filter((topic) => topic._id !== topicId).map((topic, index) => ({ ...topic, order: index + 1 })));
+    if (editingTopic?._id === topicId) setEditingTopic(null);
+  };
+
+  const deleteNestedChildTopic = (topicId: string) => {
+    if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return;
+    if (!window.confirm("Delete this topic and all of its subtopics?")) return;
+    void saveNestedChildTopics(nestedChildTopics.filter((topic) => topic._id !== topicId).map((topic, index) => ({ ...topic, order: index + 1 })));
+    if (editingTopic?._id === topicId) setEditingTopic(null);
+  };
+
+  const deleteNestedGrandchildTopic = (topicId: string) => {
+    if (!selectedNestedGrandchild || selectedNestedGrandchild.type !== "single-language") return;
+    if (!window.confirm("Delete this topic and all of its subtopics?")) return;
+    void saveNestedGrandchildTopics(nestedGrandchildTopics.filter((topic) => topic._id !== topicId).map((topic, index) => ({ ...topic, order: index + 1 })));
+    if (editingTopic?._id === topicId) setEditingTopic(null);
+  };
+
   const addTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic(activeLanguage?.id ?? "javascript")); };
+  const addNestedChildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
+  const addNestedGrandchildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
   const editTopic = (topic: Topic) => { setEditingSubtopic(null); setEditingTopic({ ...topic, sections: normalizeSections(topic) }); };
   const saveTopic = (saved: EditableTopic) => {
     if (!selectedCourse || selectedCourse.type === "problem-solving") return;
@@ -489,29 +860,137 @@ function AdminDashboard() {
     setEditingTopic(null);
   };
 
+  const saveNestedChildTopic = (saved: EditableTopic) => {
+    if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return;
+    const index = nestedChildTopics.findIndex((topic) => topic._id === saved._id);
+    const next = index >= 0 ? nestedChildTopics.map((topic, i) => i === index ? saved as Topic : topic) : [...nestedChildTopics, { ...(saved as Topic), order: nestedChildTopics.length + 1 }];
+    void saveNestedChildTopics(next);
+    setEditingTopic(null);
+  };
+
+  const saveNestedGrandchildTopic = (saved: EditableTopic) => {
+    if (!selectedNestedGrandchild || selectedNestedGrandchild.type !== "single-language") return;
+    const index = nestedGrandchildTopics.findIndex((topic) => topic._id === saved._id);
+    const next = index >= 0 ? nestedGrandchildTopics.map((topic, i) => i === index ? saved as Topic : topic) : [...nestedGrandchildTopics, { ...(saved as Topic), order: nestedGrandchildTopics.length + 1 }];
+    void saveNestedGrandchildTopics(next);
+    setEditingTopic(null);
+  };
+
+  const getAdminContentCount = (child: AdminCourse) => {
+    if (child.type === "nested") return getNestedItems(child).length;
+    if (child.type === "problem-solving") return safeProblemCategories(child).reduce((sum, category) => sum + (Array.isArray(category.problems) ? category.problems.length : 0), 0);
+    if (child.type === "multi-language") {
+      const content = child.content && typeof child.content === "object" ? child.content as Record<string, unknown> : {};
+      const languages = Array.isArray(child.languages) && child.languages.length
+        ? child.languages
+        : Array.isArray(content.languages) ? content.languages as CourseLanguage[] : [];
+      return languages.reduce((sum, language) => sum + (Array.isArray(language.topics) ? language.topics.length : 0), 0);
+    }
+    return safeTopics(child).length;
+  };
+
+  const courseItem = (child: AdminCourse) => ({
+    _id: child._id, type: child.type, title: child.title, slug: child.slug, category: child.category, description: child.description, level: child.level,
+    topicsCount: getAdminContentCount(child),
+  });
+
+  const addNestedCourse = async (parent: AdminCourse, courseId: string) => {
+    const child = courses.find((course) => course._id === courseId);
+    if (parent.type !== "nested" || !child || child._id === parent._id) return;
+    const items = getNestedItems(parent);
+    if (items.some((item) => item._id === child._id)) {
+      if (parent._id === selectedCourse?._id) setSelectedNestedCourseId(child._id);
+      else setSelectedNestedGrandchildId(child._id);
+      return;
+    }
+    await saveCourseItems(parent, [...items, courseItem(child)]);
+    if (parent._id === selectedCourse?._id) setSelectedNestedCourseId(child._id);
+    else setSelectedNestedGrandchildId(child._id);
+  };
+
+  const removeNestedCourse = async (parent: AdminCourse, id: string) => {
+    if (!window.confirm("Remove this course from the learning path? The course itself will not be deleted.")) return;
+    await saveCourseItems(parent, getNestedItems(parent).filter((item) => item._id !== id));
+    if (parent._id === selectedCourse?._id && selectedNestedCourseId === id) { setSelectedNestedCourseId(""); setSelectedNestedGrandchildId(""); }
+    if (parent._id === selectedNestedChild?._id && selectedNestedGrandchildId === id) setSelectedNestedGrandchildId("");
+  };
+
 
   const saveProblems = (categories: ProblemCategory[]) => {
     if (selectedCourse) void saveCourseContent({ ...courseContent, categories });
   };
   const addCategory = () => { const next = [...problemCategories, { ...emptyCategory(), order: problemCategories.length + 1 }]; saveProblems(next); };
-  const addProblem = (category: ProblemCategory) => { setEditingCategoryId(category._id); setEditingProblem({ ...emptyProblem(), order: category.problems.length + 1 }); };
-  const editProblem = (category: ProblemCategory, problem: Problem) => { setEditingCategoryId(category._id); setEditingProblem(problem); };
-  const saveProblem = (saved: Problem) => { if (!editingCategoryId) return; const next = problemCategories.map((category) => category._id === editingCategoryId ? { ...category, problems: category.problems.some((p) => p._id === saved._id) ? category.problems.map((p) => p._id === saved._id ? saved : p) : [...category.problems, saved] } : category); saveProblems(next); setEditingProblem(null); setEditingCategoryId(null); };
+  const addProblem = (category: ProblemCategory) => { setSelectedProblemCategoryId(category._id); setEditingCategoryId(category._id); setEditingProblem({ ...emptyProblem(), order: (Array.isArray(category.problems) ? category.problems.length : 0) + 1 }); };
+  const editProblem = (category: ProblemCategory, problem: Problem) => { setSelectedProblemCategoryId(category._id); setEditingCategoryId(category._id); setEditingProblem(problem); };
+  const saveProblem = (saved: Problem) => { if (!editingCategoryId) return; const next = problemCategories.map((category) => category._id === editingCategoryId ? { ...category, problems: Array.isArray(category.problems) && category.problems.some((p) => p._id === saved._id) ? category.problems.map((p) => p._id === saved._id ? saved : p) : [...(Array.isArray(category.problems) ? category.problems : []), saved] } : category); saveProblems(next); setEditingProblem(null); setEditingCategoryId(null); };
+  const deleteProblem = (categoryId: string, problemId: string) => {
+    if (!window.confirm("Delete this problem?")) return;
+    const next = problemCategories.map((category) => category._id === categoryId
+      ? { ...category, problems: (Array.isArray(category.problems) ? category.problems : []).filter((problem) => problem._id !== problemId).map((problem, index) => ({ ...problem, order: index + 1 })) }
+      : category
+    );
+    saveProblems(next);
+    if (editingProblem?._id === problemId) { setEditingProblem(null); setEditingCategoryId(null); }
+  };
+
   const deleteCategory = (id: string) => { if (!window.confirm("Delete this category and its problems?")) return; saveProblems(problemCategories.filter((x) => x._id !== id).map((x, i) => ({ ...x, order: i + 1 }))); };
 
-  const openCreateCourse = () => { setEditingId(null); setForm({ title: "", slug: "", category: "", type: "single-language", description: "", level: "Beginner", order: "0", isPublished: true, content: JSON.stringify({ topics: [] }, null, 2) }); setFormOpen(true); };
+  const openCreateCourse = (type: CourseKind = "single-language", isTopLevel = true) => {
+    setEditingId(null);
+    const defaultContent = type === "nested" ? { courses: [] } : type === "problem-solving" ? { categories: [] } : type === "multi-language" ? { languages: [] } : { topics: [] };
+    setForm({ title: "", slug: "", category: "", type, description: "", level: "Beginner", order: "0", isPublished: true, isTopLevel, content: JSON.stringify(defaultContent, null, 2), copySourceCourseId: "" });
+    setFormOpen(true);
+  };
+
+  const openCreateNestedChild = (parentId: string) => {
+    setNestedCreateMode(true);
+    setNestedCreateParentId(parentId);
+    // A learning path's children are normal courses by default. The admin can
+    // still change the type to nested/problem-solving/multi-language in the form.
+    openCreateCourse("single-language", false);
+  };
   const openEditCourse = (course: AdminCourse) => {
     const rawContent = course.content && typeof course.content === "object" ? course.content : {};
     const fallbackContent = course.type === "single-language"
       ? { topics: course.topics ?? (rawContent as any).topics ?? [] }
       : course.type === "multi-language"
         ? { languages: course.languages ?? (rawContent as any).languages ?? [] }
-        : { categories: course.problemSolvingCategories ?? (rawContent as any).categories ?? [] };
+        : course.type === "nested"
+          ? { courses: (rawContent as any).courses ?? [] }
+          : { categories: course.problemSolvingCategories ?? (rawContent as any).categories ?? [] };
     setEditingId(course._id);
-    setForm({ title: course.title, slug: course.slug, category: course.category, type: course.type, description: course.description, level: course.level, order: String(course.order), isPublished: course.isPublished, content: JSON.stringify(fallbackContent, null, 2) });
+    setForm({ title: course.title, slug: course.slug, category: course.category, type: course.type, description: course.description, level: course.level, order: String(course.order), isPublished: course.isPublished, isTopLevel: course.isTopLevel !== false, content: JSON.stringify(fallbackContent, null, 2), copySourceCourseId: "" });
     setFormOpen(true);
   };
-  const submitCourse = async (event: FormEvent) => { event.preventDefault(); try { const content = JSON.parse(form.content); const payload = { title: form.title.trim(), slug: form.slug.trim().toLowerCase(), category: form.category.trim(), type: form.type, description: form.description.trim(), level: form.level.trim(), order: Number(form.order) || 0, isPublished: form.isPublished, content, ...(form.type === "multi-language" && content.languages ? { languages: content.languages } : {}) }; if (editingId) await updateAdminCourse(editingId, payload); else await createAdminCourse(payload); setFormOpen(false); await loadDashboard(); } catch (err) { setError(err instanceof Error ? err.message : "Invalid course content"); } };
+  const submitCourse = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      const content = JSON.parse(form.content);
+      const payload = { title: form.title.trim(), slug: form.slug.trim().toLowerCase(), category: form.category.trim(), type: form.type, description: form.description.trim(), level: form.level.trim(), order: Number(form.order) || 0, isPublished: form.isPublished, isTopLevel: form.isTopLevel, content, ...(form.type === "multi-language" && content.languages ? { languages: content.languages } : {}) };
+      let savedCourse: AdminCourse;
+      if (editingId) savedCourse = await updateAdminCourse(editingId, payload);
+      else savedCourse = await createAdminCourse(payload);
+      setFormOpen(false);
+      if (nestedCreateMode && !editingId && nestedCreateParentId) {
+        const parent = courses.find((course) => course._id === nestedCreateParentId);
+        if (!parent || parent.type !== "nested") throw new Error("Nested parent course not found");
+        const updatedParent = await updateAdminCourse(parent._id, { content: { ...(parent.content && typeof parent.content === "object" ? parent.content as Record<string, unknown> : {}), courses: [...getNestedItems(parent), courseItem(savedCourse)] } });
+        setCourses((current) => current.map((course) => course._id === savedCourse._id ? savedCourse : course._id === updatedParent._id ? updatedParent : course));
+        if (parent._id === selectedCourse?._id) {
+          setSelectedNestedCourseId(savedCourse._id);
+          setSelectedNestedGrandchildId("");
+        } else {
+          setSelectedNestedGrandchildId(savedCourse._id);
+        }
+        setNotice(`Course "${savedCourse.title}" created and added to ${parent.title}.`);
+      } else {
+        await loadDashboard();
+      }
+      setNestedCreateMode(false);
+      setNestedCreateParentId(null);
+    } catch (err) { setError(err instanceof Error ? err.message : "Invalid course content"); }
+  };
+
   const deleteCourse = async (course: AdminCourse) => { if (!window.confirm(`Delete "${course.title}"?`)) return; try { await deleteAdminCourse(course._id); await loadDashboard(); } catch (err) { setError(err instanceof Error ? err.message : "Failed to delete course"); } };
   const roleChange = async (target: AdminUser) => { try { const role = target.role === "admin" ? "user" : "admin"; const updated = await updateUserRole(target.id, role); setUsers((current) => current.map((x) => x.id === updated.id ? updated : x)); setOverview(await getAdminOverview()); } catch (err) { setError(err instanceof Error ? err.message : "Failed to update role"); } };
 
@@ -528,29 +1007,144 @@ function AdminDashboard() {
         <>
           {activeTab === "overview" && overview && <section className="admin-stats"><article><span>Total Users</span><strong>{overview.users}</strong></article><article><span>Total Courses</span><strong>{overview.courses}</strong></article><article><span>Published Courses</span><strong>{overview.publishedCourses}</strong></article><article><span>Admins</span><strong>{overview.admins}</strong></article></section>}
           {activeTab === "users" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Users</h2><p>Manage administrator access.</p></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td>{item.name}</td><td>{item.email}</td><td><span className={`admin-role ${item.role}`}>{item.role}</span></td><td>{new Date(item.createdAt).toLocaleDateString()}</td><td>{item.id === user.id ? <span className="admin-self">You</span> : <button type="button" className="admin-small-button" onClick={() => void roleChange(item)}>{item.role === "admin" ? "Make user" : "Make admin"}</button>}</td></tr>)}</tbody></table></div></section>}
-          {activeTab === "courses" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Courses</h2><p>Manage metadata and publication status. Detailed content is managed from Content Management.</p></div><button type="button" className="admin-primary-button" onClick={openCreateCourse}>+ Add Course</button></div>{formOpen && <form className="admin-course-form" onSubmit={submitCourse}><div className="admin-form-heading"><h3>{editingId ? "Edit Course" : "Create Course"}</h3><button type="button" onClick={() => setFormOpen(false)}>Cancel</button></div><div className="admin-form-grid"><label>Title<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label><label>Slug<input required value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></label><label>Category<input required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label><label>Level<input required value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} /></label><label>Type<select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as CourseKind })}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><label>Description<textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
+          {activeTab === "courses" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Courses</h2><p>Manage metadata and publication status. Detailed content is managed from Content Management.</p></div><div className="admin-course-actions"><button type="button" className="admin-primary-button" onClick={() => openCreateCourse()}>+ Add Course</button><button type="button" className="admin-small-button" onClick={() => openCreateCourse()}>Copy Existing Course</button></div></div>{formOpen && <form className="admin-course-form" onSubmit={submitCourse}><div className="admin-form-heading"><h3>{editingId ? "Edit Course" : "Create Course"}</h3><button type="button" onClick={() => { setFormOpen(false); setNestedCreateMode(false); setNestedCreateParentId(null); }}>Cancel</button></div>{!editingId && <label className="cms-copy-course-field">Copy all data from existing course<select value={form.copySourceCourseId} onChange={(e) => { const source = courses.find((course) => course._id === e.target.value); if (!source) { setForm({ ...form, copySourceCourseId: "" }); return; } const cloned = cloneCourseContentForCopy(source.type, source.content, source.languages); setForm({ ...form, title: `${source.title} Copy`, slug: `${source.slug}-copy-${Date.now().toString(36)}`.toLowerCase(), category: source.category, type: source.type, description: source.description, level: source.level, content: JSON.stringify(cloned.content, null, 2), copySourceCourseId: source._id }); }}><option value="">Select existing course...</option>{courses.map((course) => <option key={course._id} value={course._id}>{course.title} — {course.type}</option>)}</select></label>}<div className="admin-form-grid"><label>Title<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label><label>Slug<input required value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></label><label>Category<input required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label><label>Level<input required value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} /></label><label>Type<select value={form.type} onChange={(e) => {
+  const nextType = e.target.value as CourseKind;
+  const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] };
+  setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) });
+}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><label>Description<textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
 
           {activeTab === "content" && <section className="admin-panel-card cms-page">
             <div className="admin-section-heading"><div><h2>Content Management</h2><p>Choose a course, select a topic or problem from the left, and edit its existing content on the right.</p></div></div>
             <div className="cms-course-picker">
-              <label>Course<select value={selectedCourseId} onChange={(e) => { setSelectedCourseId(e.target.value); setEditingTopic(null); setEditingProblem(null); setEditingCategoryId(null); setEditingSubtopic(null); }}>
+              <label>Course<select value={selectedCourseId} onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedNestedCourseId(""); setSelectedNestedGrandchildId(""); setEditingTopic(null); setEditingProblem(null); setEditingCategoryId(null); setSelectedProblemCategoryId(null); setEditingSubtopic(null); }}>
                 <option value="">Select a course</option>{courses.map((course) => <option key={course._id} value={course._id}>{course.title} — {course.type}</option>)}
               </select></label>
               {selectedCourse?.type === "multi-language" && <label>Programming Language<select value={activeLanguage?.id ?? ""} onChange={(e) => { setSelectedLanguageId(e.target.value); setEditingTopic(null); }}>{languages.map((language) => <option key={language.id} value={language.id}>{language.name}</option>)}</select></label>}
             </div>
 
+            {formOpen && activeTab === "content" && (
+              <form className="admin-course-form cms-inline-course-form" onSubmit={submitCourse}>
+                <div className="admin-form-heading"><h3>{editingId ? "Edit Course" : "Create Course"}</h3><button type="button" onClick={() => { setFormOpen(false); setNestedCreateMode(false); setNestedCreateParentId(null); }}>Cancel</button></div>
+                <div className="admin-form-grid">
+                  <label>Title<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+                  <label>Slug<input required value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></label>
+                  <label>Category<input required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
+                  <label>Level<input required value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} /></label>
+                  <label>Type<select value={form.type} onChange={(e) => { const nextType = e.target.value as CourseKind; const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] }; setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) }); }}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label>
+                  <label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label>
+                </div>
+                <label>Description<textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+                <label>Initial Content JSON<textarea className="admin-json-input" rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
+                <label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
+                <button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button>
+              </form>
+            )}
+
             {!selectedCourse ? <div className="admin-empty">Select a course to manage its content.</div> : selectedCourse.type === "problem-solving" ? (
-              <div className="cms-workspace">
+              <div className="cms-workspace cms-problem-workspace">
                 <aside className="cms-sidebar">
-                  <div className="cms-sidebar-head"><div><strong>Problems</strong><small>{problemCategories.reduce((sum, c) => sum + c.problems.length, 0)} total</small></div><button type="button" className="admin-small-button" onClick={addCategory}>+ Category</button></div>
-                  {problemCategories.map((category) => <div className="cms-sidebar-group" key={category._id}>
-                    <div className="cms-sidebar-group-title"><strong>{category.order}. {displayLocalized(category.title) || "Untitled Category"}</strong><button type="button" className="admin-danger-button" onClick={() => deleteCategory(category._id)}>Delete</button></div>
-                    {category.problems.map((problem) => <button type="button" className={`cms-sidebar-item ${editingProblem?._id === problem._id ? "active" : ""}`} key={problem._id} onClick={() => editProblem(category, problem)}><span>{String(problem.order).padStart(2, "0")}</span><span>{displayLocalized(problem.title) || "Untitled Problem"}</span></button>)}
-                    <button type="button" className="cms-sidebar-add" onClick={() => addProblem(category)}>+ Add Problem</button>
-                  </div>)}
+                  <div className="cms-sidebar-head"><div><strong>Categories</strong><small>{problemCategories.length} categories · {problemCategories.reduce((sum, c) => sum + (Array.isArray(c.problems) ? c.problems.length : 0), 0)} problems</small></div><button type="button" className="admin-small-button" onClick={addCategory}>+ Category</button></div>
+                  <div className="cms-category-list">
+                    {problemCategories.map((category) => {
+                      const isOpen = selectedProblemCategoryId === category._id;
+                      const problems = Array.isArray(category.problems) ? category.problems : [];
+                      return (
+                        <div className={`cms-problem-category ${isOpen ? "open" : ""}`} key={category._id}>
+                          <div className="cms-category-toggle-row">
+                            <button type="button" className="cms-category-toggle" onClick={() => { setSelectedProblemCategoryId(isOpen ? null : category._id); setEditingProblem(null); setEditingCategoryId(null); }}>
+                              <span className="cms-category-chevron">{isOpen ? "⌄" : "›"}</span>
+                              <span className="cms-category-toggle-main"><strong>{category.order}. {displayLocalized(category.title) || "Untitled Category"}</strong><small>{problems.length} {problems.length === 1 ? "problem" : "problems"}</small></span>
+                            </button>
+                            <button type="button" className="admin-danger-button" onClick={() => deleteCategory(category._id)}>Delete</button>
+                          </div>
+                          {isOpen && (
+                            <div className="cms-category-problem-list">
+                              {problems.length === 0 ? (
+                                <div className="cms-category-empty">No problems yet.</div>
+                              ) : problems.map((problem) => (
+                                <div className="cms-problem-row" key={problem._id}>
+                                  <button type="button" className={`cms-sidebar-item ${editingProblem?._id === problem._id ? "active" : ""}`} onClick={() => editProblem(category, problem)}>
+                                    <span>{String(problem.order).padStart(2, "0")}</span><span>{displayLocalized(problem.title) || "Untitled Problem"}</span>
+                                  </button>
+                                  <button type="button" className="admin-danger-button" onClick={() => deleteProblem(category._id, problem._id)}>Delete</button>
+                                </div>
+                              ))}
+                              <button type="button" className="cms-sidebar-add" onClick={() => addProblem(category)}>+ Add Problem</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </aside>
                 <div className="cms-editor-pane">
-                  {!editingProblem ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">📝</div><h3>Select a problem</h3><p>Select an existing problem from the left, or click <strong>+ Add Problem</strong> to create one.</p></div> : <ProblemEditor problem={editingProblem} onSave={saveProblem} onCancel={() => { setEditingProblem(null); setEditingCategoryId(null); }} />}
+                  {!editingProblem ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">📝</div><h3>{selectedProblemCategoryId ? "Select a problem" : "Select a category"}</h3><p>{selectedProblemCategoryId ? "Choose a problem from the selected category to edit it here, or use + Add Problem." : "Click a category on the left to see only its problems. Categories stay collapsed so large problem sets remain easy to manage."}</p></div> : <ProblemEditor problem={editingProblem} onSave={saveProblem} onCancel={() => { setEditingProblem(null); setEditingCategoryId(null); }} />}
+                </div>
+              </div>
+            ) : selectedCourse.type === "nested" ? (
+              <div className="cms-workspace">
+                <aside className="cms-sidebar">
+                  <div className="cms-sidebar-head">
+                    <div><strong>{selectedNestedChild?.type === "nested" ? "Learning Paths" : "Nested Courses"}</strong><small>{nestedCourseItems.length} courses</small></div>
+                    <div className="cms-nested-actions">
+                      <button type="button" className="admin-small-button" onClick={() => openCreateNestedChild(selectedNestedChild?.type === "nested" ? selectedNestedChild._id : selectedCourse._id)}>+ New Course</button>
+                      <select className="admin-small-button" value="" onChange={(event) => { const parent = selectedNestedChild?.type === "nested" ? selectedNestedChild : selectedCourse; void addNestedCourse(parent, event.target.value); }} aria-label="Add existing course to learning path">
+                        <option value="">+ Existing</option>
+                        {courses.filter((course) => { const parentId = selectedNestedChild?.type === "nested" ? selectedNestedChild._id : selectedCourse._id; const items = parentId === selectedCourse._id ? nestedCourseItems : nestedChildItems; return course._id !== parentId && !items.some((item) => item._id === course._id); }).map((course) => <option key={course._id} value={course._id}>{course.title} · {course.type}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  {nestedCourseItems.map((item, index) => {
+                    const child = courses.find((course) => course._id === item._id);
+                    return (
+                      <div className="cms-sidebar-group" key={item._id}>
+                        <div className="cms-sidebar-group-title">
+                          <button type="button" className={`cms-sidebar-item cms-sidebar-topic ${selectedNestedCourseId === item._id ? "active" : ""}`} onClick={() => { setSelectedNestedCourseId(item._id); setSelectedNestedGrandchildId(""); setEditingTopic(null); }}>
+                            <span>{String(index + 1).padStart(2, "0")}</span><span>{item.title}<small>{child?.type === "nested" ? `${getNestedItems(child).length} courses` : `${child?.topicsCount ?? item.topicsCount ?? 0} topics`}</small></span>
+                          </button>
+                          <button type="button" className="admin-danger-button" onClick={() => void removeNestedCourse(selectedCourse, item._id)}>Delete</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {nestedCourseItems.length === 0 && <div className="cms-editor-empty" style={{ margin: "12px" }}><p>Use <strong>+ New Course</strong> to create a learning path, or <strong>+ Existing</strong> to add an existing course.</p></div>}
+                </aside>
+                <div className="cms-editor-pane">
+                  {!selectedNestedChild ? (
+                    <div className="cms-editor-empty"><div className="cms-editor-empty-icon">📚</div><h3>Select a course</h3><p>Create a learning path or add an existing course from the left.</p></div>
+                  ) : selectedNestedChild.type === "nested" ? (
+                    <div className="cms-editor-card">
+                      <div className="admin-form-heading"><div><h3>{selectedNestedChild.title}</h3><p>Manage the courses inside this learning path.</p></div><button type="button" className="admin-small-button" onClick={() => openCreateNestedChild(selectedNestedChild._id)}>+ New Course</button></div>
+                      <div className="cms-nested-actions" style={{ marginBottom: "16px" }}>
+                        <select className="admin-small-button" value="" onChange={(event) => void addNestedCourse(selectedNestedChild, event.target.value)} aria-label="Add existing course">
+                          <option value="">+ Add Existing Course</option>
+                          {courses.filter((course) => course._id !== selectedNestedChild._id && !nestedChildItems.some((item) => item._id === course._id)).map((course) => <option key={course._id} value={course._id}>{course.title} · {course.type}</option>)}
+                        </select>
+                      </div>
+                      {nestedChildItems.length === 0 ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">🧩</div><h3>No courses yet</h3><p>Add HTML, CSS, React, Next.js or any existing course to this learning path.</p></div> : <div className="cms-subtopics">{nestedChildItems.map((item, index) => { const child = courses.find((course) => course._id === item._id); return <div className="cms-list-row" key={item._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title}</strong><small>{child?.type ?? item.type}</small><button type="button" className="admin-small-button" onClick={() => { setSelectedNestedGrandchildId(item._id); setEditingTopic(null); }}>Manage</button><button type="button" className="admin-danger-button" onClick={() => void removeNestedCourse(selectedNestedChild, item._id)}>Delete</button></div>; })}</div>}
+                    </div>
+                  ) : selectedNestedChild.type === "single-language" ? (
+                    !editingTopic ? (
+                      <div className="cms-editor-card">
+                        <div className="admin-form-heading"><div><h3>{selectedNestedChild.title}</h3><p>Manage the topics for this course inside the learning path.</p></div><button type="button" className="admin-small-button" onClick={addNestedChildTopic}>+ Topic</button></div>
+                        {nestedChildTopics.length === 0 ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>No topics yet</h3><p>Click <strong>+ Topic</strong> to add the first topic.</p></div> : <div className="cms-subtopics">{nestedChildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedChildTopic(topic._id)}>Delete</button></div></div>)}</div>}
+                      </div>
+                    ) : (
+                      <TopicEditor topic={editingTopic} onSave={saveNestedChildTopic} onCancel={() => setEditingTopic(null)} onAddSubtopic={() => setEditingSubtopic(emptySubtopic(editingTopic.language))} editingSubtopic={editingSubtopic} setEditingSubtopic={setEditingSubtopic} />
+                    )
+                  ) : (
+                    <div className="cms-editor-empty"><div className="cms-editor-empty-icon">🧩</div><h3>{selectedNestedChild.title}</h3><p>This course is a {selectedNestedChild.type} course. Select it from the main Content Management course selector to manage its language/category structure.</p></div>
+                  )}
+
+                  {selectedNestedChild?.type === "nested" && selectedNestedGrandchild && (
+                    <div className="cms-editor-card" style={{ marginTop: "18px" }}>
+                      {selectedNestedGrandchild.type === "single-language" ? (!editingTopic ? (
+                        <><div className="admin-form-heading"><div><h3>{selectedNestedGrandchild.title}</h3><p>Topics inside {selectedNestedChild?.title}.</p></div><button type="button" className="admin-small-button" onClick={addNestedGrandchildTopic}>+ Topic</button></div>{nestedGrandchildTopics.length === 0 ? <div className="cms-editor-empty"><h3>No topics yet</h3><p>Add the first topic to this course.</p></div> : <div className="cms-subtopics">{nestedGrandchildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedGrandchildTopic(topic._id)}>Delete</button></div></div>)}</div>}</>
+                      ) : <TopicEditor topic={editingTopic} onSave={saveNestedGrandchildTopic} onCancel={() => setEditingTopic(null)} onAddSubtopic={() => setEditingSubtopic(emptySubtopic(editingTopic.language))} editingSubtopic={editingSubtopic} setEditingSubtopic={setEditingSubtopic} />) : (
+                        <div className="cms-editor-empty"><h3>{selectedNestedGrandchild.title}</h3><p>This course is a {selectedNestedGrandchild.type} course. Manage its categories/languages from the main course selector.</p></div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -558,7 +1152,7 @@ function AdminDashboard() {
                 <aside className="cms-sidebar">
                   <div className="cms-sidebar-head"><div><strong>Topics</strong><small>{topicList.length} main topics</small></div><button type="button" className="admin-small-button" onClick={addTopic}>+ Topic</button></div>
                   {topicList.map((topic, index) => <div className="cms-sidebar-group" key={topic._id}>
-                    <button type="button" className={`cms-sidebar-item cms-sidebar-topic ${editingTopic?._id === topic._id ? "active" : ""}`} onClick={() => editTopic(topic)}><span>{String(index + 1).padStart(2, "0")}</span><span>{displayLocalized(topic.title) || "Untitled Topic"}<small>{topic.subtopics?.length ?? 0} subtopics</small></span></button>
+                    <div className="cms-topic-row"><button type="button" className={`cms-sidebar-item cms-sidebar-topic ${editingTopic?._id === topic._id ? "active" : ""}`} onClick={() => editTopic(topic)}><span>{String(index + 1).padStart(2, "0")}</span><span>{displayLocalized(topic.title) || "Untitled Topic"}<small>{topic.subtopics?.length ?? 0} subtopics</small></span></button><button type="button" className="admin-danger-button" onClick={() => deleteTopic(topic._id)}>Delete</button></div>
                   </div>)}
                 </aside>
                 <div className="cms-editor-pane">

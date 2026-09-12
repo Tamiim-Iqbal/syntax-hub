@@ -442,3 +442,181 @@
 .cms-file-button input:disabled{cursor:not-allowed}
 .cms-image-or{color:var(--color-text-secondary);font-size:.85rem;font-weight:600}
 .cms-image-error{margin:8px 0 0;color:#dc2626;font-size:.88rem}
+
+/* Nested course actions use the existing admin button/select styles. */
+.cms-nested-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cms-nested-actions select {
+  max-width: 180px;
+}
+
+.cms-topic-row,
+.cms-problem-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.cms-topic-row .cms-sidebar-item,
+.cms-problem-row .cms-sidebar-item {
+  flex: 1;
+}
+
+.cms-inline-course-form {
+  margin: 18px 0;
+}
+
+/* Problem editor polish: keeps the existing admin visual language while
+   giving the large structured form clearer grouping and spacing. */
+.cms-editor-card > h4 {
+  padding-top: 6px;
+  margin-top: 30px;
+  border-top: 1px solid var(--color-border);
+}
+
+.cms-editor-card > .admin-form-grid:first-of-type {
+  margin-bottom: 8px;
+}
+
+.cms-editor-card .admin-form-grid > label,
+.cms-editor-card > label {
+  min-width: 0;
+}
+
+.cms-editor-card .admin-form-grid input,
+.cms-editor-card .admin-form-grid select,
+.cms-editor-card .admin-form-grid textarea,
+.cms-editor-card > input,
+.cms-editor-card > select,
+.cms-editor-card > textarea {
+  min-height: 42px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.cms-editor-card .admin-form-grid input:focus,
+.cms-editor-card .admin-form-grid select:focus,
+.cms-editor-card .admin-form-grid textarea:focus,
+.cms-editor-card > input:focus,
+.cms-editor-card > select:focus,
+.cms-editor-card > textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.cms-example-card,
+.cms-solution-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.cms-category-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.cms-save-row {
+  position: sticky;
+  bottom: 14px;
+  z-index: 3;
+  margin-top: 28px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-white) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 760px) {
+  .cms-save-row {
+    bottom: 8px;
+  }
+}
+
+
+/* Problem-solving category accordion: keep categories compact and reveal only one problem list at a time. */
+.cms-problem-workspace .cms-sidebar {
+  padding: 12px;
+}
+.cms-category-list {
+  display: grid;
+  gap: 8px;
+}
+.cms-problem-category {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-white);
+  overflow: hidden;
+}
+.cms-category-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+}
+.cms-category-toggle {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr);
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 9px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+.cms-category-toggle:hover {
+  background: var(--color-bg-soft);
+}
+.cms-category-chevron {
+  font-size: 1.1rem;
+  opacity: .65;
+}
+.cms-category-toggle-main {
+  min-width: 0;
+}
+.cms-category-toggle-main strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cms-category-toggle-main small {
+  display: block;
+  margin-top: 3px;
+  opacity: .58;
+  font-size: .72rem;
+}
+.cms-category-problem-list {
+  display: grid;
+  gap: 4px;
+  padding: 4px 8px 10px 28px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-soft);
+}
+.cms-category-empty {
+  padding: 10px 8px;
+  color: var(--color-text-muted);
+  font-size: .78rem;
+}
+.cms-problem-workspace .cms-problem-row {
+  gap: 6px;
+}
+.cms-problem-workspace .cms-problem-row .cms-sidebar-item {
+  padding: 8px 7px;
+}
+@media (max-width: 900px) {
+  .cms-category-problem-list {
+    padding-left: 14px;
+  }
+}
+
+.cms-copy-course-field { grid-column: 1 / -1; }
+.cms-copy-course-field select { margin-top: 6px; }

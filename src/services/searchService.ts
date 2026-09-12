@@ -77,7 +77,7 @@ const buildIndex = (courses: Course[]): SearchResult[] => {
       description: course.description,
       courseTitle: course.title,
       courseSlug: course.slug,
-      href: `/courses/${course.slug}`,
+      href: course.type === "problem-solving" ? "/courses/problem-solving" : course.type === "nested" ? `/courses/nested/${course.slug}` : `/courses/${course.slug}`,
       keywords: [course.title, course.slug, course.category, course.description, course.level],
     });
 
@@ -88,6 +88,10 @@ const buildIndex = (courses: Course[]): SearchResult[] => {
 
     if (course.type === "multi-language") {
       course.languages.forEach((lang) => results.push(...topicResults(course, lang.topics, lang.name)));
+      return;
+    }
+
+    if (course.type === "nested") {
       return;
     }
 

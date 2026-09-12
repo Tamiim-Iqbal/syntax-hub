@@ -172,6 +172,7 @@ export type SingleLanguageCourse = {
   description: string;
   level: string;
   topicsCount: number;
+  isTopLevel?: boolean;
   topics: Topic[];
   languages?: never;
   problemSolvingCategories?: never;
@@ -186,8 +187,36 @@ export type MultiLanguageCourse = {
   description: string;
   level: string;
   topicsCount: number;
+  isTopLevel?: boolean;
   languages: CourseLanguage[];
   topics?: never;
+  problemSolvingCategories?: never;
+};
+
+export type NestedCourseItem = {
+  _id: string;
+  type?: "single-language" | "multi-language" | "problem-solving" | "nested";
+  title: string;
+  slug: string;
+  category: string;
+  description: string;
+  level: string;
+  topicsCount: number;
+};
+
+export type NestedCourse = {
+  _id: string;
+  title: string;
+  slug: string;
+  category: string;
+  type: "nested";
+  description: string;
+  level: string;
+  topicsCount: number;
+  isTopLevel?: boolean;
+  nestedCourses: NestedCourseItem[];
+  topics?: never;
+  languages?: never;
   problemSolvingCategories?: never;
 };
 
@@ -200,6 +229,7 @@ export type ProblemSolvingCourse = {
   description: string;
   level: string;
   topicsCount: number;
+  isTopLevel?: boolean;
 
   problemSolvingCategories: ProblemCategory[];
 
@@ -210,4 +240,5 @@ export type ProblemSolvingCourse = {
 export type Course =
   | SingleLanguageCourse
   | MultiLanguageCourse
-  | ProblemSolvingCourse;
+  | ProblemSolvingCourse
+  | NestedCourse;

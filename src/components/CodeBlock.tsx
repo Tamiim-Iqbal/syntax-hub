@@ -5,6 +5,7 @@ import typescript from "highlight.js/lib/languages/typescript";
 import python from "highlight.js/lib/languages/python";
 import cpp from "highlight.js/lib/languages/cpp";
 import csharp from "highlight.js/lib/languages/csharp";
+import "./CodeBlock.css";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("typescript", typescript);

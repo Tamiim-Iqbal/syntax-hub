@@ -271,23 +271,32 @@ function CourseDetails() {
             {activeContent && <h1 className="course-topic-title">{getText(activeContent.title)}</h1>}
           </div>
 
-          {authenticated && activeContent ? (
-            <>
-              <CourseContentRenderer
-                content={activeContent}
-                language={language}
-                activeLanguage={activeLanguage}
-                getText={getText}
-                getRichText={getRichText}
-                renderRichText={renderRichText}
-              />
-              <CourseTopicNavigation
-                previousContent={previousContent}
-                nextContent={nextContent}
-                language={language}
-                onSelect={selectContent}
-              />
-            </>
+          {authenticated ? (
+            activeContent ? (
+              <>
+                <CourseContentRenderer
+                  content={activeContent}
+                  language={language}
+                  activeLanguage={activeLanguage}
+                  getText={getText}
+                  getRichText={getRichText}
+                  renderRichText={renderRichText}
+                />
+                <CourseTopicNavigation
+                  previousContent={previousContent}
+                  nextContent={nextContent}
+                  language={language}
+                  onSelect={selectContent}
+                />
+              </>
+            ) : (
+              <div className="course-empty-content">
+                <span className="course-empty-icon" aria-hidden="true">📚</span>
+                <p className="section-label">{course.title.toUpperCase()}</p>
+                <h2>No content yet</h2>
+                <p>This course has been created, but no topics have been added yet.</p>
+              </div>
+            )
           ) : (
             <div className="course-start-content">
               <span className="course-start-icon" aria-hidden="true">🔐</span>

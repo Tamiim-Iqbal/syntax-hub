@@ -4,6 +4,7 @@ import type {
   Topic,
   ProblemCategory,
   Problem,
+  NestedCourseItem,
 } from "../types/course";
 
 const API_URL =
@@ -23,7 +24,8 @@ type ApiCourse = {
   type:
     | "single-language"
     | "multi-language"
-    | "problem-solving";
+    | "problem-solving"
+    | "nested";
 
   description: string;
   level: string;
@@ -31,11 +33,16 @@ type ApiCourse = {
   content?: {
     topics?: Topic[];
     categories?: ProblemCategory[];
+    courses?: NestedCourseItem[];
+    languages?: Array<CourseLanguage | { id: string; name: string; color: string; topics?: Topic[] }>;
   };
 
   topicsCount?: number;
+  isTopLevel?: boolean;
   topics?: Topic[];
-  languages?: Array<CourseLanguage | { id: string; name: string; color: string; }>;
+  languages?: Array<CourseLanguage | { id: string; name: string; color: string; topics?: Topic[] }>;
+  nestedCourses?: NestedCourseItem[];
+  problemSolvingCategories?: ProblemCategory[];
 
   isPublished: boolean;
   order: number;
@@ -50,7 +57,7 @@ const fetchApi = async <T>(
 ): Promise<T> => {
   const response = await fetch(
     `${API_URL}${endpoint}`,
-    { cache: "default" }
+    { cache: "no-store" }
   );
 
   if (!response.ok) {
@@ -132,7 +139,7 @@ const normalizeCourse = (
       type: "single-language",
       description: course.description,
       level: course.level,
-      topicsCount: course.topicsCount ?? topics.length,
+      topicsCount: topics.length || Number(course.topicsCount) || 0,
       topics,
     };
   }
@@ -142,20 +149,22 @@ const normalizeCourse = (
   ========================================= */
 
   if (course.type === "multi-language") {
-    const languages = (course.languages ?? []).map((language) => ({
+    const rawLanguages = Array.isArray(course.languages) && course.languages.length
+      ? course.languages
+      : course.content?.languages ?? [];
+    const languages = rawLanguages.map((language) => ({
       id: language.id,
       name: language.name,
       color: language.color,
-      topics: "topics" in language ? language.topics : [],
+      topics: "topics" in language && Array.isArray(language.topics) ? language.topics : [],
     }));
 
-    const topicsCount =
-      course.topicsCount ??
-      languages.reduce(
-        (total, language) =>
-          total + language.topics.length,
-        0
-      );
+    const derivedTopicCount = languages.reduce(
+      (total, language) =>
+        total + language.topics.length,
+      0
+    );
+    const topicsCount = derivedTopicCount || Number(course.topicsCount) || 0;
 
     return {
       _id: course._id,
@@ -171,18 +180,64 @@ const normalizeCourse = (
   }
 
   /* =========================================
+     NESTED COURSE
+  ========================================= */
+
+  if (course.type === "nested") {
+    const nestedCourses = Array.isArray(course.nestedCourses) && course.nestedCourses.length > 0
+      ? course.nestedCourses
+      : Array.isArray((course as any).content?.courses)
+        ? (course as any).content.courses
+        : [];
+
+    return {
+      _id: course._id,
+      title: course.title,
+      slug: course.slug,
+      category: course.category,
+      type: "nested",
+      description: course.description,
+      level: course.level,
+      topicsCount: nestedCourses.length || Number(course.topicsCount) || 0,
+      nestedCourses: nestedCourses as NestedCourseItem[],
+    };
+  }
+
+  /* =========================================
      PROBLEM SOLVING
   ========================================= */
 
-  const categories =
-    course.content?.categories ?? [];
+  const rootCategories = Array.isArray(course.problemSolvingCategories)
+    ? course.problemSolvingCategories
+    : [];
+  const contentCategories = Array.isArray((course as any).content?.categories)
+    ? (course as any).content.categories
+    : [];
+  const legacyCategories = Array.isArray((course as any).content?.problemSolvingCategories)
+    ? (course as any).content.problemSolvingCategories
+    : [];
 
-  const topicsCount =
+  const categories =
+    rootCategories.length > 0
+      ? rootCategories
+      : contentCategories.length > 0
+        ? contentCategories
+        : legacyCategories;
+
+  const derivedProblemCount =
     categories.reduce(
-      (total, category) =>
-        total + category.problems.length,
+      (total: number, category: ProblemCategory) =>
+        total + (Array.isArray(category.problems) ? category.problems.length : 0),
       0
     );
+
+  // The public /courses endpoint intentionally returns only summary metadata,
+  // so problem-solving categories are not present there. Use the server's
+  // computed topicsCount in that case instead of falling back to 0.
+  const topicsCount =
+    derivedProblemCount > 0
+      ? derivedProblemCount
+      : Number(course.topicsCount) || 0;
 
   return {
     _id: course._id,
@@ -209,7 +264,7 @@ export const getSearchCourses = async (): Promise<Course[]> => {
 
 let coursesCache: { data: Course[]; expiresAt: number } | null = null;
 let coursesPromise: Promise<Course[]> | null = null;
-const COURSE_CACHE_TTL = 30_000;
+const COURSE_CACHE_TTL = 5_000;
 
 export const getCourses = async (): Promise<Course[]> => {
   if (coursesCache && coursesCache.expiresAt > Date.now()) {

@@ -7,6 +7,7 @@ const Courses = lazy(() => import("./pages/Courses"));
 const Search = lazy(() => import("./pages/Search"));
 const CourseDetails = lazy(() => import("./pages/CourseDetails"));
 const ProblemSolving = lazy(() => import("./pages/ProblemSolving"));
+const NestedCourse = lazy(() => import("./pages/NestedCourse"));
 const ProblemCategory = lazy(() => import("./pages/ProblemCategory"));
 const ProblemDetails = lazy(() => import("./pages/ProblemDetails"));
 const Login = lazy(() => import("./pages/Login"));
@@ -40,6 +41,7 @@ function App() {
               <Route path="/search" element={<Search />} />
             </Route>
             <Route path="/courses/problem-solving" element={<ProblemSolving />} />
+            <Route path="/courses/nested/:slug" element={<NestedCourse />} />
             <Route path="/courses/problem-solving/:categorySlug" element={<ProblemCategory />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />

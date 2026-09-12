@@ -18,7 +18,8 @@ type CourseCardProps = {
   type:
   | "single-language"
   | "multi-language"
-  | "problem-solving";
+  | "problem-solving"
+  | "nested";
 
   languages?: CourseLanguage[];
 };
@@ -39,9 +40,13 @@ function CourseCard({
       ? topics === 1
         ? "Problem"
         : "Problems"
-      : topics === 1
-        ? "Topic"
-        : "Topics";
+      : type === "nested"
+        ? topics === 1
+          ? "Course"
+          : "Courses"
+        : topics === 1
+          ? "Topic"
+          : "Topics";
         
 
   return (
@@ -88,7 +93,7 @@ function CourseCard({
   </div>
 
   <Link
-    to={`/courses/${slug}`}
+    to={type === "problem-solving" ? "/courses/problem-solving" : type === "nested" ? `/courses/nested/${slug}` : `/courses/${slug}`}
     className="course-card-button"
   >
     View Course →

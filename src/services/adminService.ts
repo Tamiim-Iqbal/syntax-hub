@@ -20,6 +20,7 @@ export type AdminUser = AuthUser & {
 
 export type AdminCourse = Course & {
   isPublished: boolean;
+  isTopLevel?: boolean;
   order: number;
   content?: unknown;
   languages?: import("../types/course").CourseLanguage[];
@@ -78,12 +79,13 @@ type CoursePayload = {
   title: string;
   slug: string;
   category: string;
-  type: "single-language" | "multi-language" | "problem-solving";
+  type: "single-language" | "multi-language" | "problem-solving" | "nested";
   description: string;
   level: string;
   content: unknown;
   languages?: unknown[];
   isPublished: boolean;
+  isTopLevel?: boolean;
   order: number;
 };
 
