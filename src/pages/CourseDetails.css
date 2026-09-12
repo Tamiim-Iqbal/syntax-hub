@@ -1429,12 +1429,11 @@
   display: inline-block;
 
   margin: 0 2px;
-  padding: 1px 7px;
 
   border: 1px solid transparent;
   border-radius: 6px;
 
-  background: var(--color-highlight-bg);
+  
   color: var(--color-highlight);
 
   font-family: var(--font-mono);
@@ -1455,7 +1454,7 @@
   border-radius: 5px;
 
   background: var(--color-surface);
-  color: var(--color-primary);
+  color: var(--color-text);
 
   font-family: var(--font-mono);
   font-size: 0.9em;
