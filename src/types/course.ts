@@ -39,6 +39,14 @@ export type ContentSection =
     content: LocalizedText;
   }
   | {
+    type: "semi-title";
+    content: LocalizedText;
+  }
+  | {
+    type: "red-text";
+    content: LocalizedText;
+  }
+  | {
     type: "bullet-points";
     items: LocalizedText[];
   }

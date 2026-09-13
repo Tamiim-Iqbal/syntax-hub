@@ -12,6 +12,12 @@ function ProblemApproach({ problem }: Props) {
         if (section.type === "only-text" || section.type === "explanation") {
           return <p key={index}>{getDisplayText(section.content)}</p>;
         }
+        if (section.type === "semi-title") {
+          return <h3 key={index}>{getDisplayText(section.content)}</h3>;
+        }
+        if (section.type === "red-text") {
+          return <p key={index} className="problem-approach-red-text">{getDisplayText(section.content)}</p>;
+        }
         if (section.type === "bullet-points") {
           return <ul key={index}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{getDisplayText(item)}</li>)}</ul>;
         }

@@ -1039,3 +1039,10 @@
     font-size: 0.58rem;
   }
 }
+
+
+/* CMS red-text block; follows the existing light/dark danger theme token. */
+.problem-approach-red-text {
+  color: var(--color-danger);
+  font-weight: 650;
+}

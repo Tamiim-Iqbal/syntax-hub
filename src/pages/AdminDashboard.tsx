@@ -135,6 +135,8 @@ const normalizeSections = (item: EditableTopic): ContentSection[] => {
 const sectionLabel = (type: SectionKind) => ({
   explanation: "Explanation",
   "only-text": "Text / Note",
+  "semi-title": "Semi-title",
+  "red-text": "Red Text",
   "bullet-points": "Bullet Points",
   code: "Code",
   image: "Image",
@@ -172,7 +174,7 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
           <button type="button" className="admin-danger-button" onClick={onDelete}>Delete</button>
         </div>
       </div>
-      {section.type === "explanation" || section.type === "only-text" ? (
+      {section.type === "explanation" || section.type === "only-text" || section.type === "semi-title" || section.type === "red-text" ? (
         <LocalizedFields value={section.content} onChange={(content) => onChange({ ...section, content })} />
       ) : section.type === "bullet-points" ? (
         <div>
@@ -360,7 +362,7 @@ function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[
     <div className="cms-blocks">
       {sections.map((section, index) => <SectionEditor key={index} section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} />)}
       <div className="cms-add-row">
-        {(["explanation", "only-text", "bullet-points", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
+        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
       </div>
     </div>
   );

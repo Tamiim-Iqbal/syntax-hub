@@ -24,10 +24,11 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
   return (
     <article className="topic-content">
       {getSections(content).map((section, index) => {
-        if (section.type === "explanation" || section.type === "only-text") {
+        if (section.type === "explanation" || section.type === "only-text" || section.type === "semi-title" || section.type === "red-text") {
+          const className = section.type === "explanation" ? "topic-explanation" : section.type === "only-text" ? "topic-only-text" : section.type === "semi-title" ? "topic-semi-title" : "topic-red-text";
           return (
-            <section className={section.type === "explanation" ? "topic-explanation" : "topic-only-text"} key={`${section.type}-${index}`}>
-              <p className="topic-description">{renderRichText(getRichText(section.content))}</p>
+            <section className={className} key={`${section.type}-${index}`}>
+              <p className={section.type === "semi-title" ? "topic-semi-title-text" : "topic-description"}>{renderRichText(getRichText(section.content))}</p>
             </section>
           );
         }

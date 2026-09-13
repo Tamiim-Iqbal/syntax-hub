@@ -503,6 +503,30 @@
 }
 
 
+
+/* Additional CMS content blocks. Existing layout/design remains unchanged. */
+.topic-semi-title {
+  margin: 1rem 0 0.75rem;
+}
+
+.topic-semi-title-text {
+  margin: 0;
+  color: var(--color-text);
+  font-size: calc(1.55rem * 0.9);
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.topic-red-text {
+  margin: 1rem 0;
+}
+
+.topic-red-text .topic-description {
+  color: var(--color-danger);
+  font-weight: 650;
+}
+
 /* =========================================================
    CODE EXAMPLE
    ========================================================= */
@@ -1631,7 +1655,7 @@
    ========================================================= */
 
 .topic-only-text {
-  margin: 1.5rem 0;
+  margin: 1rem 0;
 }
 
 .topic-bullet-points {
