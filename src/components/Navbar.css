@@ -309,11 +309,7 @@
 }
 
 .navbar-theme:hover {
-  border-color: var(--color-primary) !important;
-
-  color: var(--color-primary) !important;
-
-  background: var(--color-surface);
+  border-color: var(--color-grad1) !important;
 
   transform: translateY(-1px);
 }
