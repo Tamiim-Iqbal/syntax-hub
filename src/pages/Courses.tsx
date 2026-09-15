@@ -58,7 +58,7 @@ function Courses() {
           LEARNING PATH
         </p>
 
-        <h1>Explore Courses</h1>
+        <h1><span className="gradient-text2">Explore Courses</span></h1>
 
         <p>
           Start learning from carefully structured

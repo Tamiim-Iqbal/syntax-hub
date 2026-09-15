@@ -10,12 +10,8 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState("");
-  const { language, toggleLanguage } =
-    useLanguage();
-
-  const { theme, toggleTheme } =
-    useTheme();
-
+  const { language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -31,37 +27,22 @@ function Navbar() {
   };
 
   const navbarText = {
-    home: {
-      bn: "Home",
-      en: "Home",
-    },
-
-    login: {
-      bn: "Login",
-      en: "Login",
-    },
+    home: { bn: "Home", en: "Home" },
+    login: { bn: "Login", en: "Login" },
   };
 
   return (
     <header className="navbar">
       <div className="navbar-container">
-
-        {/* Logo */}
-        <Link
-          to="/"
-          className="navbar-logo"
-        >
+        <Link to="/" className="navbar-logo gradient-text">
           Syntax<span>Hub</span>
         </Link>
 
-        {/* Navigation */}
         <nav className="navbar-nav">
           <NavLink
             to="/"
             className={({ isActive }) =>
-              isActive
-                ? "nav-link active"
-                : "nav-link"
+              isActive ? "nav-link active gradient-text2" : "nav-link"
             }
           >
             {navbarText.home[language]}
@@ -71,91 +52,84 @@ function Navbar() {
             to="/courses"
             className={({ isActive }) =>
               isActive || location.pathname.startsWith("/courses")
-                ? "nav-link active"
+                ? "gradient-text2 nav-link active"
                 : "nav-link"
             }
           >
-            {language === "bn" ? "Courses" : "Courses"}
+            Courses
           </NavLink>
         </nav>
 
-        {/* Global Search */}
         <form className="navbar-search" onSubmit={submitSearch} role="search">
           <span aria-hidden="true">⌕</span>
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={language === "bn" ? "Search" : "Search"} aria-label="Search SyntaxHub" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={language === "bn" ? "Search" : "Search"}
+            aria-label="Search SyntaxHub"
+          />
         </form>
 
-        {/* Actions */}
         <div className="navbar-actions">
-
-          {/* Language */}
           <button
             type="button"
             className={`navbar-language-toggle ${
-              language === "en"
-                ? "english"
-                : "bangla"
+              language === "en" ? "english" : "bangla"
             }`}
             onClick={toggleLanguage}
             aria-label="Toggle language"
           >
-            <span className="language-option bangla-option">
-              বাংলা
-            </span>
-
+            <span className="language-option bangla-option">বাংলা</span>
             <span className="language-switch">
               <span className="language-dot" />
             </span>
-
-            <span className="language-option english-option">
-              EN
-            </span>
+            <span className="language-option english-option">EN</span>
           </button>
 
-          {/* Authentication */}
           {user ? (
             <>
               {user.role === "admin" && (
                 <NavLink
-  to="/admin"
-  className={({ isActive }) =>
-    `navbar-admin-link ${isActive ? "active" : ""}`
-  }
->
-  Admin
-</NavLink>
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `navbar-admin-link ${isActive ? "active" : ""}`
+                  }
+                >
+                  Admin
+                </NavLink>
               )}
 
-              <Link to="/profile" className="navbar-user-name" aria-label="Open profile">
+              <Link
+                to="/profile"
+                className="navbar-user-name"
+                aria-label="Open profile"
+              >
                 {user.name}
               </Link>
+
               <button
                 type="button"
                 className="navbar-login"
                 onClick={logout}
                 aria-label="Logout"
               >
-                {language === "bn" ? "Logout" : "Logout"}
+                Logout
               </button>
             </>
           ) : (
-            <Link to="/login" className="navbar-login">
+            <Link to="/login" className="navbar-login ">
               {navbarText.login[language]}
             </Link>
           )}
 
-          {/* Theme */}
           <button
             type="button"
             className="navbar-theme"
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            {theme === "light"
-              ? "🌙"
-              : "☀"}
+            {theme === "light" ? "🌙" : "☀"}
           </button>
-
         </div>
       </div>
     </header>

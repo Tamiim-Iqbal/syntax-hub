@@ -47,7 +47,7 @@ function Home() {
           <h1>
             Learn Programming.
             <br/>
-            <span>Build Your Future.</span>
+            <span className="gradient-text">Build Your Future.</span>
           </h1>
 
           <p className="hero-description">
@@ -57,7 +57,7 @@ function Home() {
           <div className="hero-actions">
             <Link
               to="/courses"
-              className="hero-primary-button"
+              className="hero-primary-button gradient-button"
             >
               Explore Courses
             </Link>
@@ -72,7 +72,7 @@ function Home() {
             LEARNING PATH
           </p>
 
-          <h2>Explore Courses</h2>
+          <h2> <span className="gradient-text2">Explore Courses</span></h2>
 
           <p>
             Start learning from carefully structured

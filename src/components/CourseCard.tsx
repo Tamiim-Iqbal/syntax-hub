@@ -94,7 +94,7 @@ function CourseCard({
 
   <Link
     to={type === "problem-solving" ? "/courses/problem-solving" : type === "nested" ? `/courses/nested/${slug}` : `/courses/${slug}`}
-    className="course-card-button"
+    className="course-card-button gradient-button2"
   >
     View Course →
   </Link>

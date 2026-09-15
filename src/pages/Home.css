@@ -70,13 +70,11 @@
   margin-top: 32px;
 }
 
-.hero-primary-button {
+.hero-primary-button, .gradient-button {
   padding: 12px 22px;
 
-  border: 1px solid var(--color-primary);
   border-radius: var(--radius-md);
 
-  background: var(--color-primary);
   color: #ffffff;
 
   font-size: 0.95rem;
@@ -90,8 +88,7 @@
 }
 
 .hero-primary-button:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  
 
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);

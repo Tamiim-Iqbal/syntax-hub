@@ -84,7 +84,7 @@ function NestedCourse() {
               </div>
               <div className="course-card-footer">
                 <span className="course-card-topics">{item.topicsCount} {item.topicsCount === 1 ? "Topic" : "Topics"}</span>
-                <Link to={item.type === "nested" ? `/courses/nested/${item.slug}` : item.type === "problem-solving" ? "/courses/problem-solving" : `/courses/${item.slug}`} className="course-card-button">View Course →</Link>
+                <Link to={item.type === "nested" ? `/courses/nested/${item.slug}` : item.type === "problem-solving" ? "/courses/problem-solving" : `/courses/${item.slug}`} className="course-card-button gradient-button2">View Course →</Link>
               </div>
             </article>
           ))}

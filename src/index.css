@@ -1,3 +1,85 @@
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(
+      90deg,
+      #f97316,
+      #ec4899,
+      #8b5cf6
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text2 {
+    background: linear-gradient(
+      90deg,
+     #f97316,
+     #ec4899
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text3 {
+    background: linear-gradient(
+      90deg,
+     #ec4899,
+     #8b5cf6
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-button {
+    background: linear-gradient(
+      90deg,
+      
+      #ec6a0d,
+      #e12985,
+      #554de8
+    );
+  }
+
+  .gradient-button:hover {
+    background: linear-gradient(
+      90deg,
+      #f97316,
+      #ec4899,
+      #8b5cf6
+    );
+  }
+
+  .gradient-button2 {
+    background: linear-gradient(
+      90deg,
+      #ec4899,
+      #8b5cf6
+      
+    );
+  }
+
+  .gradient-button2:hover {
+    background: linear-gradient(
+      90deg,
+      #e12985,
+      #554de8
+    );
+  }
+
+  .gradient-border {
+  border: 2px solid;
+  border-image: linear-gradient(
+    90deg,
+    #f97316,
+    #ec4899,
+    #8b5cf6
+  ) 1;
+}
+}
+
+
+
 :root {
   /* Brand */
   --color-primary: #4f46e5;
@@ -28,6 +110,7 @@
   /* Gradient */
   --color-grad1: #ec4899;
   --color-grad2: #8b5cf6;
+  --color-grad3: #ec6a0d;
 
   /* Status */
   --color-success: #16a34a;
