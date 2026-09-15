@@ -1,5 +1,5 @@
 import type { Problem } from "../../types/course";
-import { getDisplayText } from "../../utils/localizedText";
+import { RichTextRenderer } from "../RichTextRenderer";
 
 type Props = { problem: Problem };
 
@@ -8,7 +8,7 @@ function ProblemStatement({ problem }: Props) {
   return (
     <section aria-labelledby="problem-statement-title">
       <h2 id="problem-statement-title">Problem Statement</h2>
-      <p>{getDisplayText(problem.problem.description)}</p>
+      <p><RichTextRenderer value={problem.problem.description} /></p>
     </section>
   );
 }

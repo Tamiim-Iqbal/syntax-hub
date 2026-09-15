@@ -399,3 +399,42 @@ button:disabled {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+
+/* =========================================================
+   GLOBAL CMS RICH TEXT
+   Reuses the existing Course Details text styling everywhere.
+   ========================================================= */
+
+.text-highlight {
+  display: inline-block;
+  margin: 0 2px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-highlight, #16a34a);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.inline-code {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.rich-text-content,
+.topic-description {
+  white-space: pre-line;
+}
+
+:root {
+  --color-highlight: #16a34a;
+}
+

@@ -16,6 +16,7 @@ import { getDisplayText } from "../utils/localizedText";
 import ProblemCategorySkeleton from "../components/ProblemCategorySkeleton";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
+import { RichTextRenderer } from "../components/RichTextRenderer";
 
 import "./ProblemSolving.css";
 
@@ -120,7 +121,7 @@ function ProblemSolving() {
 
         <h1>{course.title}</h1>
 
-        <p>{course.description}</p>
+        <p className="rich-text-content"><RichTextRenderer value={course.description} /></p>
       </section>
 
       {/* =========================
@@ -172,7 +173,7 @@ function ProblemSolving() {
                   <div className="course-card-content">
                     <h3>{title}</h3>
 
-                    <p>{description}</p>
+                    <p className="rich-text-content"><RichTextRenderer value={description} /></p>
                   </div>
 
                   {/* Footer */}

@@ -9,6 +9,7 @@ import CourseContentRenderer from "../components/course-details/CourseContentRen
 import CourseTopicNavigation from "../components/course-details/CourseTopicNavigation";
 import type { ContentSource } from "../components/course-details/types";
 import type { Course, CourseLanguage, LocalizedText, RichTextContent, Subtopic, Topic } from "../types/course";
+import { RichTextRenderer } from "../components/RichTextRenderer";
 import { getCourseBySlug, getCoursePreview } from "../services/courseService";
 import { hasAuthToken } from "../services/authService";
 import { useLanguage } from "../context/useLanguage";
@@ -153,15 +154,7 @@ function CourseDetails() {
 
   const getRichText = (value: LocalizedText): RichTextContent => typeof value === "string" ? value : value[language];
 
-  const renderRichText = (value: RichTextContent): ReactNode => {
-    if (typeof value === "string") return value;
-    return value.map((part, index) => {
-      if (typeof part === "string") return part;
-      if (part.type === "bold") return <strong key={index}>{part.text}</strong>;
-      if (part.type === "inline-code") return <code key={index} className="inline-code">{part.text}</code>;
-      return <span key={index} className="text-highlight">{part.text}</span>;
-    });
-  };
+  const renderRichText = (value: RichTextContent): ReactNode => <RichTextRenderer value={value} />;
 
   const selectTopic = (topic: Topic) => {
     setSelectedTopicSlug(topic.slug);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type TextareaHTMLAttributes } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
@@ -144,6 +144,34 @@ const sectionLabel = (type: SectionKind) => ({
   image: "Image",
 }[type]);
 
+function AutoResizeTextarea({ value, onChange, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+
+  const resize = () => {
+    const element = ref.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${element.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    resize();
+  }, [value]);
+
+  return (
+    <textarea
+      {...props}
+      ref={ref}
+      value={value}
+      onChange={(event) => {
+        onChange?.(event);
+        requestAnimationFrame(resize);
+      }}
+      rows={1}
+    />
+  );
+}
+
 function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   value: LocalizedText;
   onChange: (value: LocalizedText) => void;
@@ -153,8 +181,8 @@ function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   const asInput = (part: unknown) => typeof part === "string" ? part : JSON.stringify(part ?? "");
   return (
     <div className="admin-localized-grid">
-      <label>{labels[0]}<textarea rows={3} value={asInput(normalized.bn)} onChange={(e) => onChange({ ...normalized, bn: e.target.value })} /></label>
-      <label>{labels[1]}<textarea rows={3} value={asInput(normalized.en)} onChange={(e) => onChange({ ...normalized, en: e.target.value })} /></label>
+      <label>{labels[0]}<AutoResizeTextarea value={asInput(normalized.bn)} onChange={(e) => onChange({ ...normalized, bn: e.target.value })} /></label>
+      <label>{labels[1]}<AutoResizeTextarea value={asInput(normalized.en)} onChange={(e) => onChange({ ...normalized, en: e.target.value })} /></label>
     </div>
   );
 }
@@ -1072,7 +1100,7 @@ function AdminDashboard() {
   const nextType = e.target.value as CourseKind;
   const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] };
   setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) });
-}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><label>Description<textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
+}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><label>Description<AutoResizeTextarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
 
           {activeTab === "content" && <section className="admin-panel-card cms-page">
             <div className="admin-section-heading"><div><h2>Content Management</h2><p>Choose a course, select a topic or problem from the left, and edit its existing content on the right.</p></div></div>
@@ -1094,7 +1122,7 @@ function AdminDashboard() {
                   <label>Type<select value={form.type} onChange={(e) => { const nextType = e.target.value as CourseKind; const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] }; setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) }); }}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label>
                   <label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label>
                 </div>
-                <label>Description<textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+                <label>Description<AutoResizeTextarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
                 <label>Initial Content JSON<textarea className="admin-json-input" rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
                 <label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
                 <button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button>

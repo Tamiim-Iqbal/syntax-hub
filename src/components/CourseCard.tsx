@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "./CourseCard.css";
+import { RichTextRenderer } from "./RichTextRenderer";
 
 type CourseLanguage = {
   id: string;
@@ -64,7 +65,7 @@ function CourseCard({
       <div className="course-card-content">
         <h3>{title}</h3>
 
-        <p>{description}</p>
+        <p className="rich-text-content"><RichTextRenderer value={description} /></p>
       </div>
 
       <div className="course-card-footer">

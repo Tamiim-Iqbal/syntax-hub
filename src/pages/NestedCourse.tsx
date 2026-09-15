@@ -6,6 +6,7 @@ import type { NestedCourse as NestedCourseType } from "../types/course";
 import CourseCardSkeleton from "../components/CourseCardSkeleton";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
+import { RichTextRenderer } from "../components/RichTextRenderer";
 
 import "./NestedCourse.css";
 
@@ -62,7 +63,7 @@ function NestedCourse() {
       <section className="nested-course-header">
         <p className="section-label">LEARNING PATH</p>
         <h1>{course.title}</h1>
-        <p>{course.description}</p>
+        <p className="rich-text-content"><RichTextRenderer value={course.description} /></p>
       </section>
 
       {course.nestedCourses.length === 0 ? (
@@ -80,7 +81,7 @@ function NestedCourse() {
               </div>
               <div className="course-card-content">
                 <h3>{item.title}</h3>
-                <p>{item.description}</p>
+                <p className="rich-text-content"><RichTextRenderer value={item.description} /></p>
               </div>
               <div className="course-card-footer">
                 <span className="course-card-topics">{item.topicsCount} {item.topicsCount === 1 ? "Topic" : "Topics"}</span>
