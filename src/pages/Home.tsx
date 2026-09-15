@@ -72,7 +72,7 @@ function Home() {
             LEARNING PATH
           </p>
 
-          <h2> <span className="gradient-text2">Explore Courses</span></h2>
+          <h2> <span className="gradient-text3">Explore Courses</span></h2>
 
           <p>
             Start learning from carefully structured
