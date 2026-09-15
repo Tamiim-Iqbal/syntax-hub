@@ -29,6 +29,11 @@ export type LocalizedText =
     en: RichTextContent;
   };
 
+export type TableCell = {
+  content: LocalizedText;
+  align?: "left" | "center" | "right";
+};
+
 export type ContentSection =
   | {
     type: "explanation";
@@ -49,6 +54,11 @@ export type ContentSection =
   | {
     type: "bullet-points";
     items: LocalizedText[];
+    columns?: 1 | 2 | 3;
+  }
+  | {
+    type: "table";
+    rows: TableCell[][];
   }
   | {
     type: "code";

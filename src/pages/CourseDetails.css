@@ -193,7 +193,6 @@
 .topic-list {
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .topic-group {
@@ -248,10 +247,10 @@
 }
 
 .topic-preview > span:first-child {
-  flex: 0 0 28px;
+  flex: 0 0 20px;
 
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
 
   color: var(--color-text-muted);
@@ -332,10 +331,10 @@
 }
 
 .subtopic-preview > span:first-child {
-  flex: 0 0 28px;
+  flex: 0 0 20px;
 
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
 
   color: var(--color-text-muted);
@@ -1668,8 +1667,20 @@
   padding-left: 1.5rem;
 }
 
+.topic-bullet-points ul.bullet-columns-2,
+.topic-bullet-points ul.bullet-columns-3 {
+  display: grid;
+  gap: 0.35rem 2rem;
+}
+.topic-bullet-points ul.bullet-columns-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.topic-bullet-points ul.bullet-columns-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .topic-bullet-points li {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
 
   line-height: 1.8;
 }
@@ -1898,4 +1909,49 @@
   font-size: 2.2rem;
   line-height: 1;
   margin-bottom: 4px;
+}
+
+
+/* Dynamic course-content tables. Cell alignment is controlled by the CMS. */
+.topic-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.topic-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white);
+}
+.topic-table td {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: top;
+}
+
+
+.topic-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.topic-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white);
+}
+.topic-table td {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: top;
+}
+@media (max-width: 700px) {
+  .topic-bullet-points ul.bullet-columns-2,
+  .topic-bullet-points ul.bullet-columns-3 {
+    grid-template-columns: 1fr;
+  }
 }

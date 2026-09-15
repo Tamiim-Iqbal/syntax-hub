@@ -54,7 +54,8 @@ const emptyLocalized = (): LocalizedObject => ({ bn: "", en: "" });
 const emptySection = (type: SectionKind = "explanation"): ContentSection => {
   if (type === "code") return { type, code: "", language: "javascript" };
   if (type === "image") return { type, src: "", alt: "", width: "", height: "", caption: emptyLocalized() };
-  if (type === "bullet-points") return { type, items: [emptyLocalized()] };
+  if (type === "bullet-points") return { type, items: [emptyLocalized()], columns: 1 };
+  if (type === "table") return { type, rows: [[{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }], [{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }]] };
   return { type, content: emptyLocalized() };
 };
 
@@ -138,6 +139,7 @@ const sectionLabel = (type: SectionKind) => ({
   "semi-title": "Semi-title",
   "red-text": "Red Text",
   "bullet-points": "Bullet Points",
+  table: "Table",
   code: "Code",
   image: "Image",
 }[type]);
@@ -178,6 +180,13 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
         <LocalizedFields value={section.content} onChange={(content) => onChange({ ...section, content })} />
       ) : section.type === "bullet-points" ? (
         <div>
+          <label className="cms-inline-setting">Columns
+            <select value={section.columns ?? 1} onChange={(e) => onChange({ ...section, columns: Number(e.target.value) as 1 | 2 | 3 })}>
+              <option value={1}>1 column</option>
+              <option value={2}>2 columns</option>
+              <option value={3}>3 columns</option>
+            </select>
+          </label>
           {section.items.map((item, itemIndex) => (
             <div className="cms-inline-row" key={itemIndex}>
               <LocalizedFields value={item} onChange={(next) => onChange({ ...section, items: section.items.map((x, i) => i === itemIndex ? next : x) })} />
@@ -186,6 +195,8 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
           ))}
           <button type="button" className="admin-small-button" onClick={() => onChange({ ...section, items: [...section.items, emptyLocalized()] })}>+ Bullet</button>
         </div>
+      ) : section.type === "table" ? (
+        <TableSectionEditor section={section} onChange={onChange} />
       ) : section.type === "code" ? (
         <div className="admin-form-grid">
           <label>Language<input value={section.language} onChange={(e) => onChange({ ...section, language: e.target.value })} placeholder="javascript" /></label>
@@ -194,6 +205,54 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
       ) : (
         <ImageSectionEditor section={section} onChange={onChange} />
       )}
+    </div>
+  );
+}
+
+function TableSectionEditor({ section, onChange }: {
+  section: Extract<ContentSection, { type: "table" }>;
+  onChange: (section: ContentSection) => void;
+}) {
+  const rows = section.rows;
+  const cols = rows[0]?.length ?? 0;
+  const makeCell = () => ({ content: emptyLocalized(), align: "left" as const });
+  const updateCell = (rowIndex: number, colIndex: number, patch: Partial<(typeof rows)[number][number]>) => {
+    onChange({
+      ...section,
+      rows: rows.map((row, r) => r === rowIndex ? row.map((cell, c) => c === colIndex ? { ...cell, ...patch } : cell) : row),
+    });
+  };
+  const addRow = () => onChange({ ...section, rows: [...rows, Array.from({ length: Math.max(cols, 1) }, makeCell)] });
+  const removeRow = () => onChange({ ...section, rows: rows.length > 1 ? rows.slice(0, -1) : rows });
+  const addColumn = () => onChange({ ...section, rows: rows.map((row) => [...row, makeCell()]) });
+  const removeColumn = () => onChange({ ...section, rows: rows.map((row) => row.length > 1 ? row.slice(0, -1) : row) });
+
+  return (
+    <div className="cms-table-editor">
+      <div className="cms-table-toolbar">
+        <span className="admin-field-label">Table — alignment is per cell</span>
+        <div>
+          <button type="button" className="admin-small-button" onClick={addRow}>+ Row</button>
+          <button type="button" className="admin-small-button" onClick={removeRow} disabled={rows.length <= 1}>− Row</button>
+          <button type="button" className="admin-small-button" onClick={addColumn}>+ Column</button>
+          <button type="button" className="admin-small-button" onClick={removeColumn} disabled={cols <= 1}>− Column</button>
+        </div>
+      </div>
+      <div className="cms-table-grid">
+        {rows.map((row, rowIndex) => row.map((cell, colIndex) => (
+          <div className="cms-table-cell-editor" key={`${rowIndex}-${colIndex}`}>
+            <div className="cms-table-cell-head">
+              <span>R{rowIndex + 1} · C{colIndex + 1}</span>
+              <select value={cell.align ?? "left"} onChange={(e) => updateCell(rowIndex, colIndex, { align: e.target.value as "left" | "center" | "right" })} aria-label={`Alignment row ${rowIndex + 1} column ${colIndex + 1}`}>
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+            <LocalizedFields value={cell.content} onChange={(content) => updateCell(rowIndex, colIndex, { content })} />
+          </div>
+        )))}
+      </div>
     </div>
   );
 }
@@ -362,7 +421,7 @@ function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[
     <div className="cms-blocks">
       {sections.map((section, index) => <SectionEditor key={index} section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} />)}
       <div className="cms-add-row">
-        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
+        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
       </div>
     </div>
   );

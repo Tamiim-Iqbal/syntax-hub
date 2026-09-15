@@ -36,12 +36,32 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
         if (section.type === "bullet-points") {
           return (
             <section className="topic-bullet-points" key={`bullet-${index}`}>
-              <ul>
+              <ul className={`bullet-columns-${section.columns ?? 1}`}>
                 {section.items.map((item, itemIndex) => (
                   <li key={`${index}-${itemIndex}`}>{renderRichText(getRichText(item))}</li>
                 ))}
               </ul>
             </section>
+          );
+        }
+
+        if (section.type === "table") {
+          return (
+            <div className="topic-table-wrap" key={`table-${index}`}>
+              <table className="topic-table">
+                <tbody>
+                  {section.rows.map((row, rowIndex) => (
+                    <tr key={`row-${rowIndex}`}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={`cell-${rowIndex}-${cellIndex}`} style={{ textAlign: cell.align ?? "left" }}>
+                          {renderRichText(getRichText(cell.content))}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           );
         }
 

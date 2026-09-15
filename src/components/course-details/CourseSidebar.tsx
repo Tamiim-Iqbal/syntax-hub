@@ -41,7 +41,7 @@ function CourseSidebar({
                   onClick={() => onSelectTopic(topic)}
                   aria-expanded={topic.subtopics?.length ? selected : undefined}
                 >
-                  <span>{String(topic.order).padStart(2, "0")}</span>
+                  <span>{String(topic.order)}</span>
                   <p>{getText(topic.title)}</p>
                   {topic.subtopics?.length ? (
                     <span className="topic-chevron" aria-hidden="true">{selected ? "⌃" : "⌄"}</span>
@@ -58,7 +58,7 @@ function CourseSidebar({
                         onClick={() => onSelectSubtopic(topic, subtopic)}
                         aria-current={selectedSubtopicSlug === subtopic.slug ? "page" : undefined}
                       >
-                        <span>{String(subtopic.order).padStart(2, "0")}</span>
+                        <span>{String(subtopic.order)}</span>
                         <p>{getText(subtopic.title)}</p>
                       </button>
                     ))}

@@ -409,6 +409,7 @@
 .cms-editor-card h4{margin:24px 0 12px}.cms-blocks{display:grid;gap:14px}.cms-section-card{padding:16px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-bg-white)}
 .cms-section-head,.cms-category-head,.cms-save-row,.cms-add-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.cms-section-head{margin-bottom:14px}.cms-section-head>div{display:flex;gap:5px}.cms-section-head button{border:1px solid var(--color-border);background:transparent;border-radius:7px;padding:5px 9px;cursor:pointer}
 .admin-localized-grid,.cms-editor-card .admin-localized-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-localized-grid label{display:flex;flex-direction:column;gap:7px;font-weight:600}
+.admin-localized-grid textarea{field-sizing:content;min-height:42px;overflow-y:hidden;resize:none}
 .cms-full{grid-column:1/-1}.admin-field-label{display:block;font-weight:600;margin-bottom:7px}.admin-code-input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:180px;resize:vertical}
 .cms-image-preview-wrap{display:flex;flex-direction:column;gap:8px}.cms-image-preview{display:block;max-width:100%;border-radius:10px;border:1px solid var(--color-border);object-fit:contain}.cms-inline-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px}.cms-inline-row .admin-localized-grid{flex:1}
 .cms-add-row{justify-content:flex-start;margin-top:12px}.cms-save-row{justify-content:flex-start;margin-top:22px}.cms-subtopics{margin-top:28px;padding-top:20px;border-top:1px solid var(--color-border)}
@@ -620,3 +621,14 @@
 
 .cms-copy-course-field { grid-column: 1 / -1; }
 .cms-copy-course-field select { margin-top: 6px; }
+
+
+.cms-inline-setting { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-weight:600; }
+.cms-inline-setting select { width:auto; min-width:120px; }
+.cms-table-editor { display:grid; gap:12px; }
+.cms-table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.cms-table-toolbar > div { display:flex; gap:6px; flex-wrap:wrap; }
+.cms-table-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:10px; }
+.cms-table-cell-editor { border:1px solid var(--color-border); border-radius:10px; padding:10px; background:var(--color-bg-soft); }
+.cms-table-cell-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:.78rem; font-weight:700; }
+.cms-table-cell-head select { width:auto; min-width:90px; }
