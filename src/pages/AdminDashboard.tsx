@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type TextareaHTMLAttributes, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
@@ -148,34 +148,6 @@ const sectionLabel = (type: SectionKind) => ({
   code: "Code",
   image: "Image",
 }[type]);
-
-function AutoResizeTextarea({ value, onChange, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const ref = useRef<HTMLTextAreaElement | null>(null);
-
-  const resize = () => {
-    const element = ref.current;
-    if (!element) return;
-    element.style.height = "auto";
-    element.style.height = `${element.scrollHeight}px`;
-  };
-
-  useEffect(() => {
-    resize();
-  }, [value]);
-
-  return (
-    <textarea
-      {...props}
-      ref={ref}
-      value={value}
-      onChange={(event) => {
-        onChange?.(event);
-        requestAnimationFrame(resize);
-      }}
-      rows={1}
-    />
-  );
-}
 
 function RichTextEditor({ value, onChange, placeholder }: {
   value: RichTextContent;
