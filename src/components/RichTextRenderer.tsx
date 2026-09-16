@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import type { BoldPart, HighlightPart, InlineCodePart, LocalizedText, RichTextContent } from "../types/course";
+import type { BoldPart, HighlightPart, InlineCodePart, LinkPart, LocalizedText, RichTextContent } from "../types/course";
 
-type RichPart = string | HighlightPart | BoldPart | InlineCodePart;
+type RichPart = string | HighlightPart | BoldPart | InlineCodePart | LinkPart;
 
 const isRichPart = (value: unknown): value is RichPart =>
   typeof value === "string" ||
   (typeof value === "object" && value !== null &&
-    ["highlight", "bold", "inline-code"].includes((value as { type?: unknown }).type as string) &&
+    ["highlight", "bold", "inline-code", "link"].includes((value as { type?: unknown }).type as string) &&
     typeof (value as { text?: unknown }).text === "string");
 
 const tryParseRichText = (value: string): RichTextContent => {
@@ -89,6 +89,9 @@ export function RichTextRenderer({
         }
         if (part.type === "inline-code") {
           return <code key={index} className="inline-code">{renderTextWithBreaks(part.text, `code-${index}`)}</code>;
+        }
+        if (part.type === "link") {
+          return <a key={index} href={part.url} target="_blank" rel="noopener noreferrer">{renderTextWithBreaks(part.text, `link-${index}`)}</a>;
         }
         return <span key={index} className="text-highlight">{renderTextWithBreaks(part.text, `highlight-${index}`)}</span>;
       })}

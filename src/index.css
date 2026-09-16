@@ -451,3 +451,23 @@ button:disabled {
     padding-right: 0;
   }
 }
+
+
+/* CMS links: clear in both light and dark themes */
+.rich-text-renderer a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text-renderer a:hover {
+  color: #1d4ed8;
+}
+
+[data-theme="dark"] .rich-text-renderer a {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .rich-text-renderer a:hover {
+  color: #93c5fd;
+}

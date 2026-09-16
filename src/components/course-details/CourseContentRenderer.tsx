@@ -34,13 +34,14 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
         }
 
         if (section.type === "bullet-points") {
+          const List = section.listStyle === "number" ? "ol" : "ul";
           return (
             <section className="topic-bullet-points" key={`bullet-${index}`}>
-              <ul className={`bullet-columns-${section.columns ?? 1}`}>
+              <List className={`bullet-columns-${section.columns ?? 1}`}>
                 {section.items.map((item, itemIndex) => (
                   <li key={`${index}-${itemIndex}`}>{renderRichText(getRichText(item))}</li>
                 ))}
-              </ul>
+              </List>
             </section>
           );
         }

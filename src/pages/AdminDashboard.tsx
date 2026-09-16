@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
@@ -54,7 +54,7 @@ const emptyLocalized = (): LocalizedObject => ({ bn: "", en: "" });
 const emptySection = (type: SectionKind = "explanation"): ContentSection => {
   if (type === "code") return { type, code: "", language: "javascript" };
   if (type === "image") return { type, src: "", alt: "", width: "", height: "", caption: emptyLocalized() };
-  if (type === "bullet-points") return { type, items: [emptyLocalized()], columns: 1 };
+  if (type === "bullet-points") return { type, items: [emptyLocalized()], columns: 1, listStyle: "bullet" };
   if (type === "table") return {
     type,
     rows: [[{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }], [{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }]],
@@ -184,7 +184,7 @@ function RichTextEditor({ value, onChange, placeholder }: {
     onChange(htmlToRichText(ref.current));
   };
 
-  const formatSelection = (type: "bold" | "highlight" | "inline-code") => {
+  const formatSelection = (type: "bold" | "highlight" | "inline-code" | "link") => {
     const editor = ref.current;
     const selection = window.getSelection();
     if (!editor || !selection || selection.rangeCount === 0 || selection.isCollapsed) return;
@@ -192,7 +192,15 @@ function RichTextEditor({ value, onChange, placeholder }: {
     if (!editor.contains(range.commonAncestorContainer)) return;
 
     try {
-      const wrapper = document.createElement(type === "bold" ? "strong" : type === "highlight" ? "mark" : "code");
+      const wrapper = document.createElement(type === "bold" ? "strong" : type === "highlight" ? "mark" : type === "inline-code" ? "code" : "a");
+      if (type === "link") {
+        const url = window.prompt("Enter URL", "https://");
+        if (!url) return;
+        try { new URL(url); } catch { window.alert("Please enter a valid URL."); return; }
+        wrapper.setAttribute("href", url);
+        wrapper.setAttribute("target", "_blank");
+        wrapper.setAttribute("rel", "noopener noreferrer");
+      }
       wrapper.appendChild(range.extractContents());
       range.insertNode(wrapper);
       selection.removeAllRanges();
@@ -233,6 +241,7 @@ function RichTextEditor({ value, onChange, placeholder }: {
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("bold")} title="Bold"><strong>B</strong></button>
         <button type="button" className="rich-editor-highlight-button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("highlight")} title="Highlight"><span>G</span></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("inline-code")} title="Inline code">&lt;/&gt;</button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("link")} title="Add link">↗</button>
       </div>
       <div
         ref={ref}
@@ -261,27 +270,39 @@ const richTextToHtml = (value: RichTextContent): string => {
     const text = render(part.text);
     if (part.type === "bold") return `<strong>${text}</strong>`;
     if (part.type === "inline-code") return `<code>${text}</code>`;
+    if (part.type === "link") return `<a href="${escape(part.url)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
     return `<mark>${text}</mark>`;
   }).join("");
 };
 
 const htmlToRichText = (root: HTMLElement): RichTextContent => {
-  const parts: Array<string | { type: "bold" | "highlight" | "inline-code"; text: string }> = [];
-  const push = (text: string, type?: "bold" | "highlight" | "inline-code") => {
+  const parts: Array<string | { type: "bold" | "highlight" | "inline-code"; text: string } | { type: "link"; text: string; url: string }> = [];
+  const push = (text: string, type?: "bold" | "highlight" | "inline-code" | "link", url?: string) => {
     if (!text) return;
     const last = parts[parts.length - 1];
-    if (type && last && typeof last !== "string" && last.type === type) last.text += text;
+    if (type === "link") {
+      if (last && typeof last !== "string" && last.type === "link" && last.url === url) last.text += text;
+      else parts.push({ type, text, url: url ?? "" });
+    } else if (type && last && typeof last !== "string" && last.type === type) last.text += text;
     else if (!type && typeof last === "string") parts[parts.length - 1] = last + text;
     else parts.push(type ? { type, text } : text);
   };
-  const walk = (node: Node, inherited?: "bold" | "highlight" | "inline-code") => {
-    if (node.nodeType === Node.TEXT_NODE) { push((node.textContent ?? "").replace(/\u00a0/g, " "), inherited); return; }
+  const walk = (node: Node, inherited?: "bold" | "highlight" | "inline-code" | "link", inheritedUrl = "") => {
+    if (node.nodeType === Node.TEXT_NODE) { push((node.textContent ?? "").replace(/\u00a0/g, " "), inherited, inheritedUrl); return; }
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     const element = node as HTMLElement;
     const tag = element.tagName.toLowerCase();
     if (tag === "br") { push("\n"); return; }
-    const type = tag === "strong" || tag === "b" ? "bold" : tag === "mark" ? "highlight" : tag === "code" ? "inline-code" : inherited;
-    Array.from(element.childNodes).forEach((child) => walk(child, type));
+    const type = tag === "strong" || tag === "b" ? "bold" : tag === "mark" ? "highlight" : tag === "code" ? "inline-code" : tag === "a" ? "link" : inherited;
+    const url = tag === "a" ? element.getAttribute("href") ?? "" : undefined;
+    if (type === "link") {
+      Array.from(element.childNodes).forEach((child) => {
+        if (child.nodeType === Node.TEXT_NODE) push((child.textContent ?? "").replace(/\u00a0/g, " "), "link", url);
+        else walk(child, "link", url ?? "");
+      });
+    } else {
+      Array.from(element.childNodes).forEach((child) => walk(child, type));
+    }
   };
   Array.from(root.childNodes).forEach((node) => walk(node));
   return parts.length ? parts : "";
@@ -338,12 +359,13 @@ function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   );
 }
 
-function SectionEditor({ section, index, onChange, onDelete, onMove }: {
+function SectionEditor({ section, index, onChange, onDelete, onMove, onAddAfter }: {
   section: ContentSection;
   index: number;
   onChange: (section: ContentSection) => void;
   onDelete: () => void;
   onMove: (direction: -1 | 1) => void;
+  onAddAfter?: (type: SectionKind) => void;
 }) {
   return (
     <div className="cms-section-card">
@@ -366,6 +388,12 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
               <option value={3}>3 columns</option>
             </select>
           </label>
+          <label className="cms-inline-setting">List style
+            <select value={section.listStyle ?? "bullet"} onChange={(e) => onChange({ ...section, listStyle: e.target.value as "bullet" | "number" })}>
+              <option value="bullet">• Bullet</option>
+              <option value="number">1. Number</option>
+            </select>
+          </label>
           {section.items.map((item, itemIndex) => (
             <div className="cms-inline-row" key={itemIndex}>
               <LocalizedFields value={item} onChange={(next) => onChange({ ...section, items: section.items.map((x, i) => i === itemIndex ? next : x) })} />
@@ -384,6 +412,12 @@ function SectionEditor({ section, index, onChange, onDelete, onMove }: {
       ) : (
         <ImageSectionEditor section={section} onChange={onChange} />
       )}
+      <div className="cms-insert-after">
+        <span>Add after this block:</span>
+        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => (
+          <button key={type} type="button" className="admin-small-button" onClick={() => onAddAfter?.(type)}>+ {sectionLabel(type)}</button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -405,7 +439,7 @@ function TableSectionEditor({ section, onChange }: {
       rows: rows.map((row, r) => r === rowIndex ? row.map((cell, c) => c === colIndex ? { ...cell, ...patch } : cell) : row),
     });
   };
-  const addRow = () => onChange({ ...section, rows: [...rows, Array.from({ length: Math.max(cols, 1) }, makeCell)] });
+  const addRow = (afterIndex = rows.length - 1) => onChange({ ...section, rows: [...rows.slice(0, afterIndex + 1), Array.from({ length: Math.max(cols, 1) }, makeCell), ...rows.slice(afterIndex + 1)] });
   const removeRow = () => onChange({ ...section, rows: rows.length > 1 ? rows.slice(0, -1) : rows });
   const addColumn = () => onChange({ ...section, rows: rows.map((row) => [...row, makeCell()]) });
   const removeColumn = () => onChange({ ...section, rows: rows.map((row) => row.length > 1 ? row.slice(0, -1) : row) });
@@ -415,7 +449,7 @@ function TableSectionEditor({ section, onChange }: {
       <div className="cms-table-toolbar">
         <div className="cms-table-header-tools"><span className="admin-field-label">Table — alignment is per cell</span><small>Select header rows/columns; selected cells will be highlighted on the website.</small></div>
         <div>
-          <button type="button" className="admin-small-button" onClick={addRow}>+ Row</button>
+          <button type="button" className="admin-small-button" onClick={() => addRow()}>+ Row</button>
           <button type="button" className="admin-small-button" onClick={removeRow} disabled={rows.length <= 1}>− Row</button>
           <button type="button" className="admin-small-button" onClick={addColumn}>+ Column</button>
           <button type="button" className="admin-small-button" onClick={removeColumn} disabled={cols <= 1}>− Column</button>
@@ -425,8 +459,10 @@ function TableSectionEditor({ section, onChange }: {
         <div><span>Header rows</span>{rows.map((_, rowIndex) => <button type="button" className={headerRows.includes(rowIndex) ? "selected" : ""} onClick={() => toggleHeaderRow(rowIndex)} key={`hr-${rowIndex}`}>R{rowIndex + 1}</button>)}</div>
         <div><span>Header columns</span>{Array.from({ length: cols }, (_, colIndex) => <button type="button" className={headerColumns.includes(colIndex) ? "selected" : ""} onClick={() => toggleHeaderColumn(colIndex)} key={`hc-${colIndex}`}>C{colIndex + 1}</button>)}</div>
       </div>
-      <div className="cms-table-grid">
-        {rows.map((row, rowIndex) => row.map((cell, colIndex) => (
+      <div className="cms-table-grid" style={{ gridTemplateColumns: `repeat(${Math.max(cols, 1)}, minmax(0, 1fr))` }}>
+        {rows.map((row, rowIndex) => (
+          <Fragment key={`row-${rowIndex}`}>
+          {row.map((cell, colIndex) => (
           <div className="cms-table-cell-editor" key={`${rowIndex}-${colIndex}`}>
             <div className="cms-table-cell-head">
               <span>R{rowIndex + 1} · C{colIndex + 1}</span>
@@ -438,7 +474,12 @@ function TableSectionEditor({ section, onChange }: {
             </div>
             <LocalizedFields value={cell.content} onChange={(content) => updateCell(rowIndex, colIndex, { content })} />
           </div>
-        )))}
+          ))}
+          <div className="cms-table-row-add" style={{ gridColumn: "1 / -1" }}>
+            <button type="button" className="admin-small-button" onClick={() => addRow(rowIndex)}>+ Add row below R{rowIndex + 1}</button>
+          </div>
+          </Fragment>
+        ))}
       </div>
     </div>
   );
@@ -606,7 +647,7 @@ function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[
   };
   return (
     <div className="cms-blocks">
-      {sections.map((section, index) => <SectionEditor key={index} section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} />)}
+      {sections.map((section, index) => <SectionEditor key={index} section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} onAddAfter={(type) => onChange([...sections.slice(0, index + 1), emptySection(type), ...sections.slice(index + 1)])} />)}
       <div className="cms-add-row">
         {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
       </div>

@@ -13,13 +13,20 @@ export type InlineCodePart = {
   text: string;
 };
 
+export type LinkPart = {
+  type: "link";
+  text: string;
+  url: string;
+};
+
 export type RichTextContent =
   | string
   | Array<
     string |
     HighlightPart |
     BoldPart |
-    InlineCodePart
+    InlineCodePart |
+    LinkPart
   >;
 
 export type LocalizedText =
@@ -55,6 +62,7 @@ export type ContentSection =
     type: "bullet-points";
     items: LocalizedText[];
     columns?: 1 | 2 | 3;
+    listStyle?: "bullet" | "number";
   }
   | {
     type: "table";
