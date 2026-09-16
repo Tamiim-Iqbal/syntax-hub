@@ -1100,13 +1100,6 @@ function AdminDashboard() {
     finally { setSavingContent(false); }
   };
 
-  const deleteTopic = (topicId: string) => {
-    if (!selectedCourse) return;
-    if (!window.confirm("Delete this topic and all of its subtopics?")) return;
-    saveTopics(topicList.filter((topic) => topic._id !== topicId).map((topic, index) => ({ ...topic, order: index + 1 })));
-    if (editingTopic?._id === topicId) setEditingTopic(null);
-  };
-
   const deleteNestedChildTopic = (topicId: string) => {
     if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return;
     if (!window.confirm("Delete this topic and all of its subtopics?")) return;
@@ -1143,6 +1136,35 @@ function AdminDashboard() {
     else if (selectedNestedChild?.type === "single-language") void saveNestedChildTopics(nestedChildTopics.map((item) => item._id === parent._id ? nextParent : item));
     else if (selectedNestedGrandchild?.type === "single-language") void saveNestedGrandchildTopics(nestedGrandchildTopics.map((item) => item._id === parent._id ? nextParent : item));
     setEditingTopic(nextParent);
+  };
+
+  const deleteTopic = (topicId: string) => {
+    if (!selectedCourse || selectedCourse.type === "problem-solving") return;
+
+    const topic = topicList.find((item) => item._id === topicId);
+    if (!topic) return;
+
+    const confirmed = window.confirm(
+      `Delete "${displayLocalized(topic.title) || "this topic"}"? This will also remove its subtopics.`
+    );
+    if (!confirmed) return;
+
+    const nextTopics = topicList
+      .filter((item) => item._id !== topicId)
+      .map((item, index) => ({ ...item, order: index + 1 }));
+
+    saveTopics(nextTopics);
+
+    if (editingTopic?._id === topicId) setEditingTopic(null);
+    if (editingSubtopic && topic.subtopics?.some((item) => item._id === editingSubtopic._id)) {
+      setEditingSubtopic(null);
+    }
+
+    setExpandedTopicIds((current) => {
+      const next = new Set(current);
+      next.delete(topicId);
+      return next;
+    });
   };
 
   const saveTopic = (saved: EditableTopic) => {
@@ -1469,6 +1491,13 @@ function AdminDashboard() {
                             <span>{String(index + 1).padStart(2, "0")}</span>
                             <span>{displayLocalized(topic.title) || "Untitled Topic"}<small>{subtopics.length} subtopics</small></span>
 
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-danger-button"
+                            onClick={() => deleteTopic(topic._id)}
+                          >
+                            Delete
                           </button>
                         </div>
                         {isExpanded && (
