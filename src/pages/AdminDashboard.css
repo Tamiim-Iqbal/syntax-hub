@@ -647,3 +647,85 @@
 .rich-editor-highlight-button{color:var(--color-highlight,#16a34a)!important}
 
 .cms-insert-after{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed var(--color-border)}.cms-insert-after>span{font-size:.72rem;font-weight:700;opacity:.65}.cms-table-grid{display:grid;gap:8px;align-items:start}.cms-table-row-add{display:flex;justify-content:center;padding:2px 0 5px}.cms-table-row-add button{font-size:.68rem}.rich-editor-toolbar button.rich-link-button{color:var(--color-primary)}
+
+
+/* Subtopic actions: keep Delete the same size as Edit. */
+.cms-list-row .admin-danger-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: inherit;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+/* Collapsible topic/subtopic navigation */
+.cms-topic-subtopics {
+  margin: 2px 8px 8px 30px;
+  padding: 5px 0 2px 8px;
+  border-left: 1px solid var(--color-border);
+}
+.cms-topic-subtopic-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+.cms-topic-subtopic-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: .78rem;
+}
+.cms-topic-subtopic-button:hover,
+.cms-topic-subtopic-button.active {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.cms-topic-subtopic-button > span:first-child {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+}
+.cms-topic-subtopic-button > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cms-topic-subtopic-row .admin-small-button,
+.cms-topic-subtopic-row .admin-danger-button {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  font-size: .68rem;
+}
+.cms-topic-subtopics-empty {
+  padding: 5px 8px;
+  color: var(--color-text-muted);
+  font-size: .7rem;
+}
+.cms-topic-add-subtopic {
+  width: 100%;
+  margin-top: 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-grad3);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 600;
+}
+.cms-topic-add-subtopic:hover {
+  background: var(--color-surface);
+}

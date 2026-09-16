@@ -989,3 +989,37 @@
     width: 195px;
   }
 }
+
+
+/* Final mobile vertical alignment */
+@media (max-width: 640px) {
+  .navbar {
+    height: 58px;
+    min-height: 58px;
+  }
+
+  .navbar-container {
+    height: 100%;
+    min-height: 58px;
+    padding-top: 0;
+    padding-bottom: 0;
+    box-sizing: border-box;
+    align-items: center;
+  }
+
+  .navbar-mobile-menu-wrap,
+  .navbar-logo,
+  .navbar-actions {
+    align-self: center;
+  }
+
+  .navbar-mobile-menu-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+  }
+}

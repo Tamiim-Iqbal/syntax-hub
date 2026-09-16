@@ -655,21 +655,16 @@ function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[
   );
 }
 
-function TopicEditor({ topic, onSave, onCancel, onAddSubtopic, editingSubtopic, setEditingSubtopic }: {
+function TopicEditor({ topic, onSave, onCancel }: {
   topic: EditableTopic;
   onSave: (topic: EditableTopic) => void;
   onCancel: () => void;
-  onAddSubtopic?: () => void;
-  editingSubtopic?: Subtopic | null;
-  setEditingSubtopic?: (value: Subtopic | null) => void;
 }) {
   const [draft, setDraft] = useState<EditableTopic>({ ...topic, sections: normalizeSections(topic) });
   useEffect(() => setDraft({ ...topic, sections: normalizeSections(topic) }), [topic]);
-  const subtopics = "subtopics" in draft ? draft.subtopics ?? [] : [];
-  const updateSubtopics = (next: Subtopic[]) => setDraft({ ...(draft as Topic), subtopics: next });
   return (
     <div className="cms-editor-card">
-      <div className="admin-form-heading"><h3>{topic._id.startsWith("topic-") || topic._id.startsWith("subtopic-") ? "Add Topic" : "Edit Topic"}</h3><button type="button" onClick={onCancel}>Cancel</button></div>
+      <div className="admin-form-heading"><h3>{topic._id.startsWith("subtopic-") ? "Edit Subtopic" : topic._id.startsWith("topic-") ? "Add Topic" : "Edit Topic"}</h3><button type="button" onClick={onCancel}>Cancel</button></div>
       <div className="admin-form-grid">
         <div className="admin-field-group"><span className="admin-field-label">Title (shown in sidebar)</span><LocalizedFields value={draft.title} onChange={(title) => setDraft({ ...draft, title })} /></div>
         <label>Slug<input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} /></label>
@@ -679,16 +674,7 @@ function TopicEditor({ topic, onSave, onCancel, onAddSubtopic, editingSubtopic, 
       <h4>Content Blocks</h4>
       <ContentBlocksEditor sections={draft.sections ?? []} onChange={(sections) => setDraft({ ...draft, sections })} />
 
-      {"subtopics" in draft && (
-        <div className="cms-subtopics">
-          <div className="admin-section-heading"><div><h4>Subtopics</h4><p>Add as many subtopics as you need under this main topic.</p></div><button type="button" className="admin-small-button" onClick={onAddSubtopic}>+ Add Subtopic</button></div>
-          {subtopics.map((sub, index) => (
-            <div className="cms-list-row" key={sub._id}><span>{String(sub.order).padStart(2, "0")}</span><strong>{displayLocalized(sub.title) || "Untitled"}</strong><div><button type="button" className="admin-small-button" onClick={() => setEditingSubtopic?.(sub)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => updateSubtopics(subtopics.filter((_, i) => i !== index))}>Delete</button></div></div>
-          ))}
-          {editingSubtopic && <TopicEditor topic={editingSubtopic} onSave={(saved) => { updateSubtopics(subtopics.map((x) => x._id === saved._id ? saved as Subtopic : x)); setEditingSubtopic?.(null); }} onCancel={() => setEditingSubtopic?.(null)} />}
-        </div>
-      )}
-      <div className="cms-save-row"><button type="button" className="admin-primary-button" onClick={() => onSave(draft)}>Save Topic</button><button type="button" className="admin-small-button" onClick={onCancel}>Cancel</button></div>
+      <div className="cms-save-row"><button type="button" className="admin-primary-button" onClick={() => onSave(draft)}>{topic._id.startsWith("subtopic-") ? "Save Subtopic" : "Save Topic"}</button><button type="button" className="admin-small-button" onClick={onCancel}>Cancel</button></div>
     </div>
   );
 }
@@ -910,6 +896,7 @@ function AdminDashboard() {
   const [nestedCreateParentId, setNestedCreateParentId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<EditableTopic | null>(null);
   const [editingSubtopic, setEditingSubtopic] = useState<Subtopic | null>(null);
+  const [expandedTopicIds, setExpandedTopicIds] = useState<Set<string>>(new Set());
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [selectedProblemCategoryId, setSelectedProblemCategoryId] = useState<string | null>(null);
@@ -1138,6 +1125,26 @@ function AdminDashboard() {
   const addNestedChildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
   const addNestedGrandchildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
   const editTopic = (topic: Topic) => { setEditingSubtopic(null); setEditingTopic({ ...topic, sections: normalizeSections(topic) }); };
+  const persistSubtopicChange = (parent: EditableTopic, subtopic: Subtopic) => {
+    const parentSubtopics = "subtopics" in parent ? (parent.subtopics ?? []) : [];
+    const nextSubtopics = parentSubtopics.map((item) => item._id === subtopic._id ? subtopic : item);
+    if (!parentSubtopics.some((item) => item._id === subtopic._id)) nextSubtopics.push(subtopic);
+    const nextParent = { ...parent, subtopics: nextSubtopics } as Topic;
+    if (selectedCourse?.type === "single-language" || selectedCourse?.type === "multi-language") saveTopics(topicList.map((item) => item._id === parent._id ? nextParent : item));
+    else if (selectedNestedChild?.type === "single-language") void saveNestedChildTopics(nestedChildTopics.map((item) => item._id === parent._id ? nextParent : item));
+    else if (selectedNestedGrandchild?.type === "single-language") void saveNestedGrandchildTopics(nestedGrandchildTopics.map((item) => item._id === parent._id ? nextParent : item));
+    setEditingTopic(nextParent);
+  };
+
+  const persistSubtopicDelete = (parent: EditableTopic, subtopicId: string) => {
+    const parentSubtopics = "subtopics" in parent ? (parent.subtopics ?? []) : [];
+    const nextParent = { ...parent, subtopics: parentSubtopics.filter((item) => item._id !== subtopicId) } as Topic;
+    if (selectedCourse?.type === "single-language" || selectedCourse?.type === "multi-language") saveTopics(topicList.map((item) => item._id === parent._id ? nextParent : item));
+    else if (selectedNestedChild?.type === "single-language") void saveNestedChildTopics(nestedChildTopics.map((item) => item._id === parent._id ? nextParent : item));
+    else if (selectedNestedGrandchild?.type === "single-language") void saveNestedGrandchildTopics(nestedGrandchildTopics.map((item) => item._id === parent._id ? nextParent : item));
+    setEditingTopic(nextParent);
+  };
+
   const saveTopic = (saved: EditableTopic) => {
     if (!selectedCourse || selectedCourse.type === "problem-solving") return;
     const topics = [...topicList] as Topic[];
@@ -1419,7 +1426,7 @@ function AdminDashboard() {
                         {nestedChildTopics.length === 0 ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>No topics yet</h3><p>Click <strong>+ Topic</strong> to add the first topic.</p></div> : <div className="cms-subtopics">{nestedChildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedChildTopic(topic._id)}>Delete</button></div></div>)}</div>}
                       </div>
                     ) : (
-                      <TopicEditor topic={editingTopic} onSave={saveNestedChildTopic} onCancel={() => setEditingTopic(null)} onAddSubtopic={() => setEditingSubtopic(emptySubtopic(editingTopic.language))} editingSubtopic={editingSubtopic} setEditingSubtopic={setEditingSubtopic} />
+                      <TopicEditor topic={editingTopic} onSave={saveNestedChildTopic} onCancel={() => setEditingTopic(null)} />
                     )
                   ) : (
                     <div className="cms-editor-empty"><div className="cms-editor-empty-icon">🧩</div><h3>{selectedNestedChild.title}</h3><p>This course is a {selectedNestedChild.type} course. Select it from the main Content Management course selector to manage its language/category structure.</p></div>
@@ -1429,7 +1436,7 @@ function AdminDashboard() {
                     <div className="cms-editor-card" style={{ marginTop: "18px" }}>
                       {selectedNestedGrandchild.type === "single-language" ? (!editingTopic ? (
                         <><div className="admin-form-heading"><div><h3>{selectedNestedGrandchild.title}</h3><p>Topics inside {selectedNestedChild?.title}.</p></div><button type="button" className="admin-small-button" onClick={addNestedGrandchildTopic}>+ Topic</button></div>{nestedGrandchildTopics.length === 0 ? <div className="cms-editor-empty"><h3>No topics yet</h3><p>Add the first topic to this course.</p></div> : <div className="cms-subtopics">{nestedGrandchildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedGrandchildTopic(topic._id)}>Delete</button></div></div>)}</div>}</>
-                      ) : <TopicEditor topic={editingTopic} onSave={saveNestedGrandchildTopic} onCancel={() => setEditingTopic(null)} onAddSubtopic={() => setEditingSubtopic(emptySubtopic(editingTopic.language))} editingSubtopic={editingSubtopic} setEditingSubtopic={setEditingSubtopic} />) : (
+                      ) : <TopicEditor topic={editingTopic} onSave={saveNestedGrandchildTopic} onCancel={() => setEditingTopic(null)} />) : (
                         <div className="cms-editor-empty"><h3>{selectedNestedGrandchild.title}</h3><p>This course is a {selectedNestedGrandchild.type} course. Manage its categories/languages from the main course selector.</p></div>
                       )}
                     </div>
@@ -1440,12 +1447,70 @@ function AdminDashboard() {
               <div className="cms-workspace">
                 <aside className="cms-sidebar">
                   <div className="cms-sidebar-head"><div><strong>Topics</strong><small>{topicList.length} main topics</small></div><button type="button" className="admin-small-button" onClick={addTopic}>+ Topic</button></div>
-                  {topicList.map((topic, index) => <div className="cms-sidebar-group" key={topic._id}>
-                    <div className="cms-topic-row"><button type="button" className={`cms-sidebar-item cms-sidebar-topic ${editingTopic?._id === topic._id ? "active" : ""}`} onClick={() => editTopic(topic)}><span>{String(index + 1).padStart(2, "0")}</span><span>{displayLocalized(topic.title) || "Untitled Topic"}<small>{topic.subtopics?.length ?? 0} subtopics</small></span></button><button type="button" className="admin-danger-button" onClick={() => deleteTopic(topic._id)}>Delete</button></div>
-                  </div>)}
+                  {topicList.map((topic, index) => {
+                    const isExpanded = expandedTopicIds.has(topic._id);
+                    const subtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+                    return (
+                      <div className={`cms-sidebar-group ${isExpanded ? "expanded" : ""}`} key={topic._id}>
+                        <div className="cms-topic-row">
+                          <button
+                            type="button"
+                            className={`cms-sidebar-item cms-sidebar-topic ${editingTopic?._id === topic._id && !editingSubtopic ? "active" : ""}`}
+                            onClick={() => {
+                              setEditingSubtopic(null);
+                              setExpandedTopicIds((current) => {
+                                const next = new Set(current);
+                                if (next.has(topic._id)) next.delete(topic._id); else next.add(topic._id);
+                                return next;
+                              });
+                              editTopic(topic);
+                            }}
+                          >
+                            <span>{String(index + 1).padStart(2, "0")}</span>
+                            <span>{displayLocalized(topic.title) || "Untitled Topic"}<small>{subtopics.length} subtopics</small></span>
+
+                          </button>
+                        </div>
+                        {isExpanded && (
+                          <div className="cms-topic-subtopics">
+                            {subtopics.length === 0 ? (
+                              <div className="cms-topic-subtopics-empty">No subtopics</div>
+                            ) : subtopics.map((subtopic, subIndex) => (
+                              <div className="cms-topic-subtopic-row" key={subtopic._id}>
+                                <button
+                                  type="button"
+                                  className={`cms-topic-subtopic-button ${editingSubtopic?._id === subtopic._id ? "active" : ""}`}
+                                  onClick={() => {
+                                    setEditingTopic(topic);
+                                    setEditingSubtopic(subtopic);
+                                  }}
+                                >
+                                  <span>{String(subIndex + 1).padStart(2, "0")}</span>
+                                  <span>{displayLocalized(subtopic.title) || "Untitled Subtopic"}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="admin-danger-button"
+                                  onClick={() => persistSubtopicDelete(topic, subtopic._id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            ))}
+                            <button type="button" className="cms-topic-add-subtopic" onClick={() => {
+                              setEditingTopic(topic);
+                              setEditingSubtopic(emptySubtopic(topic.language));
+                            }}>
+                              + Add Subtopic
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </aside>
                 <div className="cms-editor-pane">
-                  {!editingTopic ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>Select a topic</h3><p>Select a topic from the left. Its existing content will appear here and you can change anything without scrolling to the bottom.</p></div> : <TopicEditor topic={editingTopic} onSave={saveTopic} onCancel={() => setEditingTopic(null)} onAddSubtopic={() => { setEditingSubtopic(emptySubtopic(editingTopic.language)); }} editingSubtopic={editingSubtopic} setEditingSubtopic={setEditingSubtopic} />}
+                  {!editingTopic ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>Select a topic</h3><p>Select a topic from the left. Its existing content will appear here and you can change anything without scrolling to the bottom.</p></div> : editingSubtopic ? <TopicEditor topic={editingSubtopic} onSave={(saved) => { persistSubtopicChange(editingTopic, saved as Subtopic); setEditingSubtopic(null); }} onCancel={() => setEditingSubtopic(null)} /> : <TopicEditor topic={editingTopic} onSave={saveTopic} onCancel={() => setEditingTopic(null)} />}
                 </div>
               </div>
             )}

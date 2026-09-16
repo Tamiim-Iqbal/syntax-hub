@@ -37,6 +37,7 @@ function CourseDetails() {
   const [selectedLanguageId, setSelectedLanguageId] = useState<string>();
   const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
   const [selectedSubtopicSlug, setSelectedSubtopicSlug] = useState<string | null>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
 
   useEffect(() => {
@@ -187,12 +188,14 @@ function CourseDetails() {
   };
 
   const selectTopic = (topic: Topic) => {
+    setMobileSidebarOpen(false);
     setSelectedTopicSlug(topic.slug);
     setSelectedSubtopicSlug(null);
     updateTopicUrl(topic.slug);
   };
 
   const selectSubtopic = (topic: Topic, subtopic: Subtopic) => {
+    setMobileSidebarOpen(false);
     setSelectedTopicSlug(topic.slug);
     setSelectedSubtopicSlug(subtopic.slug);
     updateTopicUrl(topic.slug, subtopic.slug);
@@ -284,16 +287,29 @@ function CourseDetails() {
 
       <CourseLanguageSelector languages={languages} selectedLanguageId={activeLanguage?.id} onSelect={selectLanguage} />
 
-      <section className="course-learning">
-        <CourseSidebar
-          topics={topics}
-          language={language}
-          selectedTopicSlug={selectedTopicSlug}
-          selectedSubtopicSlug={selectedSubtopicSlug}
-          getText={getText}
-          onSelectTopic={selectTopic}
-          onSelectSubtopic={selectSubtopic}
-        />
+      <section className={`course-learning ${mobileSidebarOpen ? "mobile-sidebar-open" : ""}`}>
+        <button
+          type="button"
+          className="mobile-sidebar-toggle"
+          onClick={() => setMobileSidebarOpen((open) => !open)}
+          aria-expanded={mobileSidebarOpen}
+          aria-controls="course-sidebar"
+        >
+          <span aria-hidden="true">☰</span>
+          <span>{language === "bn" ? "Topics" : "Topics"}</span>
+        </button>
+
+        <div id="course-sidebar" className="mobile-sidebar-panel">
+          <CourseSidebar
+            topics={topics}
+            language={language}
+            selectedTopicSlug={selectedTopicSlug}
+            selectedSubtopicSlug={selectedSubtopicSlug}
+            getText={getText}
+            onSelectTopic={selectTopic}
+            onSelectSubtopic={selectSubtopic}
+          />
+        </div>
 
         <main className="course-main">
           <div className="course-main-header">
