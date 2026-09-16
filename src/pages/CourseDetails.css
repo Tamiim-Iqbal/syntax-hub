@@ -193,6 +193,7 @@
 .topic-list {
   display: flex;
   flex-direction: column;
+  gap: 3px;
 }
 
 .topic-group {
@@ -206,7 +207,7 @@
 
 .topic-preview {
   width: 100%;
-  min-height: 36px;
+  min-height: 32px;
 
   display: flex;
   align-items: center;
