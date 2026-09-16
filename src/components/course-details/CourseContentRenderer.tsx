@@ -52,11 +52,15 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
                 <tbody>
                   {section.rows.map((row, rowIndex) => (
                     <tr key={`row-${rowIndex}`}>
-                      {row.map((cell, cellIndex) => (
-                        <td key={`cell-${rowIndex}-${cellIndex}`} style={{ textAlign: cell.align ?? "left" }}>
-                          {renderRichText(getRichText(cell.content))}
-                        </td>
-                      ))}
+                      {row.map((cell, cellIndex) => {
+                        const isHeader = (section.headerRows ?? []).includes(rowIndex) || (section.headerColumns ?? []).includes(cellIndex);
+                        const Cell = isHeader ? "th" : "td";
+                        return (
+                          <Cell key={`cell-${rowIndex}-${cellIndex}`} className={isHeader ? "topic-table-header" : ""} style={{ textAlign: cell.align ?? "left" }}>
+                            {renderRichText(getRichText(cell.content))}
+                          </Cell>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>

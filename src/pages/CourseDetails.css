@@ -1456,15 +1456,12 @@
   --color-highlight-border: #bbf7d0;
 }
 
+:root[data-theme="dark"] {
+  --color-highlight-bg: color-mix(in srgb, #16a34a 18%, var(--color-bg-white));
+  --color-highlight-border: color-mix(in srgb, #4ade80 34%, var(--color-border));
+}
+
 .text-highlight {
-  display: inline-block;
-
-  margin: 0 2px;
-
-  border: 1px solid transparent;
-  border-radius: 6px;
-
-  
   color: var(--color-highlight);
 
   font-family: var(--font-mono);
@@ -2029,43 +2026,38 @@
 }
 
 
-/* Dynamic course-content tables. Cell alignment is controlled by the CMS. */
+/* Dynamic course-content tables. Cell alignment and headers are controlled by the CMS. */
 .topic-table-wrap {
   width: 100%;
   overflow-x: auto;
   margin: 1.5rem 0;
+  border-radius: 8px;
 }
 .topic-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
   background: var(--color-bg-white);
 }
-.topic-table td {
+.topic-table td,
+.topic-table th {
   padding: 0.75rem 0.9rem;
-  border: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
   vertical-align: top;
 }
-
-
-.topic-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  margin: 1.5rem 0;
-}
-.topic-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-white);
-}
-.topic-table td {
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--color-border);
+.topic-table tr > :last-child { border-right: 0; }
+.topic-table tbody tr:last-child > * { border-bottom: 0; }
+.topic-table .topic-table-header {
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--color-bg-white));
   color: var(--color-text);
-  vertical-align: top;
+  font-weight: 700;
 }
+
 @media (max-width: 700px) {
   .topic-bullet-points ul.bullet-columns-2,
   .topic-bullet-points ul.bullet-columns-3 {

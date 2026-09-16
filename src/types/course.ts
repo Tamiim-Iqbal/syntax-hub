@@ -59,6 +59,8 @@ export type ContentSection =
   | {
     type: "table";
     rows: TableCell[][];
+    headerRows?: number[];
+    headerColumns?: number[];
   }
   | {
     type: "code";

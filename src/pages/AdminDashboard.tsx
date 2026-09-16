@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type TextareaHTMLAttributes } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type TextareaHTMLAttributes, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
@@ -55,7 +55,12 @@ const emptySection = (type: SectionKind = "explanation"): ContentSection => {
   if (type === "code") return { type, code: "", language: "javascript" };
   if (type === "image") return { type, src: "", alt: "", width: "", height: "", caption: emptyLocalized() };
   if (type === "bullet-points") return { type, items: [emptyLocalized()], columns: 1 };
-  if (type === "table") return { type, rows: [[{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }], [{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }]] };
+  if (type === "table") return {
+    type,
+    rows: [[{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }], [{ content: emptyLocalized(), align: "left" }, { content: emptyLocalized(), align: "left" }]],
+    headerRows: [0],
+    headerColumns: [],
+  };
   return { type, content: emptyLocalized() };
 };
 
@@ -172,17 +177,191 @@ function AutoResizeTextarea({ value, onChange, ...props }: TextareaHTMLAttribute
   );
 }
 
+function RichTextEditor({ value, onChange, placeholder }: {
+  value: RichTextContent;
+  onChange: (value: RichTextContent) => void;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const historyRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
+  const focusedRef = useRef(false);
+  const html = richTextToHtml(value);
+
+  const pushHistory = (nextHtml: string) => {
+    const history = historyRef.current;
+    const currentIndex = historyIndexRef.current;
+    if (history[currentIndex] === nextHtml) return;
+    historyRef.current = [...history.slice(0, currentIndex + 1), nextHtml].slice(-50);
+    historyIndexRef.current = historyRef.current.length - 1;
+  };
+
+  useEffect(() => {
+    if (!ref.current) return;
+    if (!focusedRef.current) {
+      ref.current.innerHTML = html;
+      historyRef.current = [html];
+      historyIndexRef.current = 0;
+    }
+  }, [html]);
+
+  const emitCurrent = () => {
+    if (!ref.current) return;
+    const nextHtml = ref.current.innerHTML;
+    pushHistory(nextHtml);
+    onChange(htmlToRichText(ref.current));
+  };
+
+  const formatSelection = (type: "bold" | "highlight" | "inline-code") => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) return;
+
+    try {
+      const wrapper = document.createElement(type === "bold" ? "strong" : type === "highlight" ? "mark" : "code");
+      wrapper.appendChild(range.extractContents());
+      range.insertNode(wrapper);
+      selection.removeAllRanges();
+      const nextRange = document.createRange();
+      nextRange.selectNodeContents(wrapper);
+      selection.addRange(nextRange);
+      emitCurrent();
+    } catch {
+      // Ignore invalid selections without breaking the editor.
+    }
+  };
+
+  const restoreHistory = (direction: -1 | 1) => {
+    const history = historyRef.current;
+    const nextIndex = historyIndexRef.current + direction;
+    if (!ref.current || nextIndex < 0 || nextIndex >= history.length) return;
+    historyIndexRef.current = nextIndex;
+    ref.current.innerHTML = history[nextIndex];
+    onChange(htmlToRichText(ref.current));
+    ref.current.focus();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      restoreHistory(-1);
+    } else if ((event.metaKey || event.ctrlKey) && ((event.shiftKey && event.key.toLowerCase() === "z") || event.key.toLowerCase() === "y")) {
+      event.preventDefault();
+      restoreHistory(1);
+    }
+  };
+
+  return (
+    <div className="rich-editor">
+      <div className="rich-editor-toolbar" aria-label="Text formatting">
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => restoreHistory(-1)} title="Undo">↶</button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => restoreHistory(1)} title="Redo">↷</button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("bold")} title="Bold"><strong>B</strong></button>
+        <button type="button" className="rich-editor-highlight-button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("highlight")} title="Highlight"><span>G</span></button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("inline-code")} title="Inline code">&lt;/&gt;</button>
+      </div>
+      <div
+        ref={ref}
+        className="rich-editor-input"
+        contentEditable
+        role="textbox"
+        tabIndex={0}
+        suppressContentEditableWarning
+        spellCheck
+        data-placeholder={placeholder ?? "Write here..."}
+        onFocus={() => { focusedRef.current = true; if (historyRef.current.length === 0 && ref.current) { historyRef.current = [ref.current.innerHTML]; historyIndexRef.current = 0; } }}
+        onBlur={() => { focusedRef.current = false; }}
+        onKeyDown={handleKeyDown}
+        onInput={emitCurrent}
+      />
+    </div>
+  );
+}
+
+const richTextToHtml = (value: RichTextContent): string => {
+  const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+  const render = (text: string) => escape(text.replace(/\\n/g, "\n")).replace(/\n/g, "<br>");
+  if (typeof value === "string") return render(value);
+  return value.map((part) => {
+    if (typeof part === "string") return render(part);
+    const text = render(part.text);
+    if (part.type === "bold") return `<strong>${text}</strong>`;
+    if (part.type === "inline-code") return `<code>${text}</code>`;
+    return `<mark>${text}</mark>`;
+  }).join("");
+};
+
+const htmlToRichText = (root: HTMLElement): RichTextContent => {
+  const parts: Array<string | { type: "bold" | "highlight" | "inline-code"; text: string }> = [];
+  const push = (text: string, type?: "bold" | "highlight" | "inline-code") => {
+    if (!text) return;
+    const last = parts[parts.length - 1];
+    if (type && last && typeof last !== "string" && last.type === type) last.text += text;
+    else if (!type && typeof last === "string") parts[parts.length - 1] = last + text;
+    else parts.push(type ? { type, text } : text);
+  };
+  const walk = (node: Node, inherited?: "bold" | "highlight" | "inline-code") => {
+    if (node.nodeType === Node.TEXT_NODE) { push((node.textContent ?? "").replace(/\u00a0/g, " "), inherited); return; }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const element = node as HTMLElement;
+    const tag = element.tagName.toLowerCase();
+    if (tag === "br") { push("\n"); return; }
+    const type = tag === "strong" || tag === "b" ? "bold" : tag === "mark" ? "highlight" : tag === "code" ? "inline-code" : inherited;
+    Array.from(element.childNodes).forEach((child) => walk(child, type));
+  };
+  Array.from(root.childNodes).forEach((node) => walk(node));
+  return parts.length ? parts : "";
+};
+
+const normalizeRichText = (value: unknown): RichTextContent => {
+  if (typeof value !== "string") return value as RichTextContent ?? "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (typeof parsed === "string") return parsed;
+    if (Array.isArray(parsed)) return parsed as RichTextContent;
+  } catch {
+    // Legacy/plain text descriptions are kept as plain text.
+  }
+  return value;
+};
+
+const serializeRichText = (value: RichTextContent): string =>
+  typeof value === "string" ? value : JSON.stringify(value);
+
+function sameRichText(a: RichTextContent, b: RichTextContent) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   value: LocalizedText;
   onChange: (value: LocalizedText) => void;
   labels?: [string, string];
 }) {
   const normalized = asLocalized(value);
-  const asInput = (part: unknown) => typeof part === "string" ? part : JSON.stringify(part ?? "");
+  const [mode, setMode] = useState<"both" | "bn" | "en">("both");
+  const bothValue = sameRichText(normalized.bn, normalized.en) ? normalized.en : normalized.en;
+  const update = (language: "bn" | "en", next: RichTextContent) => onChange({ ...normalized, [language]: next });
+  const updateBoth = (next: RichTextContent) => onChange({ bn: next, en: next });
+
   return (
-    <div className="admin-localized-grid">
-      <label>{labels[0]}<AutoResizeTextarea value={asInput(normalized.bn)} onChange={(e) => onChange({ ...normalized, bn: e.target.value })} /></label>
-      <label>{labels[1]}<AutoResizeTextarea value={asInput(normalized.en)} onChange={(e) => onChange({ ...normalized, en: e.target.value })} /></label>
+    <div className="admin-localized-editor">
+      <div className="localized-editor-topbar">
+        <span className="admin-field-label">Language</span>
+        <div className="localized-language-switch">
+          <button type="button" className={mode === "both" ? "active" : ""} onClick={() => setMode("both")}>Bangla + English</button>
+          <button type="button" className={mode === "bn" ? "active" : ""} onClick={() => setMode("bn")}>{labels[0]}</button>
+          <button type="button" className={mode === "en" ? "active" : ""} onClick={() => setMode("en")}>{labels[1]}</button>
+        </div>
+      </div>
+      {mode === "both" ? (
+        <div className="localized-editor-field"><span>{labels[0]} + {labels[1]}</span><RichTextEditor value={bothValue} onChange={updateBoth} placeholder="Write once — it will be used for both languages" /></div>
+      ) : (
+        <div className="localized-editor-field"><span>{mode === "bn" ? labels[0] : labels[1]}</span><RichTextEditor value={normalized[mode]} onChange={(next) => update(mode, next)} placeholder="Write your content..." /></div>
+      )}
     </div>
   );
 }
@@ -244,6 +423,10 @@ function TableSectionEditor({ section, onChange }: {
   const rows = section.rows;
   const cols = rows[0]?.length ?? 0;
   const makeCell = () => ({ content: emptyLocalized(), align: "left" as const });
+  const headerRows = section.headerRows ?? [];
+  const headerColumns = section.headerColumns ?? [];
+  const toggleHeaderRow = (rowIndex: number) => onChange({ ...section, headerRows: headerRows.includes(rowIndex) ? headerRows.filter((i) => i !== rowIndex) : [...headerRows, rowIndex] });
+  const toggleHeaderColumn = (colIndex: number) => onChange({ ...section, headerColumns: headerColumns.includes(colIndex) ? headerColumns.filter((i) => i !== colIndex) : [...headerColumns, colIndex] });
   const updateCell = (rowIndex: number, colIndex: number, patch: Partial<(typeof rows)[number][number]>) => {
     onChange({
       ...section,
@@ -258,13 +441,17 @@ function TableSectionEditor({ section, onChange }: {
   return (
     <div className="cms-table-editor">
       <div className="cms-table-toolbar">
-        <span className="admin-field-label">Table — alignment is per cell</span>
+        <div className="cms-table-header-tools"><span className="admin-field-label">Table — alignment is per cell</span><small>Select header rows/columns; selected cells will be highlighted on the website.</small></div>
         <div>
           <button type="button" className="admin-small-button" onClick={addRow}>+ Row</button>
           <button type="button" className="admin-small-button" onClick={removeRow} disabled={rows.length <= 1}>− Row</button>
           <button type="button" className="admin-small-button" onClick={addColumn}>+ Column</button>
           <button type="button" className="admin-small-button" onClick={removeColumn} disabled={cols <= 1}>− Column</button>
         </div>
+      </div>
+      <div className="cms-table-header-selectors">
+        <div><span>Header rows</span>{rows.map((_, rowIndex) => <button type="button" className={headerRows.includes(rowIndex) ? "selected" : ""} onClick={() => toggleHeaderRow(rowIndex)} key={`hr-${rowIndex}`}>R{rowIndex + 1}</button>)}</div>
+        <div><span>Header columns</span>{Array.from({ length: cols }, (_, colIndex) => <button type="button" className={headerColumns.includes(colIndex) ? "selected" : ""} onClick={() => toggleHeaderColumn(colIndex)} key={`hc-${colIndex}`}>C{colIndex + 1}</button>)}</div>
       </div>
       <div className="cms-table-grid">
         {rows.map((row, rowIndex) => row.map((cell, colIndex) => (
@@ -471,7 +658,7 @@ function TopicEditor({ topic, onSave, onCancel, onAddSubtopic, editingSubtopic, 
     <div className="cms-editor-card">
       <div className="admin-form-heading"><h3>{topic._id.startsWith("topic-") || topic._id.startsWith("subtopic-") ? "Add Topic" : "Edit Topic"}</h3><button type="button" onClick={onCancel}>Cancel</button></div>
       <div className="admin-form-grid">
-        <label>Title (shown in sidebar)<LocalizedFields value={draft.title} onChange={(title) => setDraft({ ...draft, title })} /></label>
+        <div className="admin-field-group"><span className="admin-field-label">Title (shown in sidebar)</span><LocalizedFields value={draft.title} onChange={(title) => setDraft({ ...draft, title })} /></div>
         <label>Slug<input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} /></label>
         <label>Order<input type="number" value={draft.order} onChange={(e) => setDraft({ ...draft, order: Number(e.target.value) || 0 })} /></label>
         <label>Code language<input value={draft.language} onChange={(e) => setDraft({ ...draft, language: e.target.value })} /></label>
@@ -505,7 +692,7 @@ function ProblemEditor({ problem, onSave, onCancel }: { problem: ProblemEditor; 
     <div className="cms-editor-card">
       <div className="admin-form-heading"><h3>Edit Problem</h3><button type="button" onClick={onCancel}>Cancel</button></div>
       <div className="admin-form-grid">
-        <label>Title<LocalizedFields value={draft.title} onChange={(title) => updateProblem({ title })} /></label>
+        <div className="admin-field-group"><span className="admin-field-label">Title</span><LocalizedFields value={draft.title} onChange={(title) => updateProblem({ title })} /></div>
         <label>Slug<input value={draft.slug} onChange={(e) => updateProblem({ slug: e.target.value })} /></label>
         <label>Order<input type="number" value={draft.order} onChange={(e) => updateProblem({ order: Number(e.target.value) || 0 })} /></label>
         <label>Difficulty<select value={draft.difficulty ?? "easy"} onChange={(e) => updateProblem({ difficulty: e.target.value as Problem["difficulty"] })}><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label>
@@ -1055,7 +1242,7 @@ function AdminDashboard() {
     event.preventDefault();
     try {
       const content = JSON.parse(form.content);
-      const payload = { title: form.title.trim(), slug: form.slug.trim().toLowerCase(), category: form.category.trim(), type: form.type, description: form.description.trim(), level: form.level.trim(), order: Number(form.order) || 0, isPublished: form.isPublished, isTopLevel: form.isTopLevel, content, ...(form.type === "multi-language" && content.languages ? { languages: content.languages } : {}) };
+      const payload = { title: form.title.trim(), slug: form.slug.trim().toLowerCase(), category: form.category.trim(), type: form.type, description: serializeRichText(normalizeRichText(form.description)).trim(), level: form.level.trim(), order: Number(form.order) || 0, isPublished: form.isPublished, isTopLevel: form.isTopLevel, content, ...(form.type === "multi-language" && content.languages ? { languages: content.languages } : {}) };
       let savedCourse: AdminCourse;
       if (editingId) savedCourse = await updateAdminCourse(editingId, payload);
       else savedCourse = await createAdminCourse(payload);
@@ -1100,7 +1287,7 @@ function AdminDashboard() {
   const nextType = e.target.value as CourseKind;
   const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] };
   setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) });
-}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><label>Description<AutoResizeTextarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
+}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><div className="admin-field-group"><span className="admin-field-label">Description</span><RichTextEditor value={normalizeRichText(form.description)} onChange={(value) => setForm({ ...form, description: serializeRichText(value) })} placeholder="Write course description..." /></div><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
 
           {activeTab === "content" && <section className="admin-panel-card cms-page">
             <div className="admin-section-heading"><div><h2>Content Management</h2><p>Choose a course, select a topic or problem from the left, and edit its existing content on the right.</p></div></div>
@@ -1122,7 +1309,7 @@ function AdminDashboard() {
                   <label>Type<select value={form.type} onChange={(e) => { const nextType = e.target.value as CourseKind; const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] }; setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) }); }}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label>
                   <label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label>
                 </div>
-                <label>Description<AutoResizeTextarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+                <div className="admin-field-group"><span className="admin-field-label">Description</span><RichTextEditor value={normalizeRichText(form.description)} onChange={(value) => setForm({ ...form, description: serializeRichText(value) })} placeholder="Write course description..." /></div>
                 <label>Initial Content JSON<textarea className="admin-json-input" rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
                 <label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
                 <button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button>
