@@ -13,7 +13,7 @@ function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     setMobileMenuOpen(false);
