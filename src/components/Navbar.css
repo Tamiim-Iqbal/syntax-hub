@@ -587,3 +587,405 @@
 .navbar-search input::placeholder { color: var(--color-text-muted); }
 @media (max-width: 900px) { .navbar-search { margin-left: 18px; width: 190px; } }
 @media (max-width: 640px) { .navbar-search { order: 4; width: 100%; margin: 8px 0 0; } .navbar-container { flex-wrap: wrap; height: auto; padding: 10px 0; } .navbar { height: auto; min-height: 58px; } }
+
+
+/* =========================================================
+   USER NAME — FIRST WORD ONLY
+   The profile link still opens the full profile page.
+========================================================= */
+
+.navbar-user-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .navbar-user-name {
+    max-width: 72px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-user-name {
+    max-width: 58px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE NAVIGATION — HAMBURGER + SEARCH ICON
+========================================================= */
+
+.navbar-mobile-menu-wrap,
+.navbar-mobile-search {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .navbar-container {
+    width: 92%;
+    max-width: none;
+    flex-wrap: nowrap;
+    height: 100%;
+    padding: 0;
+    position: relative;
+  }
+
+  /* Hide text navigation on mobile. */
+  .navbar-nav-desktop {
+    display: none;
+  }
+
+  /* Search input becomes a single icon. */
+  .navbar-search {
+    display: none;
+  }
+
+  .navbar-mobile-search {
+    display: grid;
+    place-items: center;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    margin-left: auto;
+    margin-right: 4px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .navbar-mobile-search span {
+    display: block;
+    transform: rotate(-20deg);
+  }
+
+  .navbar-mobile-search:hover {
+    border-color: var(--color-grad1);
+    color: var(--color-text);
+  }
+
+  /* Home + Courses live inside this hamburger. */
+  .navbar-mobile-menu-wrap {
+    display: block;
+    position: relative;
+    flex: 0 0 auto;
+    order: 0;
+  }
+
+  .navbar-mobile-icon {
+    width: 32px;
+    height: 32px;
+    padding: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 8px;
+    background: var(--color-surface) !important;
+    cursor: pointer;
+  }
+
+  .navbar-mobile-icon .hamburger-line {
+    display: block;
+    width: 16px;
+    height: 1.5px;
+    margin: 0 auto;
+    border-radius: 999px;
+    background: var(--color-text-secondary);
+  }
+
+  .navbar-mobile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 300;
+    width: 110px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-bg-white);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  }
+
+  .mobile-nav-link {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 10px;
+    border-radius: 7px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .mobile-nav-link:hover {
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .mobile-nav-link.active {
+    background: var(--color-surface);
+    color: var(--color-grad3);
+  }
+
+  .navbar-actions {
+    margin-left: 0;
+    gap: 5px;
+  }
+
+  /* Keep the mobile navbar usable without changing the existing
+     language/admin/user/logout/theme controls. */
+  .navbar-user-name {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    padding: 5px 2px;
+    font-size: 0.62rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-container {
+    width: 94%;
+  }
+
+  .navbar-mobile-search,
+  .navbar-mobile-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .navbar-mobile-menu {
+    width: 100px;
+  }
+
+  .navbar-user-name {
+    font-size: 0.58rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar-container {
+    width: 96%;
+  }
+
+  .navbar-mobile-search,
+  .navbar-mobile-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .navbar-actions {
+    gap: 3px;
+  }
+
+  .navbar-mobile-menu {
+    width: 100px;
+  }
+}
+
+
+/* =========================================================
+   ACCOUNT MENU
+   Name opens the account details; logout lives inside it.
+========================================================= */
+
+.navbar-profile-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar-user-name {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.navbar-profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 400;
+  width: 230px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-white);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.14);
+}
+
+.navbar-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 9px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar-profile-info strong {
+  color: var(--color-text);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.navbar-profile-info span {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.navbar-profile-link,
+.navbar-profile-logout {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 5px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.navbar-profile-link:hover,
+.navbar-profile-logout:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* =========================================================
+   MOBILE NAVBAR
+   Hamburger is first, then logo. Search is inside hamburger.
+========================================================= */
+
+@media (max-width: 640px) {
+  .navbar-container {
+    width: 94%;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 0;
+  }
+
+  /* Put hamburger at the absolute beginning of the row. */
+  .navbar-mobile-menu-wrap {
+    order: -2;
+    flex: 0 0 auto;
+    margin: 0 8px 0 0;
+  }
+
+  .navbar-logo {
+    order: -1;
+    flex: 0 0 auto;
+  }
+
+  /* No border/background around hamburger. */
+  .navbar-mobile-icon {
+    width: 30px;
+    height: 30px;
+    padding: 5px 3px;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none;
+  }
+
+  .navbar-mobile-icon:hover {
+    background: transparent !important;
+    transform: none;
+  }
+
+  .navbar-mobile-menu {
+    top: calc(100% + 8px);
+    left: 0;
+  }
+  .mobile-nav-button {
+  appearance: none;
+  border: 0;
+  outline: none;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mobile-nav-button:hover,
+.mobile-nav-button:focus,
+.mobile-nav-button:active {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+  .mobile-nav-button {
+    appearance: none;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* The old standalone search icon no longer exists on mobile. */
+  .navbar-mobile-search {
+    display: none !important;
+  }
+
+  /* Let the remaining controls occupy the right side. */
+  .navbar-actions {
+    margin-left: auto;
+  }
+
+  .navbar-profile-menu {
+    right: -4px;
+    width: 215px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-container {
+    width: 96%;
+  }
+
+  .navbar-mobile-menu-wrap {
+    margin-right: 6px;
+  }
+
+  .navbar-mobile-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .navbar-profile-menu {
+    width: 205px;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar-container {
+    width: 98%;
+  }
+
+  .navbar-mobile-menu-wrap {
+    margin-right: 5px;
+  }
+
+  .navbar-profile-menu {
+    width: 195px;
+  }
+}

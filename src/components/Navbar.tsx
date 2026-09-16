@@ -10,11 +10,13 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
   useEffect(() => {
+    setMobileMenuOpen(false);
     const params = new URLSearchParams(location.search);
     if (location.pathname === "/search") setSearch(params.get("q") ?? "");
   }, [location.pathname, location.search]);
@@ -38,7 +40,7 @@ function Navbar() {
           Syntax<span>Hub</span>
         </Link>
 
-        <nav className="navbar-nav">
+        <nav className="navbar-nav navbar-nav-desktop">
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -59,6 +61,55 @@ function Navbar() {
             Courses
           </NavLink>
         </nav>
+
+        <div className="navbar-mobile-menu-wrap">
+          <button
+            type="button"
+            className="navbar-mobile-icon"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+          </button>
+
+          {mobileMenuOpen && (
+            <nav className="navbar-mobile-menu" aria-label="Mobile navigation">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  isActive ? "mobile-nav-link active" : "mobile-nav-link"
+                }
+              >
+                {navbarText.home[language]}
+              </NavLink>
+
+              <NavLink
+                to="/courses"
+                className={({ isActive }) =>
+                  isActive || location.pathname.startsWith("/courses")
+                    ? "mobile-nav-link active"
+                    : "mobile-nav-link"
+                }
+              >
+                Courses
+              </NavLink>
+
+              <button
+                type="button"
+                className="mobile-nav-link mobile-nav-button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate("/search");
+                }}
+              >
+                Search
+              </button>
+            </nav>
+          )}
+        </div>
 
         <form className="navbar-search" onSubmit={submitSearch} role="search">
           <span aria-hidden="true">⌕</span>
@@ -103,18 +154,10 @@ function Navbar() {
                 to="/profile"
                 className="navbar-user-name"
                 aria-label="Open profile"
+                title={user.name}
               >
-                {user.name}
+                {(user.name || "User").trim().split(/\s+/)[0]}
               </Link>
-
-              <button
-                type="button"
-                className="navbar-login"
-                onClick={logout}
-                aria-label="Logout"
-              >
-                Logout
-              </button>
             </>
           ) : (
             <Link to="/login" className="navbar-login ">

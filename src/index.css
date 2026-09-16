@@ -438,3 +438,20 @@ button:disabled {
   --color-highlight: #16a34a;
 }
 
+
+
+/* =========================================================
+   MOBILE COURSE DETAILS — REMOVE GLOBAL CONTAINER GUTTERS
+   MainLayout uses <main class="container">, which otherwise
+   keeps the 90% desktop gutter on mobile.
+========================================================= */
+
+@media (max-width: 650px) {
+  main.container:has(.course-details) {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
