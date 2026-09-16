@@ -1,6 +1,7 @@
 import type { AuthUser } from "../types/auth";
 import { getAuthToken } from "./authService";
 import type { Course } from "../types/course";
+import { clearCourseListCache } from "./courseService";
 
 const API_URL =
   import.meta.env.VITE_API_URL ??
@@ -89,27 +90,36 @@ type CoursePayload = {
   order: number;
 };
 
-export const createAdminCourse = (
+export const createAdminCourse = async (
   payload: CoursePayload
-) =>
-  request<AdminCourse>("/admin/courses", {
+) => {
+  const course = await request<AdminCourse>("/admin/courses", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  clearCourseListCache();
+  return course;
+};
 
-export const updateAdminCourse = (
+export const updateAdminCourse = async (
   id: string,
   payload: Partial<CoursePayload>
-) =>
-  request<AdminCourse>(`/admin/courses/${id}`, {
+) => {
+  const course = await request<AdminCourse>(`/admin/courses/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
+  clearCourseListCache();
+  return course;
+};
 
-export const deleteAdminCourse = (id: string) =>
-  request<{ message: string }>(`/admin/courses/${id}`, {
+export const deleteAdminCourse = async (id: string) => {
+  const result = await request<{ message: string }>(`/admin/courses/${id}`, {
     method: "DELETE",
   });
+  clearCourseListCache();
+  return result;
+};
 
 
 export type ImageKitAuth = {

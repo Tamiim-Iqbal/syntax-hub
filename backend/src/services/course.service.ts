@@ -1,4 +1,5 @@
 import Course, { type ICourse } from "../models/Course.js";
+import type { PipelineStage } from "mongoose";
 
 const getCourseContent = (course: any) =>
   course?.content && typeof course.content === "object"
@@ -247,23 +248,264 @@ export const getCoursePreview = async (slug: string): Promise<any | null> => {
   return course ? await toCoursePreview(course) : null;
 };
 
-export const getAllCourses = async (): Promise<any[]> => {
-  // Keep the public summary calculation based on the complete course document.
-  // The previous aggregation projected the root `languages` field down to
-  // metadata-only objects, which could make multi-language topic counts zero
-  // when the real topics lived in that root field.
-  //
-  // Course cards only receive the small summary returned by toPublicSummary,
-  // so reading the source document here does not expose lesson/problem bodies
-  // to the client.
-  const courses = await Course.find({
-    isPublished: true,
-    isTopLevel: { $ne: false },
-  })
-    .sort({ order: 1, _id: 1 })
-    .lean();
+const COURSE_LIST_CACHE_TTL = 60_000;
+let courseListCache: { data: any[]; expiresAt: number } | null = null;
+let courseListPromise: Promise<any[]> | null = null;
 
-  return courses.map((course: any) => toPublicSummary(course));
+/**
+ * Public course cards must never read the large `content` blob from MongoDB.
+ * The aggregation calculates counts inside MongoDB and returns only the
+ * metadata required by the course cards.
+ */
+const COURSE_SUMMARY_PIPELINE: PipelineStage[] = [
+  {
+    $match: {
+      isPublished: true,
+      isTopLevel: { $ne: false },
+    },
+  },
+  {
+    $set: {
+      _content: {
+        $cond: [
+          { $eq: [{ $type: "$content" }, "object"] },
+          "$content",
+          {},
+        ],
+      },
+    },
+  },
+  {
+    $set: {
+      topicsCount: {
+        $switch: {
+          branches: [
+            {
+              case: { $eq: ["$type", "single-language"] },
+              then: { $size: { $ifNull: ["$_content.topics", []] } },
+            },
+            {
+              case: { $eq: ["$type", "multi-language"] },
+              then: {
+                $let: {
+                  vars: {
+                    rootLanguages: { $ifNull: ["$languages", []] },
+                    contentLanguages: { $ifNull: ["$_content.languages", []] },
+                  },
+                  in: {
+                    $let: {
+                      vars: {
+                        rootTopicCount: {
+                          $reduce: {
+                            input: { $ifNull: ["$languages", []] },
+                            initialValue: 0,
+                            in: {
+                              $add: [
+                                "$$value",
+                                { $size: { $ifNull: ["$$this.topics", []] } },
+                              ],
+                            },
+                          },
+                        },
+                      },
+                      in: {
+                        $reduce: {
+                          input: {
+                            $cond: [
+                              { $gt: ["$$rootTopicCount", 0] },
+                              "$$rootLanguages",
+                              "$$contentLanguages",
+                            ],
+                          },
+                          initialValue: 0,
+                          in: {
+                            $add: [
+                              "$$value",
+                              { $size: { $ifNull: ["$$this.topics", []] } },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              case: { $eq: ["$type", "nested"] },
+              then: {
+                $let: {
+                  vars: {
+                    contentCourses: { $ifNull: ["$_content.courses", []] },
+                    rootCourses: { $ifNull: ["$nestedCourses", []] },
+                  },
+                  in: {
+                    $cond: [
+                      { $gt: [{ $size: "$$contentCourses" }, 0] },
+                      { $size: "$$contentCourses" },
+                      { $size: "$$rootCourses" },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              case: { $eq: ["$type", "problem-solving"] },
+              then: {
+                $let: {
+                  vars: {
+                    categories: {
+                      $cond: [
+                        { $gt: [{ $size: { $ifNull: ["$_content.categories", []] } }, 0] },
+                        { $ifNull: ["$_content.categories", []] },
+                        {
+                          $cond: [
+                            { $gt: [{ $size: { $ifNull: ["$_content.problemSolvingCategories", []] } }, 0] },
+                            { $ifNull: ["$_content.problemSolvingCategories", []] },
+                            { $ifNull: ["$problemSolvingCategories", []] },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                  in: {
+                    $reduce: {
+                      input: "$$categories",
+                      initialValue: 0,
+                      in: {
+                        $add: [
+                          "$$value",
+                          { $size: { $ifNull: ["$$this.problems", []] } },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          default: 0,
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      _id: 1,
+      title: 1,
+      slug: 1,
+      category: 1,
+      type: 1,
+      description: 1,
+      level: 1,
+      topicsCount: 1,
+      isPublished: 1,
+      isTopLevel: 1,
+      order: 1,
+      languages: {
+        $cond: [
+          { $eq: ["$type", "multi-language"] },
+          {
+            $let: {
+              vars: {
+                rootLanguages: { $ifNull: ["$languages", []] },
+                contentLanguages: { $ifNull: ["$_content.languages", []] },
+              },
+              in: {
+                $let: {
+                  vars: {
+                    rootTopicCount: {
+                      $reduce: {
+                        input: { $ifNull: ["$languages", []] },
+                        initialValue: 0,
+                        in: {
+                          $add: [
+                            "$$value",
+                            { $size: { $ifNull: ["$$this.topics", []] } },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                  in: {
+                    $map: {
+                      input: {
+                        $cond: [
+                          { $gt: ["$$rootTopicCount", 0] },
+                          "$$rootLanguages",
+                          "$$contentLanguages",
+                        ],
+                      },
+                      as: "language",
+                      in: {
+                        id: "$$language.id",
+                        name: "$$language.name",
+                        color: "$$language.color",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          [],
+        ],
+      },
+    },
+  },
+  { $sort: { order: 1, _id: 1 } },
+];
+
+export const clearCourseListCache = () => {
+  courseListCache = null;
+};
+
+export const getAllCourses = async (): Promise<any[]> => {
+  const now = Date.now();
+
+  if (courseListCache && courseListCache.expiresAt > now) {
+    return courseListCache.data;
+  }
+
+  if (courseListPromise) return courseListPromise;
+
+  const promise: Promise<any[]> = Course.aggregate(COURSE_SUMMARY_PIPELINE)
+    .then((courses: any[]) => courses.map((course: any) => ({
+      _id: course._id,
+      title: course.title,
+      slug: course.slug,
+      category: course.category,
+      type: course.type,
+      description: course.description,
+      level: course.level,
+      topicsCount: Number(course.topicsCount) || 0,
+      languages:
+        course.type === "multi-language"
+          ? (course.languages ?? []).map((language: any) => ({
+              id: language.id,
+              name: language.name,
+              color: language.color,
+            }))
+          : undefined,
+      isPublished: course.isPublished,
+      isTopLevel: course.isTopLevel !== false,
+      order: course.order,
+    })))
+    .then((courses) => {
+      courseListCache = {
+        data: courses,
+        expiresAt: Date.now() + COURSE_LIST_CACHE_TTL,
+      };
+      return courses;
+    })
+    .finally(() => {
+      if (courseListPromise === promise) {
+        courseListPromise = null;
+      }
+    });
+
+  courseListPromise = promise;
+  return promise;
 };
 
 export const getSearchCourses = async (): Promise<ICourse[]> => {
@@ -278,12 +520,30 @@ export const getCourseBySlug = async (slug: string): Promise<ICourse | null> => 
   return normalizeCourseForClient(course) as ICourse | null;
 };
 
-export const createCourse = async (courseData: Partial<ICourse>): Promise<ICourse> => Course.create(courseData);
+export const createCourse = async (courseData: Partial<ICourse>): Promise<ICourse> => {
+  const course = await Course.create(courseData);
+  clearCourseListCache();
+  return course;
+};
 
-export const updateCourse = async (id: string, courseData: Partial<ICourse>): Promise<ICourse | null> =>
-  Course.findByIdAndUpdate(id, courseData, { returnDocument: "after", runValidators: true }).lean();
+export const updateCourse = async (
+  id: string,
+  courseData: Partial<ICourse>
+): Promise<ICourse | null> => {
+  const course = await Course.findByIdAndUpdate(
+    id,
+    courseData,
+    { returnDocument: "after", runValidators: true }
+  ).lean();
+  clearCourseListCache();
+  return course as ICourse | null;
+};
 
-export const deleteCourse = async (id: string): Promise<ICourse | null> => Course.findByIdAndDelete(id).lean();
+export const deleteCourse = async (id: string): Promise<ICourse | null> => {
+  const course = await Course.findByIdAndDelete(id).lean();
+  clearCourseListCache();
+  return course as ICourse | null;
+};
 
 const toProblemPreview = (problem: any) => ({
   _id: problem._id,

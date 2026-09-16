@@ -53,7 +53,7 @@ export const getCourses = async (
   try {
     const courses = await getAllCourses();
 
-    res.set("Cache-Control", "no-store");
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.status(200).json({
       success: true,
       data: courses,
@@ -114,7 +114,7 @@ export const getCoursePreviewController = async (
       return;
     }
 
-    res.set("Cache-Control", "no-store");
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.status(200).json({ success: true, data: course });
   } catch (error) {
     console.error("Get course preview error:", error);

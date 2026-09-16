@@ -24,7 +24,7 @@ const text = {
 };
 
 function CourseDetails() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, topicSlug: routeTopicSlug, subtopicSlug: routeSubtopicSlug } = useParams<{ slug: string; topicSlug?: string; subtopicSlug?: string }>();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,8 +72,8 @@ function CourseDetails() {
         if (!cancelled) {
           setCourse(data);
 
-          const requestedTopic = searchParams.get("topic");
-          const requestedSubtopic = searchParams.get("subtopic");
+          const requestedTopic = routeTopicSlug ?? searchParams.get("topic");
+          const requestedSubtopic = routeSubtopicSlug ?? searchParams.get("subtopic");
           const requestedLanguage = searchParams.get("language");
           const initialLanguage = data.type === "multi-language"
             ? data.languages.find((item) => item.name.toLowerCase() === requestedLanguage?.toLowerCase()) ?? data.languages[0]
@@ -96,6 +96,16 @@ function CourseDetails() {
               ? requestedSubtopic
               : null
           );
+          // Migrate the old query-string URL to the canonical slug path.
+          if (!routeTopicSlug && requestedTopic && initialTopic) {
+            const canonicalParams = new URLSearchParams(searchParams);
+            canonicalParams.delete("topic");
+            canonicalParams.delete("subtopic");
+            const canonicalSegments = [slug, initialTopic.slug, requestedSubtopic].filter(Boolean);
+            const canonicalPath = `/courses/${canonicalSegments.map((segment) => encodeURIComponent(segment as string)).join("/")}`;
+            const canonicalQuery = canonicalParams.toString();
+            navigate(canonicalQuery ? `${canonicalPath}?${canonicalQuery}` : canonicalPath, { replace: true });
+          }
         }
       } catch (requestError) {
         console.error("Failed to load course:", requestError);
@@ -110,7 +120,7 @@ function CourseDetails() {
 
     void load();
     return () => { cancelled = true; };
-  }, [slug, searchParams, user, authLoading, authenticated]);
+  }, [slug, routeTopicSlug, routeSubtopicSlug, searchParams, user, authLoading, authenticated, navigate]);
 
   const languages = useMemo<CourseLanguage[]>(
     () => (course?.type === "multi-language" ? course.languages : []),
@@ -156,14 +166,36 @@ function CourseDetails() {
 
   const renderRichText = (value: RichTextContent): ReactNode => <RichTextRenderer value={value} />;
 
+  const updateTopicUrl = (topicSlug: string | null, subtopicSlug: string | null = null, languageId?: string) => {
+    // Keep the course slug as the first path segment and put the active
+    // topic/subtopic slug in the pathname. Language remains a query parameter
+    // because it is a view preference rather than the content identity.
+    const params = new URLSearchParams(searchParams);
+    params.delete("topic");
+    params.delete("subtopic");
+
+    if (languageId) {
+      const selectedLanguage = languages.find((item) => item.id === languageId);
+      if (selectedLanguage) params.set("language", selectedLanguage.name);
+    }
+
+    const segments = [slug, topicSlug, subtopicSlug].filter(Boolean);
+    const pathname = `/courses/${segments.map((segment) => encodeURIComponent(segment as string)).join("/")}`;
+    const query = params.toString();
+
+    navigate(query ? `${pathname}?${query}` : pathname, { replace: true });
+  };
+
   const selectTopic = (topic: Topic) => {
     setSelectedTopicSlug(topic.slug);
     setSelectedSubtopicSlug(null);
+    updateTopicUrl(topic.slug);
   };
 
   const selectSubtopic = (topic: Topic, subtopic: Subtopic) => {
     setSelectedTopicSlug(topic.slug);
     setSelectedSubtopicSlug(subtopic.slug);
+    updateTopicUrl(topic.slug, subtopic.slug);
   };
 
   const selectContent = (content: ContentSource) => {
@@ -180,10 +212,15 @@ function CourseDetails() {
     if (!topic) {
       setSelectedTopicSlug(null);
       setSelectedSubtopicSlug(null);
+      updateTopicUrl(null, null, nextLanguage.id);
       return;
     }
+    const nextSubtopicSlug = topic.subtopics?.some((item) => item.slug === selectedSubtopicSlug)
+      ? selectedSubtopicSlug
+      : null;
     setSelectedTopicSlug(topic.slug);
-    setSelectedSubtopicSlug(topic.subtopics?.some((item) => item.slug === selectedSubtopicSlug) ? selectedSubtopicSlug : null);
+    setSelectedSubtopicSlug(nextSubtopicSlug);
+    updateTopicUrl(topic.slug, nextSubtopicSlug, nextLanguage.id);
   };
 
   const handleLogin = () => {

@@ -43,6 +43,24 @@ const tryParseRichText = (value: string): RichTextContent => {
 export const normalizeRichText = (value: RichTextContent): RichTextContent =>
   typeof value === "string" ? tryParseRichText(value) : value;
 
+/**
+ * CMS content can contain either real newlines or the literal two-character
+ * sequence "\\n". Render both consistently so content entered in the admin
+ * textarea keeps its line breaks on the website.
+ */
+const renderTextWithBreaks = (text: string, keyPrefix: string): ReactNode[] => {
+  const normalized = text.replace(/\\n/g, "\n");
+  const lines = normalized.split("\n");
+
+  return lines.flatMap((line, index) => {
+    const nodes: ReactNode[] = [<span key={`${keyPrefix}-text-${index}`}>{line}</span>];
+    if (index < lines.length - 1) {
+      nodes.push(<br key={`${keyPrefix}-br-${index}`} />);
+    }
+    return nodes;
+  });
+};
+
 export function RichTextRenderer({
   value,
   language = "en",
@@ -55,12 +73,25 @@ export function RichTextRenderer({
       ? value[language]
       : value;
   const normalized = normalizeRichText(localizedValue);
-  if (typeof normalized === "string") return normalized;
 
-  return normalized.map((part, index) => {
-    if (typeof part === "string") return part;
-    if (part.type === "bold") return <strong key={index}>{part.text}</strong>;
-    if (part.type === "inline-code") return <code key={index} className="inline-code">{part.text}</code>;
-    return <span key={index} className="text-highlight">{part.text}</span>;
-  });
+  if (typeof normalized === "string") {
+    return <span className="rich-text-renderer">{renderTextWithBreaks(normalized, "plain")}</span>;
+  }
+
+  return (
+    <span className="rich-text-renderer">
+      {normalized.map((part, index) => {
+        if (typeof part === "string") {
+          return <span key={index}>{renderTextWithBreaks(part, `part-${index}`)}</span>;
+        }
+        if (part.type === "bold") {
+          return <strong key={index}>{renderTextWithBreaks(part.text, `bold-${index}`)}</strong>;
+        }
+        if (part.type === "inline-code") {
+          return <code key={index} className="inline-code">{renderTextWithBreaks(part.text, `code-${index}`)}</code>;
+        }
+        return <span key={index} className="text-highlight">{renderTextWithBreaks(part.text, `highlight-${index}`)}</span>;
+      })}
+    </span>
+  );
 }

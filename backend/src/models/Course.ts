@@ -117,6 +117,7 @@ export interface ICourse extends Document {
   updatedAt: Date;
 }
 
+CourseSchema.index({ isPublished: 1, isTopLevel: 1, order: 1, _id: 1 });
 CourseSchema.index({ isPublished: 1, order: 1, createdAt: -1 });
 CourseSchema.index({ slug: 1, isPublished: 1 });
 

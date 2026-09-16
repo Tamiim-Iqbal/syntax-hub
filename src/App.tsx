@@ -47,6 +47,7 @@ function App() {
               <Route path="/courses/problem-solving/:categorySlug/:problemSlug" element={<ProblemDetails />} />
             </Route>
             <Route path="/courses/:slug" element={<CourseDetails />} />
+            <Route path="/courses/:slug/:topicSlug/:subtopicSlug?" element={<CourseDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>

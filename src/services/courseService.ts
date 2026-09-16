@@ -55,10 +55,9 @@ type ApiCourse = {
 const fetchApi = async <T>(
   endpoint: string
 ): Promise<T> => {
-  const response = await fetch(
-    `${API_URL}${endpoint}`,
-    { cache: "no-store" }
-  );
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    cache: "default",
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -262,31 +261,106 @@ export const getSearchCourses = async (): Promise<Course[]> => {
    GET ALL COURSES
 ========================================= */
 
+const COURSE_CACHE_KEY = "syntaxhub:courses:v2";
+const COURSE_MEMORY_TTL = 60_000;
+const COURSE_STORAGE_TTL = 5 * 60_000;
+
 let coursesCache: { data: Course[]; expiresAt: number } | null = null;
 let coursesPromise: Promise<Course[]> | null = null;
-const COURSE_CACHE_TTL = 5_000;
+
+const readPersistedCourses = (): Course[] | null => {
+  try {
+    const raw = localStorage.getItem(COURSE_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as {
+      data?: Course[];
+      savedAt?: number;
+    };
+
+    if (!Array.isArray(parsed.data) || typeof parsed.savedAt !== "number") {
+      return null;
+    }
+
+    if (Date.now() - parsed.savedAt > COURSE_STORAGE_TTL) {
+      localStorage.removeItem(COURSE_CACHE_KEY);
+      return null;
+    }
+
+    return parsed.data;
+  } catch {
+    return null;
+  }
+};
+
+const persistCourses = (courses: Course[]) => {
+  try {
+    localStorage.setItem(
+      COURSE_CACHE_KEY,
+      JSON.stringify({ data: courses, savedAt: Date.now() })
+    );
+  } catch {
+    // Storage can be unavailable/full; the in-memory cache still works.
+  }
+};
+
+const refreshCourses = async (): Promise<Course[]> => {
+  const courses = await fetchApi<ApiCourse[]>("/courses");
+  const normalized = courses.map(normalizeCourse);
+
+  coursesCache = {
+    data: normalized,
+    expiresAt: Date.now() + COURSE_MEMORY_TTL,
+  };
+  persistCourses(normalized);
+
+  return normalized;
+};
 
 export const getCourses = async (): Promise<Course[]> => {
-  if (coursesCache && coursesCache.expiresAt > Date.now()) {
+  const now = Date.now();
+
+  if (coursesCache && coursesCache.expiresAt > now) {
     return coursesCache.data;
   }
+
+  // Persist the course list across page reloads. This makes repeat visits
+  // instant while the API refreshes in the background.
+  const persisted = readPersistedCourses();
+  if (persisted) {
+    coursesCache = {
+      data: persisted,
+      expiresAt: now + COURSE_MEMORY_TTL,
+    };
+
+    if (!coursesPromise) {
+      coursesPromise = refreshCourses().finally(() => {
+        coursesPromise = null;
+      });
+      void coursesPromise.catch((error) => {
+        console.warn("Background course refresh failed:", error);
+      });
+    }
+
+    return persisted;
+  }
+
   if (coursesPromise) return coursesPromise;
 
-  coursesPromise = fetchApi<ApiCourse[]>("/courses")
-    .then((data) => data.map(normalizeCourse))
-    .then((courses) => {
-      coursesCache = { data: courses, expiresAt: Date.now() + COURSE_CACHE_TTL };
-      return courses;
-    })
-    .finally(() => {
-      coursesPromise = null;
-    });
+  coursesPromise = refreshCourses().finally(() => {
+    coursesPromise = null;
+  });
 
   return coursesPromise;
 };
 
 export const clearCourseListCache = () => {
   coursesCache = null;
+  try {
+    localStorage.removeItem(COURSE_CACHE_KEY);
+  } catch {
+    // Ignore storage errors.
+  }
 };
 
 /* =========================================
