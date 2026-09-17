@@ -90,7 +90,7 @@ function CourseSidebar({
 
                 {showSubtopics ? (
                   <div className="subtopic-list">
-                    {topic.subtopics.map((subtopic) => (
+                    {(topic.subtopics ?? []).map((subtopic) => (
                       <button
                         type="button"
                         key={subtopic._id}
