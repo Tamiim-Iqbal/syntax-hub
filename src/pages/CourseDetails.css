@@ -346,8 +346,9 @@
 }
 
 .subtopic-preview.selected {
-  
   color: var(--color-grad1);
+  color: var(--color-grad1);
+  background: color-mix(in srgb, var(--color-grad1) 10%, var(--color-bg));
 }
 
 .subtopic-preview > span:first-child {
