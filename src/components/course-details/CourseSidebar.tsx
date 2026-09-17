@@ -23,7 +23,7 @@ function CourseSidebar({
   return (
     <aside className="course-sidebar" aria-label="Course topics">
       <div className="course-sidebar-header">
-        <p className="section-label">{language === "bn" ? "Course Content" : "Course Content"}</p>
+        <p className="levels">{language === "bn" ? "COURSE CONTENT" : "COURSE CONTENT"}</p>
         <h2>{language === "bn" ? "Topics" : "Topics"}</h2>
       </div>
 

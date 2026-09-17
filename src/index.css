@@ -471,3 +471,11 @@ button:disabled {
 [data-theme="dark"] .rich-text-renderer a:hover {
   color: #93c5fd;
 }
+
+/* Section lebel */
+.levels{
+  color: var(--color-grad3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05rem;
+}

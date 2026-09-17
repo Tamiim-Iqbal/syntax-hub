@@ -90,7 +90,7 @@ function CourseContentRenderer({ content, language, activeLanguage, getText, get
 
         return (
           <section className="topic-code-section" key={`code-${index}`}>
-            <p className="section-label">{language === "bn" ? "কোড উদাহরণ" : "Code Example"}</p>
+            <p className="code-example">{language === "bn" ? "CODE EXAMPLE" : "CODE EXAMPLE"}</p>
             <CodeBlock code={section.code} language={section.language} languageColor={activeLanguage?.color} />
           </section>
         );

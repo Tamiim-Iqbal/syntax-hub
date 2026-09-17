@@ -540,6 +540,18 @@
 .topic-code-section {
   margin-top: 25px;
 }
+.code-example{
+  color: var(--color-grad2);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06rem;
+}
+
+.code-example-color{
+  color: var(--color-grad2);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
 
 .code-block {
   margin-top: 15px;
@@ -622,7 +634,7 @@
   font-size: 0.78rem;
   font-weight: 700;
 
-  color: var(--color-primary);
+  color: var(--color-grad1);
   margin-left: 10px;
 
   text-transform: uppercase;
