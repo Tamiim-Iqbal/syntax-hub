@@ -1,3 +1,4 @@
+import { useState } from "react";
 import EmptyState from "../EmptyState";
 import type { LocalizedText, Subtopic, Topic } from "../../types/course";
 
@@ -20,6 +21,8 @@ function CourseSidebar({
   onSelectTopic,
   onSelectSubtopic,
 }: Props) {
+  const [expandedTopicSlugs, setExpandedTopicSlugs] = useState<Set<string>>(new Set());
+
   return (
     <aside className="course-sidebar" aria-label="Course topics">
       <div className="course-sidebar-header">
@@ -33,22 +36,59 @@ function CourseSidebar({
         ) : (
           topics.map((topic) => {
             const selected = selectedTopicSlug === topic.slug;
+            const hasSubtopics = Boolean(topic.subtopics?.length);
+            const showSubtopics = hasSubtopics && (selected || expandedTopicSlugs.has(topic.slug));
+            const moduleName = topic.module ? getText(topic.module).trim() : "";
+
             return (
               <div className="topic-group" key={topic._id}>
-                <button
-                  type="button"
-                  className={`topic-preview ${selected ? "selected" : ""}`}
-                  onClick={() => onSelectTopic(topic)}
-                  aria-expanded={topic.subtopics?.length ? selected : undefined}
-                >
-                  <span>{String(topic.order)}</span>
-                  <p>{getText(topic.title)}</p>
-                  {topic.subtopics?.length ? (
-                    <span className="topic-chevron" aria-hidden="true">{selected ? "⌃" : "⌄"}</span>
-                  ) : null}
-                </button>
+                {moduleName ? (
+                  <div className="topic-module" aria-hidden="true">
+                    {moduleName}
+                  </div>
+                ) : null}
 
-                {selected && topic.subtopics?.length ? (
+                <div className={`topic-preview ${selected ? "selected" : ""}`}>
+                  <button
+                    type="button"
+                    className="topic-preview-main"
+                    onClick={() => {
+                      onSelectTopic(topic);
+                      if (hasSubtopics) {
+                        setExpandedTopicSlugs((current) => {
+                          const next = new Set(current);
+                          next.add(topic.slug);
+                          return next;
+                        });
+                      }
+                    }}
+                  >
+                    <span>{String(topic.order)}</span>
+                    <p>{getText(topic.title)}</p>
+                  </button>
+
+                  {hasSubtopics ? (
+                    <button
+                      type="button"
+                      className="topic-chevron"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setExpandedTopicSlugs((current) => {
+                          const next = new Set(current);
+                          if (next.has(topic.slug)) next.delete(topic.slug);
+                          else next.add(topic.slug);
+                          return next;
+                        });
+                      }}
+                      aria-label={showSubtopics ? "Collapse subtopics" : "Expand subtopics"}
+                      aria-expanded={showSubtopics}
+                    >
+                      {showSubtopics ? "⌃" : "⌄"}
+                    </button>
+                  ) : null}
+                </div>
+
+                {showSubtopics ? (
                   <div className="subtopic-list">
                     {topic.subtopics.map((subtopic) => (
                       <button

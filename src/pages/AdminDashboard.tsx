@@ -1167,6 +1167,28 @@ function AdminDashboard() {
     });
   };
 
+  const addModuleBeforeTopic = (topicId: string) => {
+    const topic = topicList.find((item) => item._id === topicId);
+    if (!topic) return;
+
+    const currentModule = topic.module ? displayLocalized(topic.module) : "";
+    const moduleText = window.prompt(
+      `Module name before "${displayLocalized(topic.title) || "this topic"}"`,
+      currentModule
+    );
+
+    if (moduleText === null) return;
+
+    const value = moduleText.trim();
+    const nextModule = value ? { bn: value, en: value } : undefined;
+
+    saveTopics(
+      topicList.map((item) =>
+        item._id === topicId ? ({ ...item, module: nextModule } as Topic) : item
+      )
+    );
+  };
+
   const saveTopic = (saved: EditableTopic) => {
     if (!selectedCourse || selectedCourse.type === "problem-solving") return;
     const topics = [...topicList] as Topic[];
@@ -1474,6 +1496,15 @@ function AdminDashboard() {
                     const subtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
                     return (
                       <div className={`cms-sidebar-group ${isExpanded ? "expanded" : ""}`} key={topic._id}>
+                        <button
+                          type="button"
+                          className="cms-topic-module-button"
+                          onClick={() => addModuleBeforeTopic(topic._id)}
+                        >
+                          {topic.module && displayLocalized(topic.module)
+                            ? `Module: ${displayLocalized(topic.module)}`
+                            : "+ Add Module Before Topic"}
+                        </button>
                         <div className="cms-topic-row">
                           <button
                             type="button"

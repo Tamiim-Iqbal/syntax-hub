@@ -200,6 +200,18 @@
   width: 100%;
 }
 
+.topic-module {
+  margin: 14px 0 5px;
+  padding: 0 6px;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  font-weight: 520;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  user-select: none;
+}
+
 
 /* =========================================================
    MAIN TOPIC
@@ -208,77 +220,87 @@
 .topic-preview {
   width: 100%;
   min-height: 32px;
-
   display: flex;
   align-items: center;
   gap: 1px;
-
-  padding-left: 6px;
-
-  border: 0;
   border-radius: 8px;
-
   background: transparent;
   color: var(--color-text-secondary);
+}
 
+.topic-preview-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 0 6px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
   text-align: left;
+  font: inherit;
   cursor: pointer;
-  transition:
-    background 0.18s ease,
-    color 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.topic-preview:hover {
+.topic-preview-main:hover {
   color: var(--color-grad3);
-  background: color-mix(
-    in srgb,
-    var(--color-grad3) 10%,
-    var(--color-bg)
-  );
+  background: color-mix(in srgb, var(--color-grad3) 10%, var(--color-bg));
 }
 
-.topic-preview.selected {
-  background: color-mix(
-    in srgb,
-    var(--color-grad1) 10%,
-    var(--color-bg)
-  );
+.topic-preview.selected .topic-preview-main {
   color: var(--color-grad1);
+  background: color-mix(in srgb, var(--color-grad1) 10%, var(--color-bg));
 }
 
-.topic-preview > span:first-child {
+.topic-preview-main > span:first-child {
   flex: 0 0 20px;
-
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
-
   color: var(--color-text-muted);
 }
-.topic-preview:hover > span:first-child{
+
+.topic-preview-main:hover > span:first-child {
   color: var(--color-grad3);
 }
 
-.topic-preview.selected > span:first-child {
+.topic-preview.selected .topic-preview-main > span:first-child {
   color: var(--color-grad1);
 }
 
-.topic-preview p {
+.topic-preview-main p {
   min-width: 0;
   margin: 0;
-
   font-size: 0.88rem;
   font-weight: 520;
-
   color: inherit;
 }
 
 .topic-chevron {
-  margin-left: auto;
   flex: 0 0 auto;
-
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
   color: currentColor;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.topic-chevron:hover {
+  color: var(--color-grad3);
+  background: color-mix(in srgb, var(--color-grad3) 10%, var(--color-bg));
 }
 
 
@@ -1019,21 +1041,28 @@
     gap: 2px;
   }
 
+  .topic-module {
+    margin: 10px 0 4px;
+    padding: 0 5px;
+    font-size: 0.62rem;
+  }
+
   .topic-preview {
     min-height: 38px;
-
-    padding: 6px 5px;
-
     gap: 4px;
   }
 
-  .topic-preview > span:first-child {
+  .topic-preview-main {
+    padding: 6px 5px;
+  }
+
+  .topic-preview-main > span:first-child {
     flex: 0 0 22px;
 
     font-size: 0.58rem;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.68rem;
 
     line-height: 1.25;
@@ -1041,10 +1070,6 @@
 
   .topic-chevron {
     font-size: 0.6rem;
-  }
-
-  .topic-preview.selected {
-    padding: 6px 5px;
   }
 
 
@@ -1281,19 +1306,20 @@
 
   .topic-preview {
     min-height: 34px;
-
-    padding: 5px 3px;
-
     gap: 2px;
   }
 
-  .topic-preview > span:first-child {
+  .topic-preview-main {
+    padding: 5px 3px;
+  }
+
+  .topic-preview-main > span:first-child {
     flex: 0 0 19px;
 
     font-size: 0.5rem;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.58rem;
 
     line-height: 1.2;
@@ -1301,10 +1327,6 @@
 
   .topic-chevron {
     font-size: 0.5rem;
-  }
-
-  .topic-preview.selected {
-    padding: 5px 3px;
   }
 
 
@@ -1463,7 +1485,7 @@
    ========================================================= */
 
 :root {
-  --color-highlight: #16a34a;
+  --color-highlight: #16b35a;
   --color-highlight-bg: #f0fdf4;
   --color-highlight-border: #bbf7d0;
 }
@@ -1825,12 +1847,12 @@
     gap: 0;
   }
 
-  .topic-preview > span:first-child {
+  .topic-preview-main > span:first-child {
     flex-basis: 17px;
     font-size: 0.65rem;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.72rem;
     line-height: 1.35;
   }
@@ -2110,7 +2132,7 @@
     border-radius: 8px 8px 0 0;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.68rem;
   }
 
@@ -2137,7 +2159,7 @@
     padding: 9px 7px;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.64rem;
   }
 
@@ -2168,7 +2190,7 @@
     padding: 8px 6px;
   }
 
-  .topic-preview p {
+  .topic-preview-main p {
     font-size: 0.60rem;
   }
 

@@ -98,6 +98,7 @@ export type Subtopic = {
 export type Topic = {
   _id: string;
   title: LocalizedText;
+  module?: LocalizedText;
   slug: string;
   order: number;
   content?: LocalizedText;
