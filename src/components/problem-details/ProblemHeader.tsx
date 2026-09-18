@@ -26,7 +26,15 @@ function ProblemHeader({ problem, title }: Props) {
             </span>
           )
         )}
-        {problem.topics.length > 0 && <span className="problem-meta-topic">{problem.topics.join(" · ")}</span>}
+        {problem.topics.length > 0 && (
+          <span className="problem-meta-topic">
+            {problem.topics.map((topic) => (
+              <span className="topic-item" key={topic}>
+                {topic}
+              </span>
+            ))}
+          </span>
+        )}
       </div>
     </header>
   );

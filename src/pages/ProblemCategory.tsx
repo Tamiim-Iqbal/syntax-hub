@@ -145,7 +145,7 @@ function ProblemCategory() {
           ← Problem Solving
         </Link>
 
-        <p className="section-label">
+        <p className="levels">
           PROBLEM SET
         </p>
 

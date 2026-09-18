@@ -154,10 +154,11 @@
   /* Background */
   --color-bg: #0c0e13;
   /* #0e1015; #172033;*/
-  --color-bg-white: #10151e;
+  --color-bg-white: #0B141A;
+  /* --color-bg-white: #10151e; */
   /* #10151e; #111a28; */
 
-  --color-surface: #1e293b;
+  --color-surface: #202C33;
   --color-surface-hover: #334155;
   --color-bg-soft: #151a23;
 

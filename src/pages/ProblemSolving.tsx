@@ -187,7 +187,7 @@ function ProblemSolving() {
 
                     <Link
                       to={`/courses/problem-solving/${category.slug}`}
-                      className="course-card-button"
+                      className="course-card-button gradient-button2"
                     >
                       Explore →
                     </Link>
