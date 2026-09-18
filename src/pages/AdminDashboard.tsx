@@ -184,25 +184,91 @@ function RichTextEditor({ value, onChange, placeholder }: {
     onChange(htmlToRichText(ref.current));
   };
 
+  const restoreHistory = (direction: -1 | 1) => {
+    const editor = ref.current;
+    if (!editor || historyRef.current.length === 0) return;
+
+    const nextIndex = historyIndexRef.current + direction;
+    if (nextIndex < 0 || nextIndex >= historyRef.current.length) return;
+
+    historyIndexRef.current = nextIndex;
+    const nextHtml = historyRef.current[nextIndex];
+    editor.innerHTML = nextHtml;
+    onChange(htmlToRichText(editor));
+  };
+
   const formatSelection = (type: "bold" | "highlight" | "inline-code" | "link") => {
     const editor = ref.current;
     const selection = window.getSelection();
     if (!editor || !selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+
     const range = selection.getRangeAt(0);
     if (!editor.contains(range.commonAncestorContainer)) return;
 
+    const tagForType: Record<typeof type, string> = {
+      bold: "strong",
+      highlight: "mark",
+      "inline-code": "code",
+      link: "a",
+    };
+
+    const tagName = tagForType[type];
+
+    // If the whole selection is already inside the same formatting element,
+    // clicking the same toolbar button toggles that formatting OFF.
+    const closestFormattingElement = (node: Node | null): HTMLElement | null => {
+      let current: Node | null = node;
+      while (current && current !== editor) {
+        if (current.nodeType === Node.ELEMENT_NODE && (current as HTMLElement).tagName.toLowerCase() === tagName) {
+          return current as HTMLElement;
+        }
+        current = current.parentNode;
+      }
+      return null;
+    };
+
+    const startElement = closestFormattingElement(range.startContainer);
+    const endElement = closestFormattingElement(range.endContainer);
+
+    if (startElement && startElement === endElement) {
+      const parent = startElement.parentNode;
+      if (!parent) return;
+
+      // Move the formatted element's children into its parent instead of
+      // creating another nested formatting element.
+      while (startElement.firstChild) {
+        parent.insertBefore(startElement.firstChild, startElement);
+      }
+      parent.removeChild(startElement);
+
+      selection.removeAllRanges();
+      const nextRange = document.createRange();
+      nextRange.selectNodeContents(parent);
+      selection.addRange(nextRange);
+      emitCurrent();
+      return;
+    }
+
     try {
-      const wrapper = document.createElement(type === "bold" ? "strong" : type === "highlight" ? "mark" : type === "inline-code" ? "code" : "a");
+      const wrapper = document.createElement(tagName);
+
       if (type === "link") {
         const url = window.prompt("Enter URL", "https://");
         if (!url) return;
-        try { new URL(url); } catch { window.alert("Please enter a valid URL."); return; }
+        try {
+          new URL(url);
+        } catch {
+          window.alert("Please enter a valid URL.");
+          return;
+        }
         wrapper.setAttribute("href", url);
         wrapper.setAttribute("target", "_blank");
         wrapper.setAttribute("rel", "noopener noreferrer");
       }
+
       wrapper.appendChild(range.extractContents());
       range.insertNode(wrapper);
+
       selection.removeAllRanges();
       const nextRange = document.createRange();
       nextRange.selectNodeContents(wrapper);
@@ -211,16 +277,6 @@ function RichTextEditor({ value, onChange, placeholder }: {
     } catch {
       // Ignore invalid selections without breaking the editor.
     }
-  };
-
-  const restoreHistory = (direction: -1 | 1) => {
-    const history = historyRef.current;
-    const nextIndex = historyIndexRef.current + direction;
-    if (!ref.current || nextIndex < 0 || nextIndex >= history.length) return;
-    historyIndexRef.current = nextIndex;
-    ref.current.innerHTML = history[nextIndex];
-    onChange(htmlToRichText(ref.current));
-    ref.current.focus();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -236,8 +292,6 @@ function RichTextEditor({ value, onChange, placeholder }: {
   return (
     <div className="rich-editor">
       <div className="rich-editor-toolbar" aria-label="Text formatting">
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => restoreHistory(-1)} title="Undo">↶</button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => restoreHistory(1)} title="Redo">↷</button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("bold")} title="Bold"><strong>B</strong></button>
         <button type="button" className="rich-editor-highlight-button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("highlight")} title="Highlight"><span>G</span></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => formatSelection("inline-code")} title="Inline code">&lt;/&gt;</button>
