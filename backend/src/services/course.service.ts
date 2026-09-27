@@ -512,7 +512,53 @@ export const getSearchCourses = async (): Promise<ICourse[]> => {
   const courses = await Course.find({ isPublished: true, isTopLevel: { $ne: false } })
     .sort({ order: 1, createdAt: -1 })
     .lean();
-  return courses.map(normalizeCourseForClient) as ICourse[];
+
+  // Keep the normal search result set unchanged, but also index courses that
+  // are reachable from a published learning path. Those child courses can be
+  // intentionally non-top-level, so their topics/subtopics were previously
+  // missing from search.
+  const searchCourses = [...courses] as any[];
+  const included = new Set(searchCourses.map((course: any) => String(course._id)));
+  const byId = new Map(courses.map((course: any) => [String(course._id), course]));
+  const bySlug = new Map(courses.map((course: any) => [String(course.slug), course]));
+
+  for (let index = 0; index < searchCourses.length; index += 1) {
+    const course = searchCourses[index];
+    if (course?.type !== "nested") continue;
+
+    const content = getCourseContent(course);
+    const refs = Array.isArray(content.courses)
+      ? content.courses
+      : Array.isArray(course?.nestedCourses)
+        ? course.nestedCourses
+        : [];
+
+    for (const ref of refs) {
+      const refId = String(ref?._id ?? ref?.id ?? ref?.courseId ?? "");
+      const refSlug = String(ref?.slug ?? "");
+      let child = (refId && byId.get(refId)) || (refSlug && bySlug.get(refSlug)) || null;
+
+      // A nested child may be non-top-level (and therefore excluded above)
+      // while still being valid content inside the published learning path.
+      if (!child) {
+        const childQuery = /^[a-f0-9]{24}$/i.test(refId)
+          ? { _id: refId }
+          : refSlug
+            ? { slug: refSlug }
+            : null;
+        if (childQuery) child = await Course.findOne(childQuery).lean();
+      }
+
+      if (!child) continue;
+      const childId = String(child._id);
+      if (!included.has(childId)) {
+        searchCourses.push(child);
+        included.add(childId);
+      }
+    }
+  }
+
+  return searchCourses.map(normalizeCourseForClient) as ICourse[];
 };
 
 export const getCourseBySlug = async (slug: string): Promise<ICourse | null> => {

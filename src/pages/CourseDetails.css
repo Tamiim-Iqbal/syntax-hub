@@ -529,6 +529,7 @@
 /* Preserve line breaks entered in the admin rich-text fields. */
 .rich-text-renderer {
   white-space: pre-wrap;
+  line-height: 1.7;
 }
 
 

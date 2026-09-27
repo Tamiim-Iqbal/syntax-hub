@@ -16,8 +16,8 @@ const router = Router();
 router.get("/", getCourses);
 router.get("/preview/:slug", getCoursePreviewController);
 
-// Full searchable/content payloads require authentication.
-router.get("/search-index", requireAuth, getSearchIndex);
+// Search index contains only published course content.
+router.get("/search-index", getSearchIndex);
 router.get("/problem-solving", getProblemSolving);
 router.get("/problem-solving/:categorySlug", getProblemSolvingCategory);
 router.get("/problem-solving/:categorySlug/:problemSlug", requireAuth, getProblem);

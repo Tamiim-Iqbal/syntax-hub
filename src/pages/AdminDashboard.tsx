@@ -949,6 +949,7 @@ function AdminDashboard() {
   const [nestedCreateMode, setNestedCreateMode] = useState(false);
   const [nestedCreateParentId, setNestedCreateParentId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<EditableTopic | null>(null);
+  const [pendingTopicInsertAfterId, setPendingTopicInsertAfterId] = useState<string | null>(null);
   const [editingSubtopic, setEditingSubtopic] = useState<Subtopic | null>(null);
   const [expandedTopicIds, setExpandedTopicIds] = useState<Set<string>>(new Set());
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
@@ -1168,9 +1169,12 @@ function AdminDashboard() {
     if (editingTopic?._id === topicId) setEditingTopic(null);
   };
 
-  const addTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic(activeLanguage?.id ?? "javascript")); };
-  const addNestedChildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
-  const addNestedGrandchildTopic = () => { setEditingSubtopic(null); setEditingTopic(emptyTopic("javascript")); };
+  const addTopic = () => { setEditingSubtopic(null); setPendingTopicInsertAfterId(null); setEditingTopic(emptyTopic(activeLanguage?.id ?? "javascript")); };
+  const addTopicAfter = (topicId: string) => { setEditingSubtopic(null); setPendingTopicInsertAfterId(topicId); setEditingTopic(emptyTopic(activeLanguage?.id ?? "javascript")); };
+  const addNestedChildTopic = () => { setEditingSubtopic(null); setPendingTopicInsertAfterId(null); setEditingTopic(emptyTopic("javascript")); };
+  const addNestedChildTopicAfter = (topicId: string) => { setEditingSubtopic(null); setPendingTopicInsertAfterId(topicId); setEditingTopic(emptyTopic("javascript")); };
+  const addNestedGrandchildTopic = () => { setEditingSubtopic(null); setPendingTopicInsertAfterId(null); setEditingTopic(emptyTopic("javascript")); };
+  const addNestedGrandchildTopicAfter = (topicId: string) => { setEditingSubtopic(null); setPendingTopicInsertAfterId(topicId); setEditingTopic(emptyTopic("javascript")); };
   const editTopic = (topic: Topic) => { setEditingSubtopic(null); setEditingTopic({ ...topic, sections: normalizeSections(topic) }); };
   const persistSubtopicChange = (parent: EditableTopic, subtopic: Subtopic) => {
     const parentSubtopics = "subtopics" in parent ? (parent.subtopics ?? []) : [];
@@ -1249,26 +1253,61 @@ function AdminDashboard() {
     const isSub = "subtopics" in saved === false && editingTopic?._id.startsWith("subtopic-");
     if (isSub) return;
     const index = topics.findIndex((x) => x._id === saved._id);
-    const next = index >= 0 ? topics.map((x, i) => i === index ? saved as Topic : x) : [...topics, { ...(saved as Topic), order: topics.length + 1 }];
+    let next: Topic[];
+    if (index >= 0) next = topics.map((x, i) => i === index ? saved as Topic : x);
+    else {
+      const after = pendingTopicInsertAfterId ? topics.findIndex((x) => x._id === pendingTopicInsertAfterId) : -1;
+      const insertAt = after >= 0 ? after + 1 : topics.length;
+      next = [...topics.slice(0, insertAt), saved as Topic, ...topics.slice(insertAt)].map((item, i) => ({ ...item, order: i + 1 }));
+    }
     saveTopics(next);
+    setPendingTopicInsertAfterId(null);
     setEditingTopic(null);
   };
+
+  const reorderTopics = (items: Topic[], index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return items;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    return next.map((item, i) => ({ ...item, order: i + 1 }));
+  };
+
+  const moveTopic = (index: number, direction: -1 | 1) => saveTopics(reorderTopics(topicList, index, direction));
 
   const saveNestedChildTopic = (saved: EditableTopic) => {
     if (!selectedNestedChild || selectedNestedChild.type !== "single-language") return;
     const index = nestedChildTopics.findIndex((topic) => topic._id === saved._id);
-    const next = index >= 0 ? nestedChildTopics.map((topic, i) => i === index ? saved as Topic : topic) : [...nestedChildTopics, { ...(saved as Topic), order: nestedChildTopics.length + 1 }];
+    let next: Topic[];
+    if (index >= 0) next = nestedChildTopics.map((topic, i) => i === index ? saved as Topic : topic);
+    else {
+      const after = pendingTopicInsertAfterId ? nestedChildTopics.findIndex((topic) => topic._id === pendingTopicInsertAfterId) : -1;
+      const insertAt = after >= 0 ? after + 1 : nestedChildTopics.length;
+      next = [...nestedChildTopics.slice(0, insertAt), saved as Topic, ...nestedChildTopics.slice(insertAt)].map((item, i) => ({ ...item, order: i + 1 }));
+    }
     void saveNestedChildTopics(next);
+    setPendingTopicInsertAfterId(null);
     setEditingTopic(null);
   };
+
+  const moveNestedChildTopic = (index: number, direction: -1 | 1) => void saveNestedChildTopics(reorderTopics(nestedChildTopics, index, direction));
 
   const saveNestedGrandchildTopic = (saved: EditableTopic) => {
     if (!selectedNestedGrandchild || selectedNestedGrandchild.type !== "single-language") return;
     const index = nestedGrandchildTopics.findIndex((topic) => topic._id === saved._id);
-    const next = index >= 0 ? nestedGrandchildTopics.map((topic, i) => i === index ? saved as Topic : topic) : [...nestedGrandchildTopics, { ...(saved as Topic), order: nestedGrandchildTopics.length + 1 }];
+    let next: Topic[];
+    if (index >= 0) next = nestedGrandchildTopics.map((topic, i) => i === index ? saved as Topic : topic);
+    else {
+      const after = pendingTopicInsertAfterId ? nestedGrandchildTopics.findIndex((topic) => topic._id === pendingTopicInsertAfterId) : -1;
+      const insertAt = after >= 0 ? after + 1 : nestedGrandchildTopics.length;
+      next = [...nestedGrandchildTopics.slice(0, insertAt), saved as Topic, ...nestedGrandchildTopics.slice(insertAt)].map((item, i) => ({ ...item, order: i + 1 }));
+    }
     void saveNestedGrandchildTopics(next);
+    setPendingTopicInsertAfterId(null);
     setEditingTopic(null);
   };
+
+  const moveNestedGrandchildTopic = (index: number, direction: -1 | 1) => void saveNestedGrandchildTopics(reorderTopics(nestedGrandchildTopics, index, direction));
 
   const getAdminContentCount = (child: AdminCourse) => {
     if (child.type === "nested") return getNestedItems(child).length;
@@ -1521,7 +1560,7 @@ function AdminDashboard() {
                     !editingTopic ? (
                       <div className="cms-editor-card">
                         <div className="admin-form-heading"><div><h3>{selectedNestedChild.title}</h3><p>Manage the topics for this course inside the learning path.</p></div><button type="button" className="admin-small-button" onClick={addNestedChildTopic}>+ Topic</button></div>
-                        {nestedChildTopics.length === 0 ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>No topics yet</h3><p>Click <strong>+ Topic</strong> to add the first topic.</p></div> : <div className="cms-subtopics">{nestedChildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedChildTopic(topic._id)}>Delete</button></div></div>)}</div>}
+                        {nestedChildTopics.length === 0 ? <div className="cms-editor-empty"><div className="cms-editor-empty-icon">✏️</div><h3>No topics yet</h3><p>Click <strong>+ Topic</strong> to add the first topic.</p></div> : <div className="cms-subtopics">{nestedChildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div className="cms-topic-list-actions"><button type="button" className="cms-topic-order-button" onClick={() => moveNestedChildTopic(index, -1)} disabled={index === 0} aria-label="Move topic up" title="Move up">↑</button><button type="button" className="cms-topic-order-button" onClick={() => moveNestedChildTopic(index, 1)} disabled={index === nestedChildTopics.length - 1} aria-label="Move topic down" title="Move down">↓</button><button type="button" className="cms-topic-order-button cms-topic-add-after" onClick={() => addNestedChildTopicAfter(topic._id)} aria-label="Add topic after this topic" title="Add topic after">+</button><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedChildTopic(topic._id)}>Delete</button></div></div>)}</div>}
                       </div>
                     ) : (
                       <TopicEditor topic={editingTopic} onSave={saveNestedChildTopic} onCancel={() => setEditingTopic(null)} />
@@ -1533,7 +1572,7 @@ function AdminDashboard() {
                   {selectedNestedChild?.type === "nested" && selectedNestedGrandchild && (
                     <div className="cms-editor-card" style={{ marginTop: "18px" }}>
                       {selectedNestedGrandchild.type === "single-language" ? (!editingTopic ? (
-                        <><div className="admin-form-heading"><div><h3>{selectedNestedGrandchild.title}</h3><p>Topics inside {selectedNestedChild?.title}.</p></div><button type="button" className="admin-small-button" onClick={addNestedGrandchildTopic}>+ Topic</button></div>{nestedGrandchildTopics.length === 0 ? <div className="cms-editor-empty"><h3>No topics yet</h3><p>Add the first topic to this course.</p></div> : <div className="cms-subtopics">{nestedGrandchildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedGrandchildTopic(topic._id)}>Delete</button></div></div>)}</div>}</>
+                        <><div className="admin-form-heading"><div><h3>{selectedNestedGrandchild.title}</h3><p>Topics inside {selectedNestedChild?.title}.</p></div><button type="button" className="admin-small-button" onClick={addNestedGrandchildTopic}>+ Topic</button></div>{nestedGrandchildTopics.length === 0 ? <div className="cms-editor-empty"><h3>No topics yet</h3><p>Add the first topic to this course.</p></div> : <div className="cms-subtopics">{nestedGrandchildTopics.map((topic, index) => <div className="cms-list-row" key={topic._id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{displayLocalized(topic.title) || "Untitled Topic"}</strong><div className="cms-topic-list-actions"><button type="button" className="cms-topic-order-button" onClick={() => moveNestedGrandchildTopic(index, -1)} disabled={index === 0} aria-label="Move topic up" title="Move up">↑</button><button type="button" className="cms-topic-order-button" onClick={() => moveNestedGrandchildTopic(index, 1)} disabled={index === nestedGrandchildTopics.length - 1} aria-label="Move topic down" title="Move down">↓</button><button type="button" className="cms-topic-order-button cms-topic-add-after" onClick={() => addNestedGrandchildTopicAfter(topic._id)} aria-label="Add topic after this topic" title="Add topic after">+</button><button type="button" className="admin-small-button" onClick={() => editTopic(topic)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => deleteNestedGrandchildTopic(topic._id)}>Delete</button></div></div>)}</div>}</>
                       ) : <TopicEditor topic={editingTopic} onSave={saveNestedGrandchildTopic} onCancel={() => setEditingTopic(null)} />) : (
                         <div className="cms-editor-empty"><h3>{selectedNestedGrandchild.title}</h3><p>This course is a {selectedNestedGrandchild.type} course. Manage its categories/languages from the main course selector.</p></div>
                       )}
@@ -1560,6 +1599,11 @@ function AdminDashboard() {
                             : "+ Add Module Before Topic"}
                         </button>
                         <div className="cms-topic-row">
+                          <div className="cms-topic-order-actions" aria-label={`Reorder ${displayLocalized(topic.title) || "topic"}`}>
+                            <button type="button" className="cms-topic-order-button" onClick={() => moveTopic(index, -1)} disabled={index === 0} aria-label="Move topic up" title="Move up">↑</button>
+                            <button type="button" className="cms-topic-order-button" onClick={() => moveTopic(index, 1)} disabled={index === topicList.length - 1} aria-label="Move topic down" title="Move down">↓</button>
+                            <button type="button" className="cms-topic-order-button cms-topic-add-after" onClick={() => addTopicAfter(topic._id)} aria-label="Add topic after this topic" title="Add topic after">+</button>
+                          </div>
                           <button
                             type="button"
                             className={`cms-sidebar-item cms-sidebar-topic ${editingTopic?._id === topic._id && !editingSubtopic ? "active" : ""}`}

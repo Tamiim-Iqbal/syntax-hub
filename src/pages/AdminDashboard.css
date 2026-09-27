@@ -807,3 +807,53 @@
   color: var(--color-text);
   background: var(--color-surface);
 }
+
+
+/* Topic reorder/add controls: compact controls stay to the left of the topic row. */
+.cms-topic-order-actions {
+  flex: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-top: 8px;
+}
+.cms-topic-order-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-white);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.cms-topic-order-button:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+.cms-topic-order-button:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+.cms-topic-add-after { font-size: 1rem; }
+.cms-topic-list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.cms-topic-list-actions .cms-topic-order-button { flex: 0 0 28px; }
+@media (max-width: 760px) {
+  .cms-topic-order-actions { padding-top: 8px; }
+  .cms-topic-row { align-items: flex-start; }
+  .cms-topic-list-actions { justify-content: flex-start; }
+}
