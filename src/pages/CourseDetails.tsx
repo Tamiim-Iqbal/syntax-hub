@@ -40,6 +40,9 @@ function CourseDetails() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
 
+  // Load the course data only when the course/auth context changes.
+  // Topic/subtopic route changes must NOT refetch/remount the sidebar,
+  // otherwise its native scroll position jumps back to the top.
   useEffect(() => {
     let cancelled = false;
 
@@ -70,44 +73,7 @@ function CourseDetails() {
           ? await getCourseBySlug(slug)
           : await getCoursePreview(slug);
 
-        if (!cancelled) {
-          setCourse(data);
-
-          const requestedTopic = routeTopicSlug ?? searchParams.get("topic");
-          const requestedSubtopic = routeSubtopicSlug ?? searchParams.get("subtopic");
-          const requestedLanguage = searchParams.get("language");
-          const initialLanguage = data.type === "multi-language"
-            ? data.languages.find((item) => item.name.toLowerCase() === requestedLanguage?.toLowerCase()) ?? data.languages[0]
-            : undefined;
-          setSelectedLanguageId(initialLanguage?.id);
-
-          const initialTopics = data.type === "multi-language"
-            ? initialLanguage?.topics ?? []
-            : data.type === "single-language"
-              ? data.topics
-              : [];
-          // Logged-in users should land directly on the first lesson when
-          // they open a course without a topic in the URL. Guests keep the
-          // Ready to Start Learning panel.
-          const initialTopic = initialTopics.find((item) => item.slug === requestedTopic)
-            ?? (authenticated ? initialTopics[0] : undefined);
-          setSelectedTopicSlug(initialTopic?.slug ?? null);
-          setSelectedSubtopicSlug(
-            initialTopic?.subtopics?.some((item) => item.slug === requestedSubtopic)
-              ? requestedSubtopic
-              : null
-          );
-          // Migrate the old query-string URL to the canonical slug path.
-          if (!routeTopicSlug && requestedTopic && initialTopic) {
-            const canonicalParams = new URLSearchParams(searchParams);
-            canonicalParams.delete("topic");
-            canonicalParams.delete("subtopic");
-            const canonicalSegments = [slug, initialTopic.slug, requestedSubtopic].filter(Boolean);
-            const canonicalPath = `/courses/${canonicalSegments.map((segment) => encodeURIComponent(segment as string)).join("/")}`;
-            const canonicalQuery = canonicalParams.toString();
-            navigate(canonicalQuery ? `${canonicalPath}?${canonicalQuery}` : canonicalPath, { replace: true });
-          }
-        }
+        if (!cancelled) setCourse(data);
       } catch (requestError) {
         console.error("Failed to load course:", requestError);
         if (!cancelled) {
@@ -121,7 +87,68 @@ function CourseDetails() {
 
     void load();
     return () => { cancelled = true; };
-  }, [slug, routeTopicSlug, routeSubtopicSlug, searchParams, user, authLoading, authenticated, navigate]);
+  }, [slug, authLoading, authenticated]);
+
+  // Keep the selected lesson in sync with the URL without reloading the
+  // course. This lets the sidebar keep its exact scroll position when a
+  // topic/subtopic is selected.
+  useEffect(() => {
+    if (!course) return;
+
+    const requestedTopic = routeTopicSlug ?? searchParams.get("topic");
+    const requestedSubtopic = routeSubtopicSlug ?? searchParams.get("subtopic");
+    const requestedLanguage = searchParams.get("language");
+
+    const nextLanguage = course.type === "multi-language"
+      ? course.languages.find(
+          (item) => item.name.toLowerCase() === requestedLanguage?.toLowerCase()
+        ) ?? course.languages[0]
+      : undefined;
+
+    setSelectedLanguageId(nextLanguage?.id);
+
+    const nextTopics = course.type === "multi-language"
+      ? nextLanguage?.topics ?? []
+      : course.type === "single-language"
+        ? course.topics
+        : [];
+
+    // Logged-in users should land directly on the first lesson when they
+    // open a course without a topic in the URL. Guests keep the Ready panel.
+    const nextTopic = nextTopics.find((item) => item.slug === requestedTopic)
+      ?? (authenticated ? nextTopics[0] : undefined);
+
+    setSelectedTopicSlug(nextTopic?.slug ?? null);
+    setSelectedSubtopicSlug(
+      nextTopic?.subtopics?.some((item) => item.slug === requestedSubtopic)
+        ? requestedSubtopic
+        : null
+    );
+
+    // Migrate old query-string URLs to the canonical slug path.
+    if (!routeTopicSlug && requestedTopic && nextTopic) {
+      const canonicalParams = new URLSearchParams(searchParams);
+      canonicalParams.delete("topic");
+      canonicalParams.delete("subtopic");
+      const canonicalSegments = [slug, nextTopic.slug, requestedSubtopic].filter(Boolean);
+      const canonicalPath = `/courses/${canonicalSegments
+        .map((segment) => encodeURIComponent(segment as string))
+        .join("/")}`;
+      const canonicalQuery = canonicalParams.toString();
+      navigate(
+        canonicalQuery ? `${canonicalPath}?${canonicalQuery}` : canonicalPath,
+        { replace: true }
+      );
+    }
+  }, [
+    course,
+    routeTopicSlug,
+    routeSubtopicSlug,
+    searchParams,
+    authenticated,
+    slug,
+    navigate,
+  ]);
 
   const languages = useMemo<CourseLanguage[]>(
     () => (course?.type === "multi-language" ? course.languages : []),
