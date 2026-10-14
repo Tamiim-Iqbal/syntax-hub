@@ -67,7 +67,7 @@ export default function SitePopups() {
     if (!enabled.length) return;
 
     let cancelled = false;
-    let timers: number[] = [];
+    const timers: number[] = [];
     let previousEnd = 0;
 
     enabled.forEach((item) => {
