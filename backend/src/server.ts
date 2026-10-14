@@ -1,12 +1,15 @@
 import "dotenv/config";
 import app from "./app.js";
 import connectDB from "./config/db.js";
+import User from "./models/User.js";
 
 const PORT = Number(process.env.PORT) || 5050;
 const HOST = "0.0.0.0";
 
 const startServer = async () => {
   await connectDB();
+  // Preserve access for accounts created before email verification was introduced.
+  await User.updateMany({ emailVerified: { $exists: false } }, { $set: { emailVerified: true } });
 
   const server = app.listen(PORT, HOST, () => {
     const displayHost = process.env.NODE_ENV === "production" ? HOST : "localhost";

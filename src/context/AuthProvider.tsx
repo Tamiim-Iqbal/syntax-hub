@@ -94,14 +94,7 @@ export function AuthProvider({
     email: string,
     password: string
   ) => {
-    const authenticatedUser =
-      await authService.register(
-        name,
-        email,
-        password
-      );
-
-    setUser(authenticatedUser);
+    await authService.register(name, email, password);
   };
 
   /* =========================================

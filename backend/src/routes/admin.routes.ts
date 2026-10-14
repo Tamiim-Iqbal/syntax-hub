@@ -7,6 +7,7 @@ import {
 } from "../controllers/admin.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { getAdminPopups, saveAdminPopups } from "../controllers/popup.controller.js";
 import { getImageKitAuth } from "../controllers/imagekit.controller.js";
 import {
   createNewCourse,
@@ -19,6 +20,8 @@ const router = Router();
 router.use(requireAuth, requireAdmin);
 
 router.get("/overview", getAdminOverview);
+router.get("/popups", getAdminPopups);
+router.put("/popups", saveAdminPopups);
 router.get("/users", getAdminUsers);
 router.patch("/users/:id/role", updateUserRole);
 router.get("/courses", getAdminCourses);

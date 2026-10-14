@@ -37,6 +37,7 @@ function Register() {
 
   const [error, setError] =
     useState("");
+  const [success, setSuccess] = useState("");
 
   const [submitting, setSubmitting] =
     useState(false);
@@ -89,6 +90,7 @@ function Register() {
     event.preventDefault();
 
     setError("");
+    setSuccess("");
 
     if (password !== confirm) {
       setError(
@@ -101,15 +103,8 @@ function Register() {
     setSubmitting(true);
 
     try {
-      await register(
-        name,
-        email,
-        password
-      );
-
-      navigate("/courses", {
-        replace: true,
-      });
+      await register(name, email, password);
+      setSuccess("Account created successfully. You can now sign in.");
     } catch (err) {
       setError(
         err instanceof Error
@@ -185,6 +180,8 @@ function Register() {
         <p>
           Save your learning progress with SyntaxHub.
         </p>
+
+        {success && <div className="auth-success" role="status">{success}</div>}
 
         {error && (
           <div

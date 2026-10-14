@@ -14,6 +14,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Drafts = lazy(() => import("./pages/Drafts"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -37,6 +38,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/drafts" element={<ProtectedRoute />}><Route index element={<Drafts />} /></Route>
             <Route element={<ProtectedRoute />}>
               <Route path="/search" element={<Search />} />
             </Route>

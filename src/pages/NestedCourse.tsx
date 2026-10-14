@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { getCoursePreview } from "../services/courseService";
 import type { NestedCourse as NestedCourseType } from "../types/course";
@@ -7,6 +7,8 @@ import CourseCardSkeleton from "../components/CourseCardSkeleton";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
 import { RichTextRenderer } from "../components/RichTextRenderer";
+import CourseCard from "../components/CourseCard";
+import "../components/CourseCard.css";
 
 import "./NestedCourse.css";
 
@@ -74,20 +76,7 @@ function NestedCourse() {
       ) : (
         <section className="nested-course-grid" aria-label={`${course.title} courses`}>
           {course.nestedCourses.map((item) => (
-            <article className="course-card nested-course-card" key={item._id}>
-              <div className="course-card-top">
-                <span className="course-card-category">{item.category}</span>
-                <span className="course-card-level">{item.level}</span>
-              </div>
-              <div className="course-card-content">
-                <h3>{item.title}</h3>
-                <p className="rich-text-content"><RichTextRenderer value={item.description} /></p>
-              </div>
-              <div className="course-card-footer">
-                <span className="course-card-topics">{item.topicsCount} {item.topicsCount === 1 ? "Topic" : "Topics"}</span>
-                <Link to={item.type === "nested" ? `/courses/nested/${item.slug}` : item.type === "problem-solving" ? "/courses/problem-solving" : `/courses/${item.slug}`} className="course-card-button gradient-button2">View Course →</Link>
-              </div>
-            </article>
+            <CourseCard key={item._id} title={item.title} description={item.description} level={item.level} topics={item.topicsCount} category={item.category} slug={item.slug} type={item.type ?? "single-language"} />
           ))}
         </section>
       )}

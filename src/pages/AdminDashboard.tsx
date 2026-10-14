@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
+import { RichTextRenderer } from "../components/RichTextRenderer";
 import { useAuth } from "../context/useAuth";
 import {
   createAdminCourse,
@@ -10,6 +11,7 @@ import {
   updateAdminCourse,
   updateUserRole,
   getImageKitAuth,
+  getAdminPopups, saveAdminPopups, type AdminPopupConfig,
   type AdminOverview,
   type AdminUser,
   type AdminCourse,
@@ -379,18 +381,22 @@ const normalizeRichText = (value: unknown): RichTextContent => {
 const serializeRichText = (value: RichTextContent): string =>
   typeof value === "string" ? value : JSON.stringify(value);
 
-function sameRichText(a: RichTextContent, b: RichTextContent) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
 function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   value: LocalizedText;
   onChange: (value: LocalizedText) => void;
   labels?: [string, string];
 }) {
   const normalized = asLocalized(value);
-  const [mode, setMode] = useState<"both" | "bn" | "en">("both");
-  const bothValue = sameRichText(normalized.bn, normalized.en) ? normalized.en : normalized.en;
+  const hasContent = (content: RichTextContent) => {
+    if (typeof content === "string") return content.trim().length > 0;
+    return Array.isArray(content) && content.some((part) => typeof part === "string" ? part.trim().length > 0 : Boolean(part.text?.trim()));
+  };
+  const hasBn = hasContent(normalized.bn);
+  const hasEn = hasContent(normalized.en);
+  const preferredMode: "both" | "bn" | "en" = hasBn && hasEn ? "en" : hasBn ? "bn" : hasEn ? "en" : "both";
+  const [mode, setMode] = useState<"both" | "bn" | "en">(preferredMode);
+  useEffect(() => { setMode(preferredMode); }, [preferredMode]);
+  const bothValue = normalized.en;
   const update = (language: "bn" | "en", next: RichTextContent) => onChange({ ...normalized, [language]: next });
   const updateBoth = (next: RichTextContent) => onChange({ bn: next, en: next });
 
@@ -413,13 +419,12 @@ function LocalizedFields({ value, onChange, labels = ["Bangla", "English"] }: {
   );
 }
 
-function SectionEditor({ section, index, onChange, onDelete, onMove, onAddAfter }: {
+function SectionEditor({ section, index, onChange, onDelete, onMove }: {
   section: ContentSection;
   index: number;
   onChange: (section: ContentSection) => void;
   onDelete: () => void;
   onMove: (direction: -1 | 1) => void;
-  onAddAfter?: (type: SectionKind) => void;
 }) {
   return (
     <div className="cms-section-card">
@@ -466,12 +471,6 @@ function SectionEditor({ section, index, onChange, onDelete, onMove, onAddAfter 
       ) : (
         <ImageSectionEditor section={section} onChange={onChange} />
       )}
-      <div className="cms-insert-after">
-        <span>Add after this block:</span>
-        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => (
-          <button key={type} type="button" className="admin-small-button" onClick={() => onAddAfter?.(type)}>+ {sectionLabel(type)}</button>
-        ))}
-      </div>
     </div>
   );
 }
@@ -691,7 +690,10 @@ function ImageSectionEditor({ section, onChange }: {
 
 function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[]; onChange: (sections: ContentSection[]) => void }) {
   const update = (index: number, section: ContentSection) => onChange(sections.map((x, i) => i === index ? section : x));
-  const remove = (index: number) => onChange(sections.filter((_, i) => i !== index));
+  const remove = (index: number) => {
+    if (!window.confirm(`Delete section ${index + 1} (${sectionLabel(sections[index].type)})? This cannot be undone.`)) return;
+    onChange(sections.filter((_, i) => i !== index));
+  };
   const move = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= sections.length) return;
@@ -699,12 +701,19 @@ function ContentBlocksEditor({ sections, onChange }: { sections: ContentSection[
     [next[index], next[target]] = [next[target], next[index]];
     onChange(next);
   };
+  const addAfter = (index: number, type: SectionKind) => {
+    const next = [...sections];
+    next.splice(index + 1, 0, emptySection(type));
+    onChange(next);
+  };
   return (
     <div className="cms-blocks">
-      {sections.map((section, index) => <SectionEditor key={index} section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} onAddAfter={(type) => onChange([...sections.slice(0, index + 1), emptySection(type), ...sections.slice(index + 1)])} />)}
-      <div className="cms-add-row">
-        {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => onChange([...sections, emptySection(type)])}>+ {sectionLabel(type)}</button>)}
-      </div>
+      {sections.map((section, index) => <Fragment key={index}>
+        <SectionEditor section={section} index={index} onChange={(s) => update(index, s)} onDelete={() => remove(index)} onMove={(d) => move(index, d)} />
+        <div className="cms-add-row cms-add-row-after-section" aria-label={`Add section after ${index + 1}`}>
+          {(["explanation", "only-text", "semi-title", "red-text", "bullet-points", "table", "code", "image"] as SectionKind[]).map((type) => <button key={type} type="button" className="admin-small-button" onClick={() => addAfter(index, type)}>+ {sectionLabel(type)}</button>)}
+        </div>
+      </Fragment>)}
     </div>
   );
 }
@@ -941,7 +950,15 @@ function AdminDashboard() {
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [courses, setCourses] = useState<AdminCourse[]>([]);
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "courses" | "content">("overview");
+  const [popupConfig, setPopupConfig] = useState<AdminPopupConfig>({ enabled: false, items: [] });
+  const [popupLoading, setPopupLoading] = useState(false);
+  const [popupSaved, setPopupSaved] = useState("");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "courses" | "content" | "popup">("overview");
+  const [courseFilter, setCourseFilter] = useState<"all" | CourseKind>("all");
+  const [selectedPopupIndex, setSelectedPopupIndex] = useState(0);
+  const [popupPreviewOpen, setPopupPreviewOpen] = useState(false);
+  const [coursePendingDelete, setCoursePendingDelete] = useState<AdminCourse | null>(null);
+  const [adminToast, setAdminToast] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [selectedLanguageId, setSelectedLanguageId] = useState("");
   const [selectedNestedCourseId, setSelectedNestedCourseId] = useState("");
@@ -998,9 +1015,11 @@ function AdminDashboard() {
     }
     setLoading(false);
   }, []);
-  useEffect(() => { void loadDashboard(); }, [loadDashboard]);
+  useEffect(() => { void loadDashboard(); getAdminPopups().then(setPopupConfig).catch(() => undefined); }, [loadDashboard]);
 
   const selectedCourse = useMemo(() => courses.find((course) => course._id === selectedCourseId) ?? null, [courses, selectedCourseId]);
+  const filteredCourses = useMemo(() => courseFilter === "all" ? courses : courses.filter((course) => course.type === courseFilter), [courses, courseFilter]);
+
   const courseContent = useMemo(() => {
     const raw = selectedCourse?.content;
     return raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
@@ -1341,6 +1360,13 @@ function AdminDashboard() {
     else setSelectedNestedGrandchildId(child._id);
   };
 
+  const moveNestedCourse = async (parent: AdminCourse, index: number, direction: -1 | 1) => {
+    const items = [...getNestedItems(parent)]; const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    [items[index], items[target]] = [items[target], items[index]];
+    await saveCourseItems(parent, items.map((item, order) => ({ ...item, order: order + 1 })));
+  };
+
   const removeNestedCourse = async (parent: AdminCourse, id: string) => {
     if (!window.confirm("Remove this course from the learning path? The course itself will not be deleted.")) return;
     await saveCourseItems(parent, getNestedItems(parent).filter((item) => item._id !== id));
@@ -1424,33 +1450,56 @@ function AdminDashboard() {
     } catch (err) { setError(err instanceof Error ? err.message : "Invalid course content"); }
   };
 
-  const deleteCourse = async (course: AdminCourse) => { if (!window.confirm(`Delete "${course.title}"?`)) return; try { await deleteAdminCourse(course._id); await loadDashboard(); } catch (err) { setError(err instanceof Error ? err.message : "Failed to delete course"); } };
-  const roleChange = async (target: AdminUser) => { try { const role = target.role === "admin" ? "user" : "admin"; const updated = await updateUserRole(target.id, role); setUsers((current) => current.map((x) => x.id === updated.id ? updated : x)); setOverview(await getAdminOverview()); } catch (err) { setError(err instanceof Error ? err.message : "Failed to update role"); } };
+  const deleteCourse = async () => { if (!coursePendingDelete) return; const course = coursePendingDelete; try { await deleteAdminCourse(course._id); setCoursePendingDelete(null); await loadDashboard(); setAdminToast(`“${course.title}” deleted successfully.`); window.setTimeout(() => setAdminToast(""), 3200); } catch (err) { setCoursePendingDelete(null); setError(err instanceof Error ? err.message : "Failed to delete course"); } };
+  const addPopup = () => { setPopupConfig(c => ({ ...c, items: [...c.items, { title: "", sticker: "📢", sections: [emptySection()], delayMinutes: 0, delaySeconds: 0, closeAfterSeconds: 10, allowManualClose: false, enabled: true, position: "center", size: "default" }] })); setSelectedPopupIndex(popupConfig.items.length); };
+  const roleChange = async (target: AdminUser) => { try { const role = target.role === "admin" ? "user" : target.role === "moderator" ? "admin" : "moderator"; const updated = await updateUserRole(target.id, role); setUsers((current) => current.map((x) => x.id === updated.id ? updated : x)); setOverview(await getAdminOverview()); } catch (err) { setError(err instanceof Error ? err.message : "Failed to update role"); } };
 
   if (!user || user.role !== "admin") return null;
   return (
     <main className="admin-page">
       <header className="admin-header"><div><span className="section-label">ADMIN PANEL</span><h1>Dashboard</h1><p>Manage SyntaxHub users, courses and learning content.</p></div><Link className="admin-back-link" to="/">Back to website</Link></header>
       <nav className="admin-tabs" aria-label="Admin sections">
-        {(["overview", "users", "courses", "content"] as const).map((tab) => <button key={tab} type="button" className={activeTab === tab ? "active" : ""} onClick={() => { setActiveTab(tab); setEditingTopic(null); setEditingProblem(null); }}>{tab === "content" ? "Content Management" : tab[0].toUpperCase() + tab.slice(1)}</button>)}
+        {(["overview", "users", "courses", "content", "popup"] as const).map((tab) => <button key={tab} type="button" className={activeTab === tab ? "active" : ""} onClick={() => { setActiveTab(tab); setEditingTopic(null); setEditingProblem(null); }}>{tab === "content" ? "Content Management" : tab === "popup" ? "Popup" : tab[0].toUpperCase() + tab.slice(1)}</button>)}
       </nav>
       {error && <div className="admin-error" role="alert">{error}</div>}
       {notice && <div className="admin-success" role="status">{notice}</div>}
       {loading ? <div className="admin-loading">Loading dashboard...</div> : (
         <>
           {activeTab === "overview" && overview && <section className="admin-stats"><article><span>Total Users</span><strong>{overview.users}</strong></article><article><span>Total Courses</span><strong>{overview.courses}</strong></article><article><span>Published Courses</span><strong>{overview.publishedCourses}</strong></article><article><span>Admins</span><strong>{overview.admins}</strong></article></section>}
-          {activeTab === "users" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Users</h2><p>Manage administrator access.</p></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td>{item.name}</td><td>{item.email}</td><td><span className={`admin-role ${item.role}`}>{item.role}</span></td><td>{new Date(item.createdAt).toLocaleDateString()}</td><td>{item.id === user.id ? <span className="admin-self">You</span> : <button type="button" className="admin-small-button" onClick={() => void roleChange(item)}>{item.role === "admin" ? "Make user" : "Make admin"}</button>}</td></tr>)}</tbody></table></div></section>}
+          {activeTab === "users" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Users</h2><p>Manage administrator access.</p></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Role</th><th>Joined</th><th>Last Visited</th><th>Action</th></tr></thead><tbody>{users.map((item) => <tr key={item.id}><td>{item.name}</td><td>{item.email}</td><td><span className={`admin-role ${item.emailVerified ? "verified" : "unverified"}`}>{item.emailVerified ? "Verified" : "Unverified"}</span></td><td><span className={`admin-role ${item.role}`}>{item.role}</span></td><td>{new Date(item.createdAt).toLocaleDateString()}</td><td>{item.lastVisitedAt ? new Date(item.lastVisitedAt).toLocaleString() : "Never"}</td><td>{item.id === user.id ? <span className="admin-self">You</span> : <button type="button" className="admin-small-button" onClick={() => void roleChange(item)}>{item.role === "admin" ? "Make user" : item.role === "moderator" ? "Make admin" : "Make moderator"}</button>}</td></tr>)}</tbody></table></div></section>}
           {activeTab === "courses" && <section className="admin-panel-card"><div className="admin-section-heading"><div><h2>Courses</h2><p>Manage metadata and publication status. Detailed content is managed from Content Management.</p></div><div className="admin-course-actions"><button type="button" className="admin-primary-button" onClick={() => openCreateCourse()}>+ Add Course</button><button type="button" className="admin-small-button" onClick={() => openCreateCourse()}>Copy Existing Course</button></div></div>{formOpen && <form className="admin-course-form" onSubmit={submitCourse}><div className="admin-form-heading"><h3>{editingId ? "Edit Course" : "Create Course"}</h3><button type="button" onClick={() => { setFormOpen(false); setNestedCreateMode(false); setNestedCreateParentId(null); }}>Cancel</button></div>{!editingId && <label className="cms-copy-course-field">Copy all data from existing course<select value={form.copySourceCourseId} onChange={(e) => { const source = courses.find((course) => course._id === e.target.value); if (!source) { setForm({ ...form, copySourceCourseId: "" }); return; } const cloned = cloneCourseContentForCopy(source.type, source.content, source.languages); setForm({ ...form, title: `${source.title} Copy`, slug: `${source.slug}-copy-${Date.now().toString(36)}`.toLowerCase(), category: source.category, type: source.type, description: source.description, level: source.level, content: JSON.stringify(cloned.content, null, 2), copySourceCourseId: source._id }); }}><option value="">Select existing course...</option>{courses.map((course) => <option key={course._id} value={course._id}>{course.title} — {course.type}</option>)}</select></label>}<div className="admin-form-grid"><label>Title<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label><label>Slug<input required value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></label><label>Category<input required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label><label>Level<input required value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} /></label><label>Type<select value={form.type} onChange={(e) => {
   const nextType = e.target.value as CourseKind;
   const defaultContent = nextType === "nested" ? { courses: [] } : nextType === "problem-solving" ? { categories: [] } : nextType === "multi-language" ? { languages: [] } : { topics: [] };
   setForm({ ...form, type: nextType, content: JSON.stringify(defaultContent, null, 2) });
-}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><div className="admin-field-group"><span className="admin-field-label">Description</span><RichTextEditor value={normalizeRichText(form.description)} onChange={(value) => setForm({ ...form, description: serializeRichText(value) })} placeholder="Write course description..." /></div><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-list">{courses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => void deleteCourse(course)}>Delete</button></div></article>)}</div></section>}
+}}><option value="single-language">Single language</option><option value="multi-language">Multi language</option><option value="problem-solving">Problem solving</option><option value="nested">Nested course</option></select></label><label>Order<input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} /></label></div><div className="admin-field-group"><span className="admin-field-label">Description</span><RichTextEditor value={normalizeRichText(form.description)} onChange={(value) => setForm({ ...form, description: serializeRichText(value) })} placeholder="Write course description..." /></div><label>Initial Content JSON<textarea className="admin-json-input" rows={12} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label><label className="admin-checkbox"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label><button className="admin-primary-button" type="submit">{editingId ? "Save Changes" : "Create Course"}</button></form>}<div className="admin-course-filter" role="group" aria-label="Filter courses by type">{(["all", "nested", "single-language", "multi-language", "problem-solving"] as const).map((kind) => <button type="button" key={kind} className={courseFilter === kind ? "active" : ""} onClick={() => { setCourseFilter(kind); const match = kind === "all" ? courses[0] : courses.find((course) => course.type === kind); setSelectedCourseId(match?._id ?? ""); }}>{kind === "all" ? "All" : kind === "nested" ? "Nested" : kind === "single-language" ? "Single" : kind === "multi-language" ? "Multi" : "Problem Solving"}</button>)}</div><div className="admin-course-list">{filteredCourses.map((course) => <article className="admin-course-row" key={course._id}><div><h3>{course.title}</h3><p>/{course.slug} · {course.category} · {course.level}</p></div><div className="admin-course-actions"><span className={`admin-publish ${course.isPublished ? "published" : "draft"}`}>{course.isPublished ? "Published" : "Draft"}</span><button type="button" className="admin-small-button" onClick={() => openEditCourse(course)}>Edit</button><button type="button" className="admin-danger-button" onClick={() => setCoursePendingDelete(course)}>Delete</button></div></article>)}</div></section>}
 
+          {activeTab === "popup" && <section className="admin-panel-card admin-popup-panel">
+            <div className="admin-section-heading"><div><h2>Website Popups</h2><p>Create course-style announcements with rich-text sections. Popups appear at the configured time on any website page.</p></div></div>
+            <div className="admin-popup-settings"><label className="admin-popup-toggle"><input type="checkbox" checked={popupConfig.enabled} onChange={e=>setPopupConfig(c=>({...c,enabled:e.target.checked}))}/> Enable popups globally</label><button type="button" className="admin-primary-button" onClick={addPopup}>+ Add Popup</button></div>
+            <div className="admin-popup-workspace">
+              <aside className="admin-popup-sidebar"><div className="admin-popup-sidebar-title"><strong>Popups</strong><span>{popupConfig.items.length}</span></div>
+                {popupConfig.items.map((item,i)=><div key={item._id ?? i} className={`admin-popup-nav-item ${selectedPopupIndex===i?"active":""}`}><button type="button" onClick={()=>setSelectedPopupIndex(i)}><span className="admin-popup-nav-sticker">{item.sticker||"📢"}</span><span><strong>{item.title||`Popup ${i+1}`}</strong><small>{item.enabled===false?"Disabled":`${item.delayMinutes||0} min delay`}</small></span></button><button type="button" aria-label={`Delete popup ${i+1}`} className="admin-danger-button" onClick={()=>{if(!window.confirm(`Delete popup ${item.title||i+1}?`))return;setPopupConfig(c=>({...c,items:c.items.filter((_,j)=>j!==i)}));setSelectedPopupIndex(Math.max(0,Math.min(selectedPopupIndex,popupConfig.items.length-2)));}}>×</button></div>)}
+                {!popupConfig.items.length&&<p className="admin-popup-empty">No popups yet. Add one to get started.</p>}
+                <button type="button" className="admin-popup-add-sidebar" onClick={addPopup}>＋ Add new popup</button>
+              </aside>
+              <div className="admin-popup-editor">
+                {popupConfig.items[selectedPopupIndex] ? (()=>{const item=popupConfig.items[selectedPopupIndex];const update=(patch:Partial<AdminPopupConfig["items"][number]>)=>setPopupConfig(c=>({...c,items:c.items.map((x,j)=>j===selectedPopupIndex?{...x,...patch}:x)}));return <>
+                  <div className="admin-popup-editor-heading"><div><h3>{item.title||`Popup ${selectedPopupIndex+1}`}</h3><p>Edit the selected popup. Content uses the same section editor as course topics.</p></div><div className="admin-popup-heading-actions"><button type="button" className="admin-small-button" onClick={()=>setPopupPreviewOpen(true)}>Preview</button><label className="admin-popup-toggle"><input type="checkbox" checked={item.enabled!==false} onChange={e=>update({enabled:e.target.checked})}/> Enabled</label></div></div>
+                  <div className="admin-form-grid"><label>Popup title<input value={item.title} onChange={e=>update({title:e.target.value})} placeholder="e.g. Important Notice"/></label><label>Top sticker / emoji<select value={item.sticker||"📢"} onChange={e=>update({sticker:e.target.value})}><option value="📢">📢 Notice</option><option value="📣">📣 Announcement</option><option value="📌">📌 Important</option><option value="🎉">🎉 Celebration</option><option value="⚠️">⚠️ Warning</option><option value="💡">💡 Tip</option><option value="🚀">🚀 Update</option><option value="📚">📚 Learning</option><option value="❤️">❤️ Thanks</option><option value="🔔">🔔 Reminder</option></select></label></div>
+                  <div className="admin-popup-section-editor"><div className="admin-field-label">Popup content sections</div><ContentBlocksEditor sections={item.sections?.length?item.sections:[emptySection()]} onChange={sections=>update({sections,html:""})}/></div>
+                  <div className="admin-popup-grid"><label>Show after (minutes)<input type="number" min="0" max="10080" value={item.delayMinutes} onChange={e=>update({delayMinutes:Number(e.target.value)})}/><small>Timer starts when the visitor opens the website, across any page.</small></label><label>Additional delay (seconds)<input type="number" min="0" max="59" value={item.delaySeconds ?? 0} onChange={e=>update({delaySeconds:Number(e.target.value)})}/><small>Combined with the minutes above.</small></label><label>Auto close after (seconds)<input type="number" min="1" max="3600" value={item.closeAfterSeconds} onChange={e=>update({closeAfterSeconds:Number(e.target.value)})}/></label><label>Popup size<select value={item.size || "default"} onChange={e=>update({size:e.target.value as "default" | "small"})}><option value="default">Default</option><option value="small">Small (toast size)</option></select></label><label>Popup position<select value={item.position || "center"} onChange={e=>update({position:e.target.value as NonNullable<typeof item.position>})}><option value="center">Center</option><option value="top-center">Top center</option><option value="top-left">Top left</option><option value="top-right">Top right</option><option value="bottom-left">Bottom left</option><option value="bottom-right">Bottom right</option></select></label></div>
+                  <label className="admin-popup-toggle"><input type="checkbox" checked={item.allowManualClose} onChange={e=>update({allowManualClose:e.target.checked})}/> Allow visitor to close early (show × button)</label>
+                </>})() : <div className="cms-editor-empty"><div className="cms-editor-empty-icon">📢</div><h3>Select or add a popup</h3><p>Choose a popup from the left or create a new announcement.</p></div>}
+              </div>
+            </div>
+            <div className="admin-popup-save-row"><button type="button" className="admin-primary-button" disabled={popupLoading} onClick={async()=>{setPopupLoading(true);setPopupSaved("");try{setPopupConfig(await saveAdminPopups(popupConfig));setPopupSaved("Popup settings saved.");}catch(e){setPopupSaved(e instanceof Error?e.message:"Unable to save popup settings.");}finally{setPopupLoading(false);}}}>{popupLoading?"Saving…":"Save Popup Settings"}</button>{popupSaved && <span role="status">{popupSaved}</span>}</div>
+          </section>}
           {activeTab === "content" && <section className="admin-panel-card cms-page">
             <div className="admin-section-heading"><div><h2>Content Management</h2><p>Choose a course, select a topic or problem from the left, and edit its existing content on the right.</p></div></div>
             <div className="cms-course-picker">
+              <div className="admin-course-filter cms-course-type-filter" role="group" aria-label="Filter content courses by type">{(["all", "nested", "single-language", "multi-language", "problem-solving"] as const).map((kind) => <button type="button" key={kind} className={courseFilter === kind ? "active" : ""} onClick={() => { setCourseFilter(kind); const match = kind === "all" ? courses[0] : courses.find((course) => course.type === kind); setSelectedCourseId(match?._id ?? ""); setSelectedNestedCourseId(""); setSelectedNestedGrandchildId(""); setEditingTopic(null); setEditingProblem(null); }}>{kind === "all" ? "All" : kind === "nested" ? "Nested" : kind === "single-language" ? "Single" : kind === "multi-language" ? "Multi" : "Problem Solving"}</button>)}</div>
               <label>Course<select value={selectedCourseId} onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedNestedCourseId(""); setSelectedNestedGrandchildId(""); setEditingTopic(null); setEditingProblem(null); setEditingCategoryId(null); setSelectedProblemCategoryId(null); setEditingSubtopic(null); }}>
-                <option value="">Select a course</option>{courses.map((course) => <option key={course._id} value={course._id}>{course.title} — {course.type}</option>)}
+                <option value="">Select a course</option>{filteredCourses.map((course) => <option key={course._id} value={course._id}>{course.title} — {course.type}</option>)}
               </select></label>
               {selectedCourse?.type === "multi-language" && <label>Programming Language<select value={activeLanguage?.id ?? ""} onChange={(e) => { setSelectedLanguageId(e.target.value); setEditingTopic(null); }}>{languages.map((language) => <option key={language.id} value={language.id}>{language.name}</option>)}</select></label>}
             </div>
@@ -1535,7 +1584,12 @@ function AdminDashboard() {
                           <button type="button" className={`cms-sidebar-item cms-sidebar-topic ${selectedNestedCourseId === item._id ? "active" : ""}`} onClick={() => { setSelectedNestedCourseId(item._id); setSelectedNestedGrandchildId(""); setEditingTopic(null); }}>
                             <span>{String(index + 1).padStart(2, "0")}</span><span>{item.title}<small>{child?.type === "nested" ? `${getNestedItems(child).length} courses` : `${child?.topicsCount ?? item.topicsCount ?? 0} topics`}</small></span>
                           </button>
-                          <button type="button" className="admin-danger-button" onClick={() => void removeNestedCourse(selectedCourse, item._id)}>Delete</button>
+                          <div className="cms-topic-list-actions">
+                            <button type="button" className="cms-topic-order-button cms-topic-add-after" title={child?.type === "nested" ? "Add course inside this learning path" : "Add another course to this learning path"} aria-label={`Add course near ${item.title}`} onClick={() => openCreateNestedChild(child?.type === "nested" ? child._id : selectedCourse._id)}>+</button>
+                            <button type="button" className="cms-topic-order-button" title="Move course up" aria-label="Move course up" disabled={index === 0} onClick={() => void moveNestedCourse(selectedCourse, index, -1)}>↑</button>
+                            <button type="button" className="cms-topic-order-button" title="Move course down" aria-label="Move course down" disabled={index === nestedCourseItems.length - 1} onClick={() => void moveNestedCourse(selectedCourse, index, 1)}>↓</button>
+                            <button type="button" className="admin-danger-button" onClick={() => void removeNestedCourse(selectedCourse, item._id)}>Delete</button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1676,6 +1730,9 @@ function AdminDashboard() {
           </section>}
         </>
       )}
+      {adminToast && <div className="admin-toast-top-center" role="status"><span>✓</span>{adminToast}</div>}
+      {coursePendingDelete && <div className="admin-confirm-backdrop" role="presentation"><section className="admin-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-course-title"><div className="admin-confirm-icon">!</div><h2 id="delete-course-title">Delete course?</h2><p>Are you sure you want to delete <strong>{coursePendingDelete.title}</strong>? This action cannot be undone.</p><div className="admin-confirm-actions"><button type="button" className="admin-small-button" onClick={()=>setCoursePendingDelete(null)}>Cancel</button><button type="button" className="admin-danger-button" onClick={()=>void deleteCourse()}>Delete course</button></div></section></div>}
+      {popupPreviewOpen && popupConfig.items[selectedPopupIndex] && (() => { const item = popupConfig.items[selectedPopupIndex]; return <div className={`admin-popup-preview-backdrop position-${item.position || "center"}`} role="presentation" onClick={()=>setPopupPreviewOpen(false)}><section className={`site-popup admin-popup-preview ${item.size === "small" ? "site-popup-small" : ""}`} role="dialog" aria-modal="true" aria-label="Popup preview" onClick={e=>e.stopPropagation()}>{item.allowManualClose && <button type="button" className="site-popup-close" aria-label="Close preview" onClick={()=>setPopupPreviewOpen(false)}>×</button>}<div className="site-popup-sticker" aria-hidden="true">{item.sticker || "📢"}</div>{item.title && <h2>{item.title}</h2>}<div className="site-popup-content">{item.sections?.map((section, i) => { if (["explanation","only-text","semi-title","red-text"].includes(section.type)) { const value = (section as Extract<ContentSection,{content:LocalizedText}>).content; return <p key={i} className={section.type === "red-text" ? "popup-red-text" : section.type === "semi-title" ? "popup-semi-title" : "popup-text"}><RichTextRenderer value={value} language="en" /></p>; } if (section.type === "bullet-points") return <ul key={i}>{section.items.map((x,j)=><li key={j}><RichTextRenderer value={x} language="en" /></li>)}</ul>; if (section.type === "code") return <pre key={i}><code>{section.code}</code></pre>; if (section.type === "image") return <figure key={i}><img src={section.src} alt={section.alt} style={{maxWidth:"100%"}}/>{section.caption && <figcaption>{typeof section.caption === "string" ? section.caption : section.caption.en || section.caption.bn}</figcaption>}</figure>; return null; })}</div><div className="admin-preview-note">Preview only · {item.position || "center"} · closes after {item.closeAfterSeconds || 10}s</div></section></div>; })()}
     </main>
   );
 }

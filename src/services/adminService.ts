@@ -17,6 +17,8 @@ export type AdminOverview = {
 export type AdminUser = AuthUser & {
   createdAt: string;
   updatedAt: string;
+  emailVerified: boolean;
+  lastVisitedAt?: string | null;
 };
 
 export type AdminCourse = Course & {
@@ -61,17 +63,19 @@ const request = async <T>(
 export const getAdminOverview =
   () => request<AdminOverview>("/admin/overview");
 
-export const getAdminUsers =
-  () => request<AdminUser[]>("/admin/users");
+export const getAdminUsers = async () => {
+  const rows = await request<Array<AdminUser & { _id?: string }>>("/admin/users");
+  return rows.map((item) => ({ ...item, id: item.id || item._id || "" }));
+};
 
 export const updateUserRole = (
   id: string,
-  role: "user" | "admin"
+  role: "user" | "moderator" | "admin"
 ) =>
-  request<AdminUser>(`/admin/users/${id}/role`, {
+  request<AdminUser & { _id?: string }>(`/admin/users/${id}/role`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
-  });
+  }).then((item) => ({ ...item, id: item.id || item._id || id }));
 
 export const getAdminCourses =
   () => request<AdminCourse[]>("/admin/courses");
@@ -131,3 +135,9 @@ export type ImageKitAuth = {
 
 export const getImageKitAuth = () =>
   request<ImageKitAuth>("/admin/imagekit/auth");
+
+export type PopupPosition = "center" | "bottom-left" | "bottom-right" | "top-left" | "top-right" | "top-center";
+export type AdminPopupItem = { _id?: string; title: string; html?: string; sticker?: string; sections?: import("../types/course").ContentSection[]; delayMinutes: number; delaySeconds?: number; closeAfterSeconds: number; allowManualClose: boolean; enabled: boolean; position?: PopupPosition; size?: "default" | "small" };
+export type AdminPopupConfig = { enabled: boolean; items: AdminPopupItem[] };
+export const getAdminPopups = () => request<AdminPopupConfig>("/admin/popups");
+export const saveAdminPopups = (config: AdminPopupConfig) => request<AdminPopupConfig>("/admin/popups", { method: "PUT", body: JSON.stringify(config) });

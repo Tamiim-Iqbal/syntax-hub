@@ -40,7 +40,7 @@ export const getAdminUsers = async (
 ) => {
   try {
     const users = await User.find()
-      .select("_id name email role createdAt updatedAt")
+      .select("_id name email role emailVerified lastVisitedAt createdAt updatedAt")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -65,10 +65,10 @@ export const updateUserRole = async (
     const { id } = req.params;
     const { role } = req.body as { role?: unknown };
 
-    if (typeof id !== "string" || (role !== "user" && role !== "admin")) {
+    if (typeof id !== "string" || (role !== "user" && role !== "moderator" && role !== "admin")) {
       res.status(400).json({
         success: false,
-        message: "Valid user ID and role are required",
+        message: "Valid user ID and role (user, moderator, admin) are required",
       });
       return;
     }
@@ -86,7 +86,7 @@ export const updateUserRole = async (
       { role },
       { returnDocument: "after", runValidators: true }
     )
-      .select("_id name email role createdAt updatedAt")
+      .select("_id name email role emailVerified lastVisitedAt createdAt updatedAt")
       .lean();
 
     if (!user) {

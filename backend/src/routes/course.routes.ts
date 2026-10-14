@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 
 import {
   getCourses,
+  getDraftCourses,
   getCoursePreviewController,
   getCourse,
   getProblemSolving,
@@ -14,6 +15,7 @@ import {
 const router = Router();
 
 router.get("/", getCourses);
+router.get("/drafts", requireAuth, getDraftCourses);
 router.get("/preview/:slug", getCoursePreviewController);
 
 // Search index contains only published course content.

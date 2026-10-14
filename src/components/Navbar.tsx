@@ -60,6 +60,7 @@ function Navbar() {
           >
             Courses
           </NavLink>
+          {(user?.role === "admin" || user?.role === "moderator") && <NavLink to="/drafts" className={({isActive}) => isActive ? "gradient-text2 nav-link active" : "nav-link"}>Draft</NavLink>}
         </nav>
 
         <div className="navbar-mobile-menu-wrap">
@@ -96,6 +97,7 @@ function Navbar() {
               >
                 Courses
               </NavLink>
+              {(user?.role === "admin" || user?.role === "moderator") && <NavLink to="/drafts" className={({isActive}) => isActive ? "mobile-nav-link active" : "mobile-nav-link"}>Draft</NavLink>}
 
               <button
                 type="button"

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 
+import { getPublicPopups } from "./controllers/popup.controller.js";
 import courseRoutes from "./routes/course.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
@@ -57,6 +58,8 @@ app.get("/api/health", (_req, res) => {
     message: "SyntaxHub API is running",
   });
 });
+
+app.get("/api/popups", getPublicPopups);
 
 // Authentication routes
 app.use("/api/auth", authRoutes);

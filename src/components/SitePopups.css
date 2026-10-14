@@ -1,0 +1,182 @@
+.site-popup-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(10, 14, 28, .52);
+    backdrop-filter: blur(3px)
+}
+
+.site-popup {
+    position: relative;
+    width: min(560px, 100%);
+    max-height: min(80vh, 720px);
+    overflow: auto;
+    padding: 28px;
+    border-radius: 20px;
+    background: var(--color-bg-white, #fff);
+    color: var(--color-text, #172033);
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--color-bg-white, #fff), var(--color-bg-white, #fff)), linear-gradient(135deg, #f97316 0%, #ec4899 52%, #8b5cf6 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: 0 24px 80px #0003
+}
+
+.site-popup-sticker {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    font-size: 28px;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding-top: 14px;
+}
+
+.site-popup h2 {
+    margin: 50px 32px 16px 0;
+    font-size: 1.35rem
+}
+
+.site-popup-content {
+    overflow-wrap: anywhere;
+    line-height: 1.7;
+}
+.site-popup-content > * {
+    margin: 0 0 10px;
+}
+
+.site-popup-content > *:last-child {
+    margin-bottom: 0;
+}
+
+.site-popup-content a {
+    color: var(--color-primary, #635bff);
+    text-decoration: underline
+}
+
+.site-popup-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.site-popup-close {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 28px;
+    cursor: pointer
+}
+
+.popup-red-text {
+    color: #dc2626
+}
+
+.popup-semi-title {
+    font-weight: 750;
+    font-size: 1.15rem
+}
+
+.site-popup-content strong {
+    font-weight: 750;
+}
+
+.site-popup-content a {
+    color: var(--color-primary);
+    text-decoration: underline
+}
+
+.site-popup-content mark {
+    background: #bbf7d0;
+    color: inherit
+}
+
+.site-popup-progress {
+    height: 3px;
+    background: var(--color-border, #ddd);
+    margin-top: 20px;
+    overflow: hidden;
+    border-radius: 4px
+}
+
+.site-popup-progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    transition: width .2s linear
+}
+
+@media(max-width:480px) {
+    .site-popup {
+        padding: 22px 18px;
+        border-radius: 16px
+    }
+}
+
+.site-popup-backdrop.position-top-left {
+    place-items: start start
+}
+
+.site-popup-backdrop.position-top-center {
+    place-items: start center
+}
+
+.site-popup-backdrop.position-top-right {
+    place-items: start end
+}
+
+.site-popup-backdrop.position-bottom-left {
+    place-items: end start
+}
+
+.site-popup-backdrop.position-bottom-right {
+    place-items: end end
+}
+
+.site-popup-backdrop.position-top-left,
+.site-popup-backdrop.position-top-center,
+.site-popup-backdrop.position-top-right {
+    padding-top: 24px
+}
+
+.site-popup-backdrop.position-bottom-left,
+.site-popup-backdrop.position-bottom-right {
+    padding-bottom: 24px
+}
+
+.site-popup-small {
+    width: min(360px, 100%);
+    max-height: min(70vh, 420px);
+    padding: 18px 20px;
+    border-radius: 14px;
+    font-size: .9rem
+}
+
+.site-popup-small .site-popup-sticker {
+    top: 8px;
+    font-size: 22px;
+    padding-top: 3px
+}
+
+.site-popup-small h2 {
+    font-size: 1rem;
+    margin: 42px 28px 10px 0
+}
+
+.site-popup-small .site-popup-content {
+    line-height: 1.5
+}
+
+.site-popup-small .site-popup-progress {
+    margin-top: 12px
+}

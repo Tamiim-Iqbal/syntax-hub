@@ -92,7 +92,7 @@ export const register = async (
   password: string
 ) => {
   const result =
-    await request<AuthResponse>(
+    await request<{ success: boolean; message?: string; data: { user: AuthUser } }>(
       "/auth/register",
       {
         method: "POST",
@@ -103,11 +103,6 @@ export const register = async (
         }),
       }
     );
-
-  localStorage.setItem(
-    TOKEN_KEY,
-    result.data.token
-  );
 
   return result.data.user;
 };

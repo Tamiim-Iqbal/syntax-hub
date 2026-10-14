@@ -487,3 +487,11 @@ The core platform, authentication, course architecture, multi-language learning 
 ## 📄 License
 
 This project is currently maintained as a private project. Licensing and repository access may change in the future.
+
+
+## New admin, verification, and popup settings
+
+- Email/password registration currently does not require email verification. These accounts are shown as Unverified in Admin > Users until email verification is added later. Google sign-ins are marked verified based on Google's `email_verified` claim.
+- Admin > Popup lets admins add multiple scheduled popup messages, write course-style HTML formatting, set delay in minutes, auto-close in seconds, toggle each message, and optionally show an X close button. Popups use the website theme and gradient border.
+- User management includes email verification, role, joined date, and last visited. Roles include user, moderator, and admin. Admin/moderator accounts can open Draft from the navbar.
+- For deployment, configure the required backend environment variables locally and on your backend host. Never commit real API keys.

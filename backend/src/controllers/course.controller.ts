@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import type { AuthRequest } from "../types/auth.js";
+import Course from "../models/Course.js";
 
 import {
   getAllCourses,
@@ -127,7 +129,7 @@ export const getCoursePreviewController = async (
 ========================================= */
 
 export const getCourse = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -145,19 +147,19 @@ export const getCourse = async (
     const course =
       await getCourseBySlug(slug);
 
-    if (!course) {
-      res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
-
+    let resolvedCourse: any = course;
+    if (!resolvedCourse && (req.user?.role === "admin" || req.user?.role === "moderator")) {
+      resolvedCourse = await Course.findOne({ slug }).lean();
+    }
+    if (!resolvedCourse) {
+      res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
-    res.set("Cache-Control", "private, max-age=30, stale-while-revalidate=120");
+    res.set("Cache-Control", "private, no-store");
     res.status(200).json({
       success: true,
-      data: course,
+      data: resolvedCourse,
     });
   } catch (error) {
     console.error(
@@ -504,4 +506,8 @@ export const getProblem = async (
       message: "Failed to fetch problem",
     });
   }
+};
+export const getDraftCourses = async (req: AuthRequest, res: Response) => {
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "moderator")) { res.status(403).json({ success: false, message: "Moderator access required" }); return; }
+  try { const courses = await Course.find({ isPublished: false, isTopLevel: { $ne: false } }).select("_id title slug category type description level order updatedAt").sort({ order: 1, updatedAt: -1 }).lean(); res.set("Cache-Control", "private, no-store"); res.json({ success: true, data: courses }); } catch { res.status(500).json({ success: false, message: "Unable to load draft courses" }); }
 };

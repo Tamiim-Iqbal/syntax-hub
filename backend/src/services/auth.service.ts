@@ -1,6 +1,7 @@
 import {
   createHmac,
   randomBytes,
+  createHash,
   pbkdf2Sync,
   timingSafeEqual,
 } from "node:crypto";
@@ -250,21 +251,15 @@ export const registerUser = async (
     throw error;
   }
 
+  // Email verification is intentionally disabled for now. New email/password
+  // accounts remain marked unverified in the admin dashboard, but can sign in.
   const user = await User.create({
-    name: name.trim(),
-    email: normalizedEmail,
-    passwordHash:
-      hashPassword(password),
-    role: "user",
+    name: name.trim(), email: normalizedEmail,
+    passwordHash: hashPassword(password), role: "user",
+    emailVerified: false,
   });
+  return { user: toAuthUser(user) };
 
-  const authUser =
-    toAuthUser(user);
-
-  return {
-    user: authUser,
-    token: createToken(authUser),
-  };
 };
 
 /* =========================================
@@ -293,13 +288,10 @@ export const loginUser = async (
     return null;
   }
 
-  const authUser =
-    toAuthUser(user);
-
-  return {
-    user: authUser,
-    token: createToken(authUser),
-  };
+  const authUser = toAuthUser(user);
+  user.lastVisitedAt = new Date();
+  await user.save();
+  return { user: authUser, token: createToken(authUser) };
 };
 
 /* =========================================
@@ -325,6 +317,8 @@ export const loginWithGoogleUser =
     ===================================== */
 
     if (user) {
+      user.emailVerified = true;
+      user.lastVisitedAt = new Date();
       if (
         googleUser.name.trim() &&
         user.name !==
@@ -370,7 +364,7 @@ export const loginWithGoogleUser =
           )
         ),
 
-      role: "user",
+      role: "user", emailVerified: true, lastVisitedAt: new Date(),
     });
 
     const authUser =
@@ -391,4 +385,24 @@ export const getUserById = async (
   return user
     ? toAuthUser(user)
     : null;
+};
+export const verifyEmailToken = async (rawToken: string) => {
+  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+  const user = await User.findOne({ verificationTokenHash: tokenHash }).select("+verificationTokenHash +verificationTokenExpiresAt");
+  if (!user || !user.verificationTokenExpiresAt || user.verificationTokenExpiresAt.getTime() < Date.now()) return false;
+  user.emailVerified = true;
+  user.verificationTokenHash = undefined;
+  user.verificationTokenExpiresAt = undefined;
+  await user.save();
+  return true;
+};
+
+export const createEmailVerification = async (email: string) => {
+  const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+verificationTokenHash +verificationTokenExpiresAt");
+  if (!user || user.emailVerified) return null;
+  const rawToken = randomBytes(32).toString("hex");
+  user.verificationTokenHash = createHash("sha256").update(rawToken).digest("hex");
+  user.verificationTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+  await user.save();
+  return { email: user.email, name: user.name, token: rawToken };
 };

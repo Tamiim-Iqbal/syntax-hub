@@ -13,6 +13,7 @@ import {
   loginWithGoogleUser,
   registerUser,
 } from "../services/auth.service.js";
+import User from "../models/User.js";
 
 import type {
   AuthRequest,
@@ -79,10 +80,7 @@ export const register = async (
         password
       );
 
-    res.status(201).json({
-      success: true,
-      data: result,
-    });
+    res.status(201).json({ success: true, message: "Account created successfully. You can now sign in.", data: { user: result.user } });
   } catch (error) {
     if (
       error instanceof Error &&
@@ -98,16 +96,8 @@ export const register = async (
       return;
     }
 
-    console.error(
-      "Register error:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Failed to create account",
-    });
+    console.error("Register error:", error);
+    res.status(500).json({ success: false, message: error instanceof Error ? error.message : "Failed to create account" });
   }
 };
 
@@ -144,11 +134,7 @@ export const login = async (
       return;
     }
 
-    const result =
-      await loginUser(
-        email,
-        password
-      );
+    const result = await loginUser(email, password);
 
     if (!result) {
       res.status(401).json({
@@ -291,10 +277,8 @@ export const me = async (
       return;
     }
 
-    const user =
-      await getUserById(
-        req.user.id
-      );
+    await User.updateOne({ _id: req.user.id }, { $set: { lastVisitedAt: new Date() } });
+    const user = await getUserById(req.user.id);
 
     if (!user) {
       res.status(401).json({
